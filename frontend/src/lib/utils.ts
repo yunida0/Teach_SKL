@@ -1,0 +1,56 @@
+import type { Category, PageKey } from "@/types";
+
+export const subjects = ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "PKWU"];
+
+export const pageLabels: Record<PageKey, string> = {
+  dashboard: "Dashboard",
+  profil: "Profil",
+  ebook: "E-Book",
+  banktugas: "Bank Tugas",
+  quiz: "Quiz",
+  pointmurid: "Poin Saya",
+  daftarmurid: "Daftar Murid",
+  raport: "Raport",
+  absensimurid: "Absensi Murid",
+  absensipengajar: "Absensi Pengajar",
+  dokumentasi: "Dokumentasi",
+  ulasan: "Beri Ulasan",
+  adminpanel: "Admin Panel",
+};
+
+export function pageLabelFor(page: PageKey, category?: Category): string {
+  if (page === "pointmurid") return category === "murid" ? "Poin Saya" : "Point Murid";
+  return pageLabels[page];
+}
+
+export function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 11) return "Selamat Pagi";
+  if (hour < 15) return "Selamat Siang";
+  if (hour < 18) return "Selamat Sore";
+  return "Selamat Malam";
+}
+
+export function studyRemaining(createdAt?: string) {
+  if (!createdAt) return { years: 3, months: 0, days: 0 };
+  const start = new Date(createdAt).getTime();
+  const end = start + 3 * 365 * 24 * 60 * 60 * 1000;
+  const diffDays = Math.max(0, Math.floor((end - Date.now()) / 86_400_000));
+  return {
+    years: Math.floor(diffDays / 365),
+    months: Math.floor((diffDays % 365) / 30),
+    days: (diffDays % 365) % 30,
+  };
+}
+
+export function navFor(category: Category): PageKey[] {
+  if (category === "admin") return ["adminpanel"];
+  const base: PageKey[] = ["dashboard", "ebook"];
+  if (category !== "tamu") base.push("banktugas", "quiz", "pointmurid");
+  if (category === "pengajar") {
+    base.push("daftarmurid", "absensimurid", "absensipengajar", "raport", "dokumentasi");
+  }
+  if (category === "murid") base.push("absensimurid", "raport", "dokumentasi");
+  if (category === "tamu") base.push("dokumentasi", "ulasan");
+  return base;
+}

@@ -1,0 +1,23 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Front controller itself.
+    RewriteRule ^index\.php$ - [L]
+
+    # Keep directories browsable only as directories; directory listing is disabled.
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route every PHP endpoint (legacy or implementation path) through the
+    # front controller so public URLs are governed by one route map.
+    RewriteRule ^(.+)\.php$ index.php?route=$1 [QSA,L]
+
+    # Serve non-PHP static files if any are ever added under backend.
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Clean extensionless routes.
+    RewriteRule ^(.+)$ index.php?route=$1 [QSA,L]
+</IfModule>

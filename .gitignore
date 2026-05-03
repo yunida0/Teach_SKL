@@ -1,0 +1,37 @@
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+logs/
+*.log
+error_log
+
+# Uploads (jangan push file upload user)
+uploads/
+backend/uploads/
+
+# Node / Next.js
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/.env*.local
+.next/
+
+# Environment files
+.env
+*.env
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
