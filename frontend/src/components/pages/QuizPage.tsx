@@ -542,7 +542,15 @@ export function QuizPage({ category, csrfToken }: { category: Category; csrfToke
 
 
   function load() {
-    readJson<Quiz[]>(`${PHP_BASE}/backend/data/get_quizzes.php`).then(setItems).catch(() => setItems([]));
+    return readJson<Quiz[]>(`${PHP_BASE}/backend/data/get_quizzes.php?ts=${Date.now()}`)
+      .then((data) => {
+        setItems(data);
+        return data;
+      })
+      .catch(() => {
+        setItems([]);
+        return [];
+      });
   }
   useEffect(() => { load(); }, []);
 

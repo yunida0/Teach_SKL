@@ -93,7 +93,7 @@ export function QuizHomeTable({
 }: {
   allItems: Quiz[];
   onOpen: (subject: string) => void;
-  onRefresh: () => void;
+  onRefresh: () => Promise<Quiz[]>;
   csrfToken: string;
 }) {
   const [showModal, setShowModal] = useState(false);
@@ -152,7 +152,7 @@ export function QuizHomeTable({
       const res = await fetch(`${PHP_BASE}/backend/actions/rename_quiz_subject.php`, { method: "POST", body: fd, credentials: "include" });
       const json = await res.json();
       if (json.success) {
-        onRefresh();
+        await onRefresh();
       } else {
         setNotice({ title: "Gagal mengubah quiz", description: json.error || "Gagal mengubah data quiz." });
       }
@@ -510,7 +510,7 @@ export function QuizEditor({
   allItems: Quiz[];
   csrfToken: string;
   onBack: () => void;
-  onRefresh: () => void;
+  onRefresh: () => Promise<Quiz[]>;
 }) {
   const quizzes = allItems.filter(q => q.pelajaran === subject);
   const [activeId, setActiveId] = useState<number | string | "new">(() => quizzes[0]?.id ?? "new");
@@ -523,13 +523,23 @@ export function QuizEditor({
   const resolvedActiveId = activeId !== "new" && activeQuiz ? activeId : "new";
   const isNew = resolvedActiveId === "new";
 
+  async function refreshAfterSave() {
+    const latest = await onRefresh();
+    if (isNew) {
+      const added = latest.find(q => q.pelajaran === subject);
+      setActiveId(added?.id ?? "new");
+      return;
+    }
+    setActiveId(activeQuiz?.id ?? activeId);
+  }
+
   async function handleDelete(quiz: Quiz) {
     const fd = new FormData();
     fd.set("csrf_token", csrfToken); fd.set("id", String(quiz.id));
     const res = await fetch(`${PHP_BASE}/backend/deletes/hapus_quiz.php`, { method: "POST", body: fd, credentials: "include" });
     const json = await res.json().catch(() => ({ success: false }));
     if (json.success) {
-      onRefresh();
+      await onRefresh();
       const rem = quizzes.filter(q => String(q.id) !== String(quiz.id));
       setActiveId(rem[0]?.id ?? "new");
     }
@@ -620,7 +630,7 @@ export function QuizEditor({
             subject={subject}
             csrfToken={csrfToken}
             isNew={isNew}
-            onSaved={onRefresh}
+            onSaved={refreshAfterSave}
           />
         </div>
       </div>
