@@ -592,11 +592,18 @@ export function QuizEditor({
                   onClick={() => setActiveId(quiz.id)}>
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <span className={`text-[11px] font-black uppercase tracking-wider ${active ? 'text-sky-700' : 'text-slate-400'}`}>Soal {i + 1} · 10 poin</span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button type="button"
+                        onClick={e => { e.stopPropagation(); setActiveId(quiz.id); }}
+                        className={`cursor-pointer rounded-full border px-2.5 py-1 text-[10px] font-black transition-colors ${active ? 'border-sky-200 bg-white text-sky-700' : 'border-sky-100 bg-sky-50 text-sky-600 hover:bg-sky-100'}`}>
+                        Edit
+                      </button>
                       <button type="button"
                       onClick={e => { e.stopPropagation(); setDeleteTarget(quiz); }}
                       className="cursor-pointer rounded-full border border-rose-100 bg-rose-50 px-2.5 py-1 text-[10px] font-black text-rose-600 transition-colors hover:bg-rose-100">
                       Hapus
                     </button>
+                    </div>
                   </div>
                   <p className="m-0 mb-3 text-sm font-bold leading-snug text-slate-800">{quiz.soal}</p>
                   <div className="grid gap-1.5 sm:grid-cols-2">
