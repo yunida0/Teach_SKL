@@ -122,7 +122,7 @@ export function TugasPage({ category, csrfToken }: { category: Category; csrfTok
               />
               {isPengajar && (
                 <button
-                  className="absolute right-3 top-3 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-600 opacity-0 transition hover:bg-rose-100 group-hover:opacity-100"
+                  className="absolute right-3 top-3 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-600 transition hover:bg-rose-100 sm:opacity-0 sm:group-hover:opacity-100"
                   onClick={() => setDeleteTarget(item)}
                   type="button"
                 >

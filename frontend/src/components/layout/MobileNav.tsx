@@ -105,6 +105,14 @@ export function MobileNav({
               <h2 className="truncate text-xl font-black leading-tight">{namaPanggilan}</h2>
             </div>
             <button
+              aria-label="Buka detail profil"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/10 text-sky-100 transition hover:bg-white hover:text-sky-900"
+              onClick={() => nav("profil")}
+              type="button"
+            >
+              <SettingsIcon />
+            </button>
+            <button
               aria-label="Tutup menu"
               className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white/10 text-sky-100 transition hover:bg-white/20"
               onClick={() => setOpen(false)}
@@ -169,6 +177,15 @@ function HamburgerIcon() {
   return (
     <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24">
       <path d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
+      <path d="M19.4 15a1.8 1.8 0 0 0 .36 1.98l.04.04a2.18 2.18 0 0 1-3.08 3.08l-.04-.04a1.8 1.8 0 0 0-1.98-.36 1.8 1.8 0 0 0-1.1 1.66V21.5a2.18 2.18 0 0 1-4.36 0v-.06a1.8 1.8 0 0 0-1.18-1.68 1.8 1.8 0 0 0-1.9.4l-.04.04a2.18 2.18 0 1 1-3.08-3.08l.04-.04a1.8 1.8 0 0 0 .36-1.98 1.8 1.8 0 0 0-1.66-1.1H1.5a2.18 2.18 0 0 1 0-4.36h.06a1.8 1.8 0 0 0 1.68-1.18 1.8 1.8 0 0 0-.4-1.9l-.04-.04A2.18 2.18 0 1 1 5.88 3.44l.04.04a1.8 1.8 0 0 0 1.98.36h.02A1.8 1.8 0 0 0 9 2.18V2.1a2.18 2.18 0 0 1 4.36 0v.06a1.8 1.8 0 0 0 1.1 1.66 1.8 1.8 0 0 0 1.98-.36l.04-.04a2.18 2.18 0 1 1 3.08 3.08l-.04.04a1.8 1.8 0 0 0-.36 1.98v.02A1.8 1.8 0 0 0 20.82 9h.08a2.18 2.18 0 0 1 0 4.36h-.06A1.8 1.8 0 0 0 19.4 15Z" />
     </svg>
   );
 }

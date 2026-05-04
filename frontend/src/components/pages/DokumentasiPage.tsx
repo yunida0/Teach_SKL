@@ -267,7 +267,7 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
                 </div>
                 {isPengajar && (
                   <button
-                    className="absolute right-3 top-3 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white opacity-0 shadow-sm transition hover:bg-rose-700 group-hover:opacity-100"
+                    className="absolute right-3 top-3 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-rose-700 sm:opacity-0 sm:group-hover:opacity-100"
                     onClick={() => setDeleteTarget(item)}
                     type="button"
                   >
