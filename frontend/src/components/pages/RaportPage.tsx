@@ -49,7 +49,7 @@ function RaportEmptyState({ isPengajar }: { isPengajar: boolean }) {
   return (
     <div className="rounded-[1.75rem] border border-dashed border-sky-200 bg-white p-6 text-center shadow-sm">
       <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-sky-50 text-2xl font-black text-sky-800">R</div>
-      <h3 className="title-font mt-3 text-2xl font-black text-slate-900">Belum ada raport</h3>
+      <h3 className="mt-3 text-2xl font-black text-slate-900">Belum ada raport</h3>
       <p className="mx-auto mt-2 max-w-md text-sm font-bold leading-6 text-slate-500">
         {isPengajar
           ? "Input nilai raport pertama lewat form di sebelah kiri. Setelah tersimpan, datanya akan muncul ringkas per murid di sini."
@@ -160,7 +160,7 @@ export function RaportPage({ category, csrfToken }: { category: Category; csrfTo
         <div className="rounded-[1.75rem] border border-sky-100 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="title-font text-2xl font-black text-slate-900">{isPengajar ? "Semua Raport" : "Raport Saya"} ({items.length})</h2>
+              <h2 className="text-2xl font-black text-slate-900">{isPengajar ? "Semua Raport" : "Raport Saya"} ({items.length})</h2>
             </div>
           </div>
         </div>

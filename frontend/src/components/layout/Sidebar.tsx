@@ -1,23 +1,30 @@
 "use client";
 
-import type { PageKey, User } from "@/types";
+import type { AdminSection, PageKey, User } from "@/types";
 import { PHP_BASE } from "@/lib/api";
-import { pageLabelFor } from "@/lib/utils";
+import { adminNav, pageLabelFor } from "@/lib/utils";
 
 export function Sidebar({
   activePage,
+  activeAdminSection,
+  onAdminSectionChange,
   onNavigate,
   onLogout,
+  loggingOut,
   user,
   visibleNav,
 }: {
   activePage: PageKey;
+  activeAdminSection?: AdminSection;
+  onAdminSectionChange?: (section: AdminSection) => void;
   onNavigate: (page: PageKey) => void;
   onLogout: () => void;
+  loggingOut?: boolean;
   user: User;
   visibleNav: PageKey[];
 }) {
   const fotoProfil = user.foto ? `${PHP_BASE}/${user.foto}` : "";
+  const namaPanggilan = user.nama.trim().split(/\s+/)[0] || user.username;
 
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-sky-100 bg-white lg:block">
@@ -33,8 +40,7 @@ export function Sidebar({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="title-font truncate text-xl font-black leading-tight">Teach SKL</h2>
-              <p className="truncate text-xs font-bold text-sky-300">{user.nama}</p>
+              <h2 className="truncate text-xl font-black leading-tight">{namaPanggilan}</h2>
             </div>
             <button
               aria-label="Buka detail profil"
@@ -55,7 +61,18 @@ export function Sidebar({
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto pr-1">
           <div className="grid gap-2 pb-4">
-            {visibleNav.map((page) => (
+            {user.kategori === "admin" && onAdminSectionChange ? adminNav.map(([section, label]) => (
+              <button
+                className={`rounded-2xl px-4 py-3 text-left font-black transition ${
+                  activeAdminSection === section ? "bg-sky-800 text-white shadow-lg" : "text-slate-600 hover:bg-sky-50"
+                }`}
+                key={section}
+                onClick={() => onAdminSectionChange(section)}
+                type="button"
+              >
+                {label}
+              </button>
+            )) : visibleNav.map((page) => (
               <button
                 className={`rounded-2xl px-4 py-3 text-left font-black transition ${
                   activePage === page ? "bg-sky-800 text-white shadow-lg" : "text-slate-600 hover:bg-sky-50"
@@ -69,8 +86,14 @@ export function Sidebar({
             ))}
           </div>
         </nav>
-        <button className="btn-ghost mt-4 w-full shrink-0 px-5 py-3" onClick={onLogout} type="button">
-          Keluar
+        <button
+          className={`btn-ghost mt-4 flex w-full shrink-0 items-center justify-center gap-2 px-5 py-3 transition duration-300 ease-out hover:-translate-y-0.5 active:scale-[0.98] ${loggingOut ? "bg-sky-50 text-sky-700" : ""}`}
+          disabled={loggingOut}
+          onClick={onLogout}
+          type="button"
+        >
+          {loggingOut && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-sky-200 border-t-sky-700" aria-hidden="true" />}
+          {loggingOut ? "Keluar..." : "Keluar"}
         </button>
       </div>
     </aside>

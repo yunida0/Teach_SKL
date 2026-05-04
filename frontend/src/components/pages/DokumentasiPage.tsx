@@ -2,14 +2,144 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import type { Category, DokumentasiItem } from "@/types";
-import { PHP_BASE, readJson } from "@/lib/api";
+import { PHP_BASE, readJson, uploadWithProgress } from "@/lib/api";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AppDialog } from "@/components/ui/AppDialog";
+
+const drivePhotos = [
+  { id: "1OIxeDLxPxzDaS5ViLAAinXx9Ls52Uj4_", title: "Kegiatan Belajar 01" },
+  { id: "1hy9SMoNNB2_i0oRxfE881hhNWr9_GnsR", title: "Kegiatan Belajar 02" },
+  { id: "1m1ooJxwa5Xsfvfqy1muVL1zGHalI4JGt", title: "Kegiatan Belajar 03" },
+  { id: "17KAmZuH1lpYzvkHLGN4M3RMC6WXbL_Ia", title: "Kegiatan Belajar 04" },
+  { id: "1B0wpYCcf6iFT-W9yl4Yx4EafvIYLR-2x", title: "Senam Pagi" },
+  { id: "1Rl85UWjF4KugCK3HNbU63y_HCN1L-jWk", title: "Belajar Bersama" },
+  { id: "1RxPhMQnmUqVjmO3i5_v3aYSftdk02oDd", title: "Kegiatan Belajar 05" },
+  { id: "1xIbSJhlF_xVXNJoKMwkYtkzcWfMPcfFQ", title: "Kegiatan Belajar 06" },
+  { id: "1hlhgs9Fab0I1IwMGh4TZrE9zBxOZRBRu", title: "Kegiatan Belajar 07" },
+  { id: "1L0wjOQm5Ml-v0CTlkyTYX8Y47ntBmsSS", title: "Kegiatan Belajar 08" },
+  { id: "1TNznzy5yP1AsbYRb2MAjF664xwoaLehX", title: "Kegiatan Belajar 09" },
+  { id: "13oYrZNiwkDIdYbt6jdDE1QqdQXfg3Va-", title: "Kegiatan Belajar 10" },
+  { id: "1R9TNkrjd34HMhogvHVCzF_uGdSj83jRo", title: "Kegiatan Belajar 11" },
+  { id: "11aD2rs9z5DmkLt6_I3o3Ms91c6Xn-J56", title: "Kegiatan Belajar 12" },
+  { id: "1uZAYtQYhpLr0CEso72AEkZ5HDDRxqk4B", title: "Kegiatan Belajar 13" },
+  { id: "1HfSYmW82gSVSE6RKUM0KFbFySMpQAxH1", title: "Kegiatan Belajar 14" },
+  { id: "11vPprOVFvGjk5wLY1cvTosUmADuC1rCn", title: "Kegiatan Belajar 15" },
+  { id: "1ZG1sjHpvqyZwncJwgnwEGpicT00DHM5K", title: "Kegiatan Belajar 16" },
+  { id: "1W-AGdPIObUyekF9moNVypYYxR5I8FdWq", title: "Kegiatan Belajar 17" },
+  { id: "1itDfTeJ968rrtLIklBEo5O8-kVBiPRIp", title: "Kegiatan Belajar 18" },
+  { id: "1o2ufUISQ-r8zJOcB2eXSl_zuLC52L37i", title: "Ruang Belajar" },
+  { id: "1eFi63qP8jnwYCb-L5zWBj8OwmaPs-kOI", title: "Kegiatan Belajar 19" },
+  { id: "1YlQ-wrdwlPYHpWuml79UyRXzMqggQQqZ", title: "Kegiatan Belajar 20" },
+  { id: "12sSabuhOzmV1b8JvcVa8VmoCImbUl9rY", title: "Kegiatan Belajar 21" },
+  { id: "1AWma_7Aa7ufsF9__xH8XCzMAV3qureJ0", title: "Kegiatan Belajar 22" },
+  { id: "1idjFJfjgunrfNgeWAQn4UEowJ-7WuMVb", title: "Kegiatan Belajar 23" },
+  { id: "1G2P-C0CGkTRU-ium6Pyi4cDm_urI0OEz", title: "Kegiatan Belajar 24" },
+];
+
+function driveThumb(id: string, size = 1200) {
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w${size}`;
+}
+
+function GuestDocumentationCanvas() {
+  const [activePhoto, setActivePhoto] = useState<(typeof drivePhotos)[number] | null>(null);
+  const heroPhoto = drivePhotos[4] ?? drivePhotos[0];
+  const restPhotos = drivePhotos.filter((photo) => photo.id !== heroPhoto.id);
+
+  return (
+    <>
+      <section className="relative overflow-hidden rounded-[2rem] border border-sky-100 bg-[#f8fbf7] p-4 shadow-sm md:p-6 xl:p-8">
+        <div className="pointer-events-none absolute -left-16 top-10 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 top-0 h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 left-1/3 h-48 w-48 rounded-full bg-amber-100 blur-3xl" />
+
+        <div className="relative grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
+          <div className="grid content-between gap-5 rounded-[1.7rem] border border-white/70 bg-white/75 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur md:p-7">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-700">Dokumentasi Kegiatan</p>
+              <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-slate-950 md:text-5xl">
+                Cerita kecil dari ruang belajar Kolong Langit.
+              </h2>
+              <p className="mt-4 max-w-xl text-sm font-bold leading-7 text-slate-600 md:text-base">
+                Foto ditata satu per satu supaya pengunjung bisa menikmati momen kegiatan tanpa tampilan folder Google Drive.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl bg-emerald-50 p-4">
+                <p className="text-2xl font-black text-emerald-800">{drivePhotos.length}</p>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Foto</p>
+              </div>
+              <div className="rounded-2xl bg-sky-50 p-4">
+                <p className="text-2xl font-black text-sky-800">2026</p>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-sky-600">Arsip</p>
+              </div>
+              <div className="rounded-2xl bg-amber-50 p-4">
+                <p className="text-2xl font-black text-amber-800">SKL</p>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-600">Galeri</p>
+              </div>
+            </div>
+          </div>
+
+          <button
+            className="group relative min-h-[24rem] overflow-hidden rounded-[1.9rem] border border-white bg-slate-900 text-left shadow-[0_28px_90px_rgba(15,23,42,0.18)]"
+            onClick={() => setActivePhoto(heroPhoto)}
+            type="button"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt={heroPhoto.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" src={driveThumb(heroPhoto.id, 1400)} />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-5 text-white md:p-7">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-100">Sorotan</p>
+              <h3 className="mt-2 text-3xl font-black">{heroPhoto.title}</h3>
+              <p className="mt-2 text-sm font-bold text-white/80">Klik untuk membuka foto di canvas.</p>
+            </div>
+          </button>
+        </div>
+      </section>
+
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {restPhotos.map((photo, index) => (
+          <button
+            className={`group relative overflow-hidden rounded-[1.6rem] border border-white bg-white text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${index % 7 === 0 ? "sm:row-span-2" : ""}`}
+            key={photo.id}
+            onClick={() => setActivePhoto(photo)}
+            type="button"
+          >
+            <div className={`${index % 7 === 0 ? "h-[28rem]" : "h-64"} overflow-hidden bg-slate-100`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img alt={photo.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" src={driveThumb(photo.id)} />
+            </div>
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-4 pt-14 text-white opacity-95">
+              <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-sky-100">Foto {String(index + 1).padStart(2, "0")}</p>
+              <h3 className="mt-1 text-lg font-black">{photo.title}</h3>
+            </div>
+          </button>
+        ))}
+      </section>
+
+      {activePhoto && (
+        <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/80 p-4 backdrop-blur-md" onClick={() => setActivePhoto(null)} role="presentation">
+          <div className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] bg-white p-2 shadow-2xl" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={activePhoto.title}>
+            <button
+              className="absolute right-4 top-4 z-10 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-slate-900 shadow-sm transition hover:bg-white"
+              onClick={() => setActivePhoto(null)}
+              type="button"
+            >
+              Tutup
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt={activePhoto.title} className="max-h-[82vh] w-full rounded-[1.6rem] object-contain bg-slate-100" src={driveThumb(activePhoto.id, 1800)} />
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 function UploadDokumentasiForm({ csrfToken, onUploaded }: { csrfToken: string; onUploaded: () => void }) {
   const [tipe, setTipe]       = useState("foto");
   const [msg, setMsg]         = useState("");
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -18,15 +148,22 @@ function UploadDokumentasiForm({ csrfToken, onUploaded }: { csrfToken: string; o
     try {
       const data = new FormData(e.currentTarget);
       data.set("csrf_token", csrfToken);
-      const res  = await fetch(`${PHP_BASE}/backend/uploads/dokumentasi`, { method: "POST", body: data, credentials: "include" });
-      const json = await res.json();
-      if (json.success) {
+      setProgress(1);
+      let json: { success?: boolean; error?: string } | null = null;
+      try {
+        json = await uploadWithProgress(`${PHP_BASE}/backend/uploads/dokumentasi`, data, setProgress);
+      } catch (error) {
+        json = error as { success?: boolean; error?: string };
+      }
+      if (json?.success) {
         setMsg("Dokumentasi berhasil diupload.");
         (e.target as HTMLFormElement).reset();
         setTipe("foto");
+        window.setTimeout(() => setProgress(0), 900);
         onUploaded();
       } else {
-        setMsg(json.error ?? "Upload gagal.");
+        setMsg(json?.error ?? "Upload gagal.");
+        setProgress(0);
       }
     } finally {
       setLoading(false);
@@ -57,6 +194,12 @@ function UploadDokumentasiForm({ csrfToken, onUploaded }: { csrfToken: string; o
       {msg && (
         <p className={`text-sm font-black ${msg.includes("berhasil") ? "text-emerald-700" : "text-rose-600"}`}>{msg}</p>
       )}
+      {progress > 0 && (
+        <div className="rounded-2xl bg-sky-50 p-3">
+          <div className="flex items-center justify-between text-xs font-black text-sky-700"><span>Upload dokumentasi</span><span>{progress}%</span></div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-sky-500 transition-all" style={{ width: `${progress}%` }} /></div>
+        </div>
+      )}
       <button className="btn-primary px-6 py-3 disabled:opacity-50" disabled={loading} type="submit">
         {loading ? "Mengupload..." : "Upload"}
       </button>
@@ -75,6 +218,10 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
   useEffect(() => { load(); }, []);
 
   const isPengajar = category === "pengajar";
+
+  if (category === "tamu") {
+    return <GuestDocumentationCanvas />;
+  }
 
   async function handleDelete() {
     if (!deleteTarget) return;

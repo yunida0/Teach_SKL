@@ -3,28 +3,16 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type {
   AdminAbsensi, AdminActivity, AdminContent, AdminLaporan,
-  AdminUser, Category, Stats, TeacherToken, User,
+  AdminSection, AdminUser, Category, Stats, TeacherToken, User,
 } from "@/types";
-import { API_AUTH, PHP_BASE, readJson } from "@/lib/api";
+import { PHP_BASE, readJson } from "@/lib/api";
 import { greeting } from "@/lib/utils";
 import { AppDialog } from "@/components/ui/AppDialog";
 
 type MsgState = { type: "ok" | "err"; text: string } | null;
 type CreateUserResponse = { success: boolean; error?: string; user?: AdminUser };
-type AdminSection = "overview" | "create" | "tokens" | "users" | "content" | "absensi" | "laporan" | "activity";
 
-const NAV: Array<[AdminSection, string]> = [
-  ["overview", "Overview"],
-  ["create", "Buat Akun"],
-  ["tokens", "Token Pengajar"],
-  ["users", "Pengguna"],
-  ["content", "Konten"],
-  ["absensi", "Absensi"],
-  ["laporan", "Laporan"],
-  ["activity", "Aktivitas"],
-];
-
-export function AdminDashboardPage({ csrfToken, user }: { csrfToken: string; user: User }) {
+export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, user }: { activeSection: AdminSection; csrfToken: string; onSectionChange: (section: AdminSection) => void; user: User }) {
   /* ── core data ───────────────────────────────────────────────── */
   const [stats, setStats] = useState<Stats>({ ebook: "-", tugas: "-", murid: "-", quiz: "-" });
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -34,8 +22,6 @@ export function AdminDashboardPage({ csrfToken, user }: { csrfToken: string; use
   const [absensi, setAbsensi] = useState<AdminAbsensi | null>(null);
   const [laporan, setLaporan] = useState<AdminLaporan | null>(null);
 
-  /* ── navigation ──────────────────────────────────────────────── */
-  const [activeSection, setActiveSection] = useState<AdminSection>("overview");
   const loadedRef = useRef(new Set<string>());
 
   /* ── token ui ────────────────────────────────────────────────── */
@@ -103,15 +89,6 @@ export function AdminDashboardPage({ csrfToken, user }: { csrfToken: string; use
   });
 
   /* ── handlers ────────────────────────────────────────────────── */
-  async function handleLogout() {
-    try {
-      const fd = new FormData();
-      fd.set("csrf_token", csrfToken);
-      await readJson<{ success: boolean }>(`${API_AUTH}?action=logout`, { method: "POST", body: fd });
-    } catch { /* ignore */ }
-    window.location.href = "/admin";
-  }
-
   async function handleCreateToken(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); setCreatingToken(true); setTokenMsg(null);
     const data = new FormData(e.currentTarget); data.set("csrf_token", csrfToken);
@@ -249,16 +226,7 @@ export function AdminDashboardPage({ csrfToken, user }: { csrfToken: string; use
         <div className="absolute -bottom-28 left-1/3 h-56 w-56 rounded-full bg-white/10" />
         <div className="relative grid gap-6 xl:grid-cols-[1fr_auto] xl:items-start">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.28em] text-sky-300">Admin Command Center · Teach SKL</p>
-            <h1 className="mt-3 text-4xl font-black tracking-tight md:text-5xl">{greeting()}, {user.nama}</h1>
-            <p className="mt-3 max-w-2xl font-bold text-sky-100">Kelola akun, konten, absensi, token pengajar, dan pantau laporan dari satu workspace.</p>
-            <button
-              className="mt-4 rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-sm font-black text-white transition hover:bg-white/20"
-              onClick={handleLogout}
-              type="button"
-            >
-              Keluar
-            </button>
+            <h1 className="text-4xl font-black tracking-tight md:text-5xl">{greeting()}, {user.nama}</h1>
           </div>
           <div className="grid min-w-56 gap-2 rounded-3xl border border-white/10 bg-white/10 p-4">
             <div className="flex items-center justify-between">
@@ -273,23 +241,10 @@ export function AdminDashboardPage({ csrfToken, user }: { csrfToken: string; use
         </div>
       </section>
 
-      {/* ── nav ── */}
-      <nav className="flex gap-2 overflow-x-auto rounded-[1.4rem] border border-sky-100 bg-white p-2 shadow-sm">
-        {NAV.map(([key, label]) => (
-          <button
-            className={`shrink-0 rounded-2xl px-4 py-2 text-sm font-black transition ${activeSection === key ? "bg-sky-900 text-white" : "text-slate-500 hover:bg-sky-50 hover:text-sky-800"}`}
-            key={key}
-            onClick={() => setActiveSection(key)}
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
-      </nav>
-
-      {/* ── overview ── */}
-      {activeSection === "overview" && (
-        <div className="grid gap-6">
+      <div className="min-w-0 grid gap-6">
+          {/* ── overview ── */}
+          {activeSection === "overview" && (
+            <div className="grid gap-6">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:grid-cols-8">
             <StatCard label="Pengajar"    value={counts.pengajar} tone="bg-sky-500" />
             <StatCard label="Murid"       value={counts.murid}    tone="bg-emerald-500" />
@@ -304,25 +259,26 @@ export function AdminDashboardPage({ csrfToken, user }: { csrfToken: string; use
             <ActivityPanel activity={activity.slice(0, 6)} />
             <Panel title="Quick Actions" caption="Pintasan ke operasi admin yang sering digunakan.">
               <div className="grid gap-3">
-                <QuickAction title="Buat akun baru"     text="Admin, pengajar, murid, atau tamu."           onClick={() => setActiveSection("create")} />
-                <QuickAction title="Token pengajar"     text="Generate token untuk pendaftaran pengajar."   onClick={() => setActiveSection("tokens")} />
-                <QuickAction title="Audit pengguna"     text="Cari, edit, reset password, hapus akun."      onClick={() => setActiveSection("users")} />
-                <QuickAction title="Kelola konten"      text="Ebook, quiz, bank tugas, dokumentasi."        onClick={() => setActiveSection("content")} />
-                <QuickAction title="Rekap absensi"      text="Kehadiran murid dan pengajar."                onClick={() => setActiveSection("absensi")} />
-                <QuickAction title="Laporan &amp; nilai" text="Top scorer, raport, dan ulasan tamu."        onClick={() => setActiveSection("laporan")} />
+                <QuickAction title="Buat akun baru"     text="Admin, pengajar, murid, atau tamu."           onClick={() => onSectionChange("create")} />
+                <QuickAction title="Token pengajar"     text="Generate token untuk pendaftaran pengajar."   onClick={() => onSectionChange("tokens")} />
+                <QuickAction title="Audit pengguna"     text="Cari, edit, reset password, hapus akun."      onClick={() => onSectionChange("users")} />
+                <QuickAction title="Kelola konten"      text="Ebook, quiz, bank tugas, dokumentasi."        onClick={() => onSectionChange("content")} />
+                <QuickAction title="Rekap absensi"      text="Kehadiran murid dan pengajar."                onClick={() => onSectionChange("absensi")} />
+                <QuickAction title="Laporan &amp; nilai" text="Top scorer, raport, dan ulasan tamu."        onClick={() => onSectionChange("laporan")} />
               </div>
             </Panel>
           </div>
-        </div>
-      )}
+            </div>
+          )}
 
-      {activeSection === "create"   && <CreateUserPanel createRole={createRole} creatingUser={creatingUser} message={userMsg} onRoleChange={setCreateRole} onSubmit={handleCreateUser} />}
-      {activeSection === "tokens"   && <TokenPanel copied={copied} creatingToken={creatingToken} message={tokenMsg} onCopy={copyToken} onCreate={handleCreateToken} onReveal={toggleReveal} onRevoke={handleRevokeToken} onTokenLabel={setTokenLabel} revealed={revealed} tokenLabel={tokenLabel} tokens={tokens} />}
-      {activeSection === "users"    && <UsersPanel counts={counts} currentUserId={user.id} filter={filter} message={userMsg} onDelete={(id, nama) => setDeleteUserTarget({ id, nama })} onEdit={setEditingUser} onExport={exportUsersCsv} onFilter={setFilter} onQuery={setQuery} onReset={setResetUser} query={query} shownUsers={shownUsers} />}
-      {activeSection === "content"  && <ContentPanel content={content} message={contentMsg} onDelete={(tipe, id) => setDeleteContentTarget({ tipe, id })} />}
-      {activeSection === "absensi"  && <AbsensiPanel data={absensi} />}
-      {activeSection === "laporan"  && <LaporanPanel data={laporan} />}
-      {activeSection === "activity" && <ActivityPanel activity={activity} full />}
+          {activeSection === "create"   && <CreateUserPanel createRole={createRole} creatingUser={creatingUser} message={userMsg} onRoleChange={setCreateRole} onSubmit={handleCreateUser} />}
+          {activeSection === "tokens"   && <TokenPanel copied={copied} creatingToken={creatingToken} message={tokenMsg} onCopy={copyToken} onCreate={handleCreateToken} onReveal={toggleReveal} onRevoke={handleRevokeToken} onTokenLabel={setTokenLabel} revealed={revealed} tokenLabel={tokenLabel} tokens={tokens} />}
+          {activeSection === "users"    && <UsersPanel counts={counts} currentUserId={user.id} filter={filter} message={userMsg} onDelete={(id, nama) => setDeleteUserTarget({ id, nama })} onEdit={setEditingUser} onExport={exportUsersCsv} onFilter={setFilter} onQuery={setQuery} onReset={setResetUser} query={query} shownUsers={shownUsers} />}
+          {activeSection === "content"  && <ContentPanel content={content} message={contentMsg} onDelete={(tipe, id) => setDeleteContentTarget({ tipe, id })} />}
+          {activeSection === "absensi"  && <AbsensiPanel data={absensi} />}
+          {activeSection === "laporan"  && <LaporanPanel data={laporan} />}
+          {activeSection === "activity" && <ActivityPanel activity={activity} full />}
+      </div>
 
       {editingUser && <EditUserModal onClose={() => setEditingUser(null)} onSubmit={handleUpdateUser} user={editingUser} />}
       {resetUser   && <ResetPasswordModal onClose={() => setResetUser(null)} onSubmit={handleResetPassword} user={resetUser} />}

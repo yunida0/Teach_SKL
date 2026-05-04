@@ -6,6 +6,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     die(json_encode(['success' => false, 'error' => 'Metode tidak valid']));
 }
 
+require_role_json(['tamu']);
+
 csrf_verify();
 
 $nama = trim($_POST['nama'] ?? '');

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { AuthResponse, Detail, PageKey, User } from "@/types";
+import type { AdminSection, AuthResponse, Detail, PageKey, User } from "@/types";
 import { API_AUTH, readJson } from "@/lib/api";
 import { navFor, pageLabels } from "@/lib/utils";
 import { AuthPage } from "@/components/auth/AuthPage";
@@ -18,6 +18,7 @@ import { AbsensiPengajarPage } from "@/components/pages/AbsensiPengajarPage";
 import { RaportPage } from "@/components/pages/RaportPage";
 import { DokumentasiPage } from "@/components/pages/DokumentasiPage";
 import { UlasanPage } from "@/components/pages/UlasanPage";
+import { DonasiPage } from "@/components/pages/DonasiPage";
 import { PlaceholderPage } from "@/components/pages/PlaceholderPage";
 import { AdminDashboardPage } from "@/components/pages/AdminDashboardPage";
 import { MobileNav } from "@/components/layout/MobileNav";
@@ -73,7 +74,9 @@ export default function Home() {
   const [csrfToken, setCsrfToken] = useState("");
   const [message, setMessage] = useState("");
   const [activePage, setActivePage] = useState<PageKey>("dashboard");
+  const [activeAdminSection, setActiveAdminSection] = useState<AdminSection>("overview");
   const [checkingSession, setCheckingSession] = useState(true);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     const snapshot = readSessionSnapshot();
@@ -82,6 +85,7 @@ export default function Home() {
         setUser(snapshot.user);
         setDetail(snapshot.detail);
         if (snapshot.user.kategori === "admin") setActivePage("adminpanel");
+        if (snapshot.user.kategori === "tamu") setActivePage("dokumentasi");
         setCheckingSession(false);
       }, 0);
     }
@@ -92,26 +96,35 @@ export default function Home() {
         setUser(payload.user ?? null);
         setDetail(payload.detail ?? null);
         if (payload.user?.kategori === "admin") setActivePage("adminpanel");
+        if (payload.user?.kategori === "tamu") setActivePage("dokumentasi");
         writeSessionSnapshot(payload.user ?? null, payload.detail ?? null);
       })
       .catch(() => {
-        if (!snapshot) setMessage("Tidak bisa menghubungi backend PHP. Pastikan XAMPP aktif.");
+        if (!snapshot) setMessage("Tidak bisa menghubungi backend PHP. Coba refresh halaman.");
       })
       .finally(() => setCheckingSession(false));
   }, []);
 
   const visibleNav = useMemo(() => (user ? navFor(user.kategori) : []), [user]);
+  const effectiveActivePage = user && !visibleNav.includes(activePage) ? visibleNav[0] ?? "dashboard" : activePage;
 
   async function logout() {
+    if (loggingOut) return;
+    setLoggingOut(true);
     const data = new FormData();
     data.set("csrf_token", csrfToken);
-    await readJson<AuthResponse>(`${API_AUTH}?action=logout`, { method: "POST", body: data });
-    writeSessionSnapshot(null, null);
-    setUser(null);
-    setDetail(null);
-    setActivePage("dashboard");
-    const next = await readJson<AuthResponse>(`${API_AUTH}?action=csrf`);
-    setCsrfToken(next.csrfToken ?? "");
+    try {
+      await new Promise((resolve) => window.setTimeout(resolve, 320));
+      await readJson<AuthResponse>(`${API_AUTH}?action=logout`, { method: "POST", body: data });
+      writeSessionSnapshot(null, null);
+      setUser(null);
+      setDetail(null);
+      setActivePage("dashboard");
+      const next = await readJson<AuthResponse>(`${API_AUTH}?action=csrf`);
+      setCsrfToken(next.csrfToken ?? "");
+    } finally {
+      setLoggingOut(false);
+    }
   }
 
   if (checkingSession) {
@@ -120,7 +133,7 @@ export default function Home() {
         <div className="rounded-[2rem] border border-sky-100 bg-white p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-sky-100 text-xl font-black text-sky-900">T</div>
           <p className="font-black text-slate-900">Memuat sesi...</p>
-          <p className="mt-1 text-sm font-bold text-slate-500">Mengecek login dari backend XAMPP</p>
+          <p className="mt-1 text-sm font-bold text-slate-500">Mengecek sesi login</p>
         </div>
       </main>
     );
@@ -140,15 +153,21 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#f4f8fb]">
       <Sidebar
-        activePage={activePage}
+        activePage={effectiveActivePage}
+        activeAdminSection={activeAdminSection}
+        onAdminSectionChange={setActiveAdminSection}
         onLogout={logout}
+        loggingOut={loggingOut}
         onNavigate={setActivePage}
         user={user}
         visibleNav={visibleNav}
       />
       <MobileNav
-        activePage={activePage}
+        activePage={effectiveActivePage}
+        activeAdminSection={activeAdminSection}
+        onAdminSectionChange={setActiveAdminSection}
         onLogout={logout}
+        loggingOut={loggingOut}
         onNavigate={setActivePage}
         user={user}
         visibleNav={visibleNav}
@@ -159,12 +178,14 @@ export default function Home() {
             <div className="mb-4 rounded-2xl bg-amber-50 p-4 text-sm font-bold text-amber-800">{message}</div>
           )}
           <PageContent
-            activePage={activePage}
+            activePage={effectiveActivePage}
+            activeAdminSection={activeAdminSection}
             csrfToken={csrfToken}
             detail={detail}
             setDetail={setDetail}
             setMessage={setMessage}
             setUser={setUser}
+            onAdminSectionChange={setActiveAdminSection}
             user={user}
           />
         </div>
@@ -175,19 +196,23 @@ export default function Home() {
 
 function PageContent({
   activePage,
+  activeAdminSection,
   csrfToken,
   detail,
   setDetail,
   setMessage,
   setUser,
+  onAdminSectionChange,
   user,
 }: {
   activePage: PageKey;
+  activeAdminSection: AdminSection;
   csrfToken: string;
   detail: Detail | null;
   setDetail: (d: Detail | null) => void;
   setMessage: (message: string) => void;
   setUser: (u: User) => void;
+  onAdminSectionChange: (section: AdminSection) => void;
   user: User;
 }) {
   if (activePage === "dashboard") return <DashboardHome user={user} />;
@@ -201,7 +226,7 @@ function PageContent({
       />
     );
   if (activePage === "ebook")
-    return <EbookPage csrfToken={csrfToken} isPengajar={user.kategori === "pengajar"} setMessage={setMessage} />;
+    return <EbookPage category={user.kategori} csrfToken={csrfToken} isPengajar={user.kategori === "pengajar"} setMessage={setMessage} studentLevel={detail?.tingkat} />;
   if (activePage === "banktugas")
     return <TugasPage category={user.kategori} csrfToken={csrfToken} />;
   if (activePage === "quiz")
@@ -219,8 +244,10 @@ function PageContent({
   if (activePage === "dokumentasi")
     return <DokumentasiPage category={user.kategori} csrfToken={csrfToken} />;
   if (activePage === "adminpanel")
-    return <AdminDashboardPage csrfToken={csrfToken} user={user} />;
+    return <AdminDashboardPage activeSection={activeAdminSection} csrfToken={csrfToken} onSectionChange={onAdminSectionChange} user={user} />;
   if (activePage === "ulasan")
     return <UlasanPage category={user.kategori} csrfToken={csrfToken} />;
+  if (activePage === "donasi")
+    return <DonasiPage csrfToken={csrfToken} />;
   return <PlaceholderPage label={pageLabels[activePage]} />;
 }

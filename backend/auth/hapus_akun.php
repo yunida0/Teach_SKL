@@ -1,10 +1,15 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 
-if (!isset($_SESSION['user'])) {
-    header('Location: ../index.php');
-    exit;
+header('Content-Type: application/json; charset=utf-8');
+
+require_login_json();
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    json_forbidden('Metode tidak valid', 405);
 }
+
+csrf_verify();
 
 $user = $_SESSION['user'];
 $userId = (int) $user['id'];
@@ -39,11 +44,12 @@ try {
     $pdo->commit();
 
     session_destroy();
-    header('Location: ../index.php?success=' . urlencode('Akun berhasil dihapus'));
+    echo json_encode(['success' => true, 'message' => 'Akun berhasil dihapus']);
     exit;
 } catch (PDOException $e) {
     $pdo->rollBack();
-    header('Location: ../dashboard.php?page=profil&error=' . urlencode('Gagal menghapus akun'));
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Gagal menghapus akun']);
     exit;
 }
 ?>

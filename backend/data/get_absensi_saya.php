@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
-if (!isset($_SESSION['user']) || $_SESSION['user']['kategori'] != 'murid') {
-    die(json_encode(['error' => 'Unauthorized']));
-}
+require_role_json(['murid']);
 
 $murid_id = $_SESSION['user']['id'];
 $riwayat = $pdo->prepare("SELECT tanggal, status FROM absensi_murid WHERE murid_id = ? ORDER BY tanggal DESC");

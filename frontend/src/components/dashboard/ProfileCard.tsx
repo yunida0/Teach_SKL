@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import type { Detail, User } from "@/types";
-import { PHP_BASE, readJson } from "@/lib/api";
+import { PHP_BASE, readJson, uploadWithProgress } from "@/lib/api";
 
 type SaveResponse = {
   success: boolean;
@@ -41,6 +41,7 @@ export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoProgress, setPhotoProgress] = useState(0);
 
   const fotoProfil = user.foto ? `${PHP_BASE}/${user.foto}` : "";
 
@@ -104,24 +105,30 @@ export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
     setUploadingPhoto(true);
     setError("");
     setSuccess("");
+    setPhotoProgress(1);
 
     const data = new FormData();
     data.set("foto", file);
     data.set("csrf_token", csrfToken);
 
     try {
-      const res = await readJson<{ success: boolean; path?: string; error?: string }>(
-        `${PHP_BASE}/backend/uploads/foto`,
-        { method: "POST", body: data },
-      );
+      let res: { success: boolean; path?: string; error?: string };
+      try {
+        res = await uploadWithProgress(`${PHP_BASE}/backend/uploads/foto`, data, setPhotoProgress);
+      } catch (error) {
+        res = error as { success: boolean; path?: string; error?: string };
+      }
       if (res.success && res.path) {
         onUpdate({ ...user, foto: res.path }, detail);
         setSuccess("Foto profil berhasil diperbarui");
+        window.setTimeout(() => setPhotoProgress(0), 900);
       } else {
         setError(res.error ?? "Gagal upload foto");
+        setPhotoProgress(0);
       }
     } catch {
       setError("Gagal upload foto");
+      setPhotoProgress(0);
     } finally {
       setUploadingPhoto(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -201,7 +208,7 @@ export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
           </button>
           <input
             ref={fileRef}
-            accept="image/*"
+            accept=".jpg,.jpeg,.png,.webp"
             className="hidden"
             onChange={handlePhotoChange}
             type="file"
@@ -223,6 +230,12 @@ export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
       )}
       {success && (
         <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{success}</div>
+      )}
+      {photoProgress > 0 && (
+        <div className="rounded-2xl bg-sky-50 px-4 py-3">
+          <div className="flex items-center justify-between text-xs font-black text-sky-700"><span>Upload foto profil</span><span>{photoProgress}%</span></div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-sky-500 transition-all" style={{ width: `${photoProgress}%` }} /></div>
+        </div>
       )}
 
       {/* Profile info / edit */}

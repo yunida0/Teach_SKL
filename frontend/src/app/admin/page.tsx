@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import type { AuthResponse, User } from "@/types";
+import type { AdminSection, AuthResponse, User } from "@/types";
 import { API_AUTH, readJson } from "@/lib/api";
 import { AdminDashboardPage } from "@/components/pages/AdminDashboardPage";
 
@@ -12,6 +12,7 @@ export default function AdminRoute() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
+  const [activeSection, setActiveSection] = useState<AdminSection>("overview");
 
   useEffect(() => {
     readJson<AuthResponse>(`${API_AUTH}?action=me`)
@@ -19,7 +20,7 @@ export default function AdminRoute() {
         setCsrfToken(payload.csrfToken ?? "");
         if (payload.user?.kategori === "admin") setUser(payload.user);
       })
-      .catch(() => setMessage("Tidak bisa menghubungi backend XAMPP."))
+      .catch(() => setMessage("Tidak bisa menghubungi backend."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -56,7 +57,7 @@ export default function AdminRoute() {
 
       setUser(payload.user);
     } catch {
-      setMessage("Login admin gagal. Periksa backend XAMPP.");
+      setMessage("Login admin gagal. Periksa koneksi backend.");
     } finally {
       setSubmitting(false);
     }
@@ -107,7 +108,7 @@ export default function AdminRoute() {
 
   return (
     <main className="min-h-screen bg-[#f4f8fb] p-5 md:p-8">
-      <AdminDashboardPage csrfToken={csrfToken} user={user} />
+      <AdminDashboardPage activeSection={activeSection} csrfToken={csrfToken} onSectionChange={setActiveSection} user={user} />
     </main>
   );
 }

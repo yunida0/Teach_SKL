@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
+
+require_role_json(['pengajar', 'admin']);
+
 $tipe = $_GET['tipe'] ?? 'murid';
 
 if ($tipe == 'murid') {

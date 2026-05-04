@@ -1,28 +1,40 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { PageKey, User } from "@/types";
+import type { AdminSection, PageKey, User } from "@/types";
 import { PHP_BASE } from "@/lib/api";
-import { pageLabelFor } from "@/lib/utils";
+import { adminNav, pageLabelFor } from "@/lib/utils";
 
 export function MobileNav({
   activePage,
+  activeAdminSection,
+  onAdminSectionChange,
   onNavigate,
   onLogout,
+  loggingOut,
   user,
   visibleNav,
 }: {
   activePage: PageKey;
+  activeAdminSection?: AdminSection;
+  onAdminSectionChange?: (section: AdminSection) => void;
   onNavigate: (page: PageKey) => void;
   onLogout: () => void;
+  loggingOut?: boolean;
   user: User;
   visibleNav: PageKey[];
 }) {
   const [open, setOpen] = useState(false);
   const fotoProfil = user.foto ? `${PHP_BASE}/${user.foto}` : "";
+  const namaPanggilan = user.nama.trim().split(/\s+/)[0] || user.username;
 
   function nav(page: PageKey) {
     onNavigate(page);
+    setOpen(false);
+  }
+
+  function navAdmin(section: AdminSection) {
+    onAdminSectionChange?.(section);
     setOpen(false);
   }
 
@@ -90,8 +102,7 @@ export function MobileNav({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-xl font-black leading-tight">Teach SKL</h2>
-              <p className="truncate text-xs font-bold text-sky-300">{user.nama}</p>
+              <h2 className="truncate text-xl font-black leading-tight">{namaPanggilan}</h2>
             </div>
             <button
               aria-label="Tutup menu"
@@ -110,7 +121,20 @@ export function MobileNav({
         {/* Nav list */}
         <nav className="min-h-0 flex-1 overflow-y-auto pr-1">
           <div className="grid gap-1.5 pb-4">
-            {visibleNav.map((page) => (
+            {user.kategori === "admin" && onAdminSectionChange ? adminNav.map(([section, label]) => (
+              <button
+                className={`rounded-2xl px-4 py-3 text-left text-sm font-black transition ${
+                  activeAdminSection === section
+                    ? "bg-sky-800 text-white shadow-lg"
+                    : "text-slate-600 active:bg-sky-50"
+                }`}
+                key={section}
+                onClick={() => navAdmin(section)}
+                type="button"
+              >
+                {label}
+              </button>
+            )) : visibleNav.map((page) => (
               <button
                 className={`rounded-2xl px-4 py-3 text-left text-sm font-black transition ${
                   activePage === page
@@ -128,11 +152,13 @@ export function MobileNav({
         </nav>
 
         <button
-          className="btn-ghost mt-3 w-full shrink-0 px-5 py-3 text-sm"
+          className={`btn-ghost mt-3 flex w-full shrink-0 items-center justify-center gap-2 px-5 py-3 text-sm transition duration-300 ease-out active:scale-[0.98] ${loggingOut ? "bg-sky-50 text-sky-700" : ""}`}
+          disabled={loggingOut}
           onClick={() => { setOpen(false); onLogout(); }}
           type="button"
         >
-          Keluar
+          {loggingOut && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-sky-200 border-t-sky-700" aria-hidden="true" />}
+          {loggingOut ? "Keluar..." : "Keluar"}
         </button>
       </div>
     </>

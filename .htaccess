@@ -1,50 +1,42 @@
-# Security Headers
-<IfModule mod_headers.c>
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-Frame-Options "SAMEORIGIN"
-    Header set X-XSS-Protection "1; mode=block"
-    Header set Referrer-Policy "strict-origin-when-cross-origin"
-</IfModule>
-
-# Disable directory listing
 Options -Indexes
+DirectoryIndex index.html index.php
 
-# Protect sensitive files
-<FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
-
-# Protect config files
-<FilesMatch "\.(ini|log|conf|sql)$">
-    Order allow,deny
-    Deny from all
-</FilesMatch>
-
-# PHP settings
-<IfModule mod_php7.c>
-    php_value upload_max_filesize 10M
-    php_value post_max_size 10M
-    php_value max_execution_time 30
-    php_value max_input_time 30
-    php_flag display_errors Off
-    php_flag log_errors On
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set X-Frame-Options "SAMEORIGIN"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
 </IfModule>
 
-# Error pages
-ErrorDocument 403 /index.php
-ErrorDocument 404 /index.php
+<IfModule mod_php7.c>
+  php_value upload_max_filesize 128M
+  php_value post_max_size 128M
+  php_value max_execution_time 180
+  php_value max_input_time 180
+  php_flag display_errors Off
+  php_flag log_errors On
+</IfModule>
 
-# Prevent access to backend without going through index
+<IfModule mod_php8.c>
+  php_value upload_max_filesize 128M
+  php_value post_max_size 128M
+  php_value max_execution_time 180
+  php_value max_input_time 180
+  php_flag display_errors Off
+  php_flag log_errors On
+</IfModule>
+
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>
+
+<FilesMatch "\.(ini|log|conf|sql)$">
+  Require all denied
+</FilesMatch>
+
 <IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteBase /
-    
-    # Block direct access to config
-    RewriteRule ^config/ - [F,L]
-    
-    # Block direct access to uploads (except images)
-    RewriteCond %{REQUEST_URI} ^/uploads/
-    RewriteCond %{REQUEST_URI} !\.(jpg|jpeg|png|gif|webp)$ [NC]
-    RewriteRule .* - [F,L]
+  RewriteEngine On
+  RewriteRule ^config/ - [F,L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
 </IfModule>

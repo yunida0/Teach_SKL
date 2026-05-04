@@ -35,7 +35,7 @@ export function AuthPage({
         if (mounted) setCsrfToken(payload.csrfToken ?? "");
       })
       .catch(() => {
-        if (mounted) setMessage("Tidak bisa menghubungi backend. Pastikan XAMPP/Apache aktif.");
+        if (mounted) setMessage("Tidak bisa menghubungi backend. Coba refresh halaman.");
       });
 
     return () => {
@@ -109,7 +109,7 @@ export function AuthPage({
         );
       }
     } catch {
-      setMessage("Request gagal. Periksa XAMPP/Apache dan proxy Next.js.");
+      setMessage("Request gagal. Periksa koneksi backend lalu coba lagi.");
     } finally {
       setLoading(false);
     }
@@ -118,34 +118,21 @@ export function AuthPage({
   const isSuccessMessage = message.toLowerCase().includes("berhasil");
 
   return (
-    <main className="noise min-h-screen px-5 py-8 md:px-10">
-      <section className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="relative overflow-hidden rounded-[2.4rem] bg-[#0f4f7f] p-8 text-white shadow-2xl md:p-12">
-          <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-cyan-300/30 blur-2xl" />
-          <div className="absolute -bottom-24 left-12 h-72 w-72 rounded-full bg-amber-300/30 blur-2xl" />
-          <p className="relative mb-5 inline-flex rounded-full bg-white/14 px-4 py-2 text-sm font-black uppercase tracking-[0.22em]">
-            Teach SKL Next Portal
-          </p>
-          <h1 id="auth-title" className="title-font relative max-w-2xl text-5xl font-black leading-[0.95] md:text-7xl">
-            Kelas digital yang terasa seperti ruang belajar premium.
-          </h1>
-          <p className="relative mt-6 max-w-xl text-lg leading-8 text-cyan-50/86">
-            Frontend baru memakai Next.js + React + Tailwind, sementara backend PHP/MySQL tetap hidup di XAMPP.
-          </p>
-          <div className="relative mt-8 grid gap-3 sm:grid-cols-3">
-            {["CSRF safe", "PHP session", "Role aware"].map((item) => (
-              <div key={item} className="rounded-2xl border border-white/16 bg-white/12 p-4 font-black">
-                {item}
-              </div>
-            ))}
+    <main className="auth-page">
+      <section className="auth-shell" aria-labelledby="auth-title">
+        <div className="auth-card">
+          <div className="auth-card-brand">
+            <div className="auth-mark" aria-hidden="true">T</div>
+            <div>
+              <p className="auth-kicker">Portal Akademik Digital</p>
+              <h1 id="auth-title" className="auth-card-title">Teach SKL</h1>
+            </div>
           </div>
-        </div>
 
-        <div className="glass-card rounded-[2rem] p-6 md:p-8">
-          <div className="mb-6 flex rounded-full bg-sky-50 p-1" role="tablist" aria-label="Pilih mode autentikasi">
+          <div className="af-tabs" role="tablist" aria-label="Pilih mode autentikasi">
             <button
               aria-selected={authMode === "login"}
-              className={`flex-1 rounded-full px-5 py-3 font-black transition ${authMode === "login" ? "bg-white text-sky-800 shadow" : "text-slate-500"}`}
+              className={`af-tab ${authMode === "login" ? "active" : "inactive"}`}
               onClick={() => updateMode("login")}
               role="tab"
               type="button"
@@ -154,7 +141,7 @@ export function AuthPage({
             </button>
             <button
               aria-selected={authMode === "register"}
-              className={`flex-1 rounded-full px-5 py-3 font-black transition ${authMode === "register" ? "bg-white text-sky-800 shadow" : "text-slate-500"}`}
+              className={`af-tab ${authMode === "register" ? "active" : "inactive"}`}
               onClick={() => updateMode("register")}
               role="tab"
               type="button"
@@ -164,39 +151,34 @@ export function AuthPage({
           </div>
 
           {message && (
-            <div
-              className={`mb-4 rounded-2xl p-4 text-sm font-bold ${
-                isSuccessMessage ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"
-              }`}
-              role="status"
-            >
+            <div className={`auth-message ${isSuccessMessage ? "success" : "error"}`} role="status">
               {message}
             </div>
           )}
 
-          <form className="grid gap-3" onSubmit={submitAuth}>
+          <form onSubmit={submitAuth} className="auth-form">
             {authMode === "register" && (
-              <div className="grid gap-1.5">
-                <label className="text-sm font-black text-sky-900" htmlFor="auth-nama">
+              <div className="auth-field">
+                <label className="auth-label" htmlFor="auth-nama">
                   Nama lengkap
                 </label>
-                <input className="field" id="auth-nama" name="nama" placeholder="Masukkan nama lengkap" maxLength={100} required />
+                <input className="af-input" id="auth-nama" name="nama" placeholder="Masukkan nama lengkap" maxLength={100} required />
               </div>
             )}
 
-            <div className="grid gap-1.5">
-              <label className="text-sm font-black text-sky-900" htmlFor="auth-username">
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="auth-username">
                 Username
               </label>
-              <input className="field" id="auth-username" name="username" placeholder="Masukkan username" maxLength={50} required autoComplete="username" />
+              <input className="af-input" id="auth-username" name="username" placeholder="Masukkan username" maxLength={50} required autoComplete="username" />
             </div>
 
-            <div className="grid gap-1.5">
-              <label className="text-sm font-black text-sky-900" htmlFor="auth-password">
+            <div className="auth-field">
+              <label className="auth-label" htmlFor="auth-password">
                 Password
               </label>
               <input
-                className="field"
+                className="af-input"
                 id="auth-password"
                 name="password"
                 placeholder="Minimal 6 karakter"
@@ -209,12 +191,12 @@ export function AuthPage({
 
             {authMode === "register" && (
               <>
-                <div className="grid gap-1.5">
-                  <label className="text-sm font-black text-sky-900" htmlFor="auth-password-confirm">
+                <div className="auth-field">
+                  <label className="auth-label" htmlFor="auth-password-confirm">
                     Konfirmasi password
                   </label>
                   <input
-                    className="field"
+                    className="af-input"
                     id="auth-password-confirm"
                     name="password_confirm"
                     placeholder="Ulangi password"
@@ -225,12 +207,12 @@ export function AuthPage({
                   />
                 </div>
 
-                <div className="grid gap-1.5">
-                  <label className="text-sm font-black text-sky-900" htmlFor="auth-kategori">
+                <div className="auth-field">
+                  <label className="auth-label" htmlFor="auth-kategori">
                     Kategori
                   </label>
                   <select
-                    className="field"
+                    className="af-input"
                     id="auth-kategori"
                     name="kategori"
                     required
@@ -248,45 +230,45 @@ export function AuthPage({
                 </div>
 
                 {kategori === "pengajar" && (
-                  <div className="grid gap-3 rounded-3xl bg-sky-50/70 p-4">
-                    <p className="text-sm font-black text-sky-900">Data Pengajar</p>
-                    <div className="grid gap-1.5">
-                      <label className="text-sm font-black text-sky-900" htmlFor="auth-teacher-token">
+                  <div className="auth-subform">
+                    <p className="af-section-label">Data Pengajar</p>
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="auth-teacher-token">
                         Token admin
                       </label>
                       <input
-                        className="field"
+                        className="af-input"
                         id="auth-teacher-token"
                         name="teacher_token"
                         placeholder="Masukkan token dari admin"
                         required
                         autoComplete="off"
                       />
-                      <span className="text-xs font-bold text-slate-500">Khusus role pengajar. Minta token ini ke admin sebelum daftar.</span>
+                      <span className="auth-help">Khusus role pengajar. Minta token ini ke admin sebelum daftar.</span>
                     </div>
-                    <div className="grid gap-1.5">
-                      <label className="text-sm font-black text-sky-900" htmlFor="auth-universitas">
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="auth-universitas">
                         Universitas
                       </label>
-                      <input className="field" id="auth-universitas" name="universitas" placeholder="Nama universitas" required />
+                      <input className="af-input" id="auth-universitas" name="universitas" placeholder="Nama universitas" required />
                     </div>
-                    <div className="grid gap-1.5">
-                      <label className="text-sm font-black text-sky-900" htmlFor="auth-bidang">
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="auth-bidang">
                         Bidang
                       </label>
-                      <input className="field" id="auth-bidang" name="bidang" placeholder="Bidang yang diajar" required />
+                      <input className="af-input" id="auth-bidang" name="bidang" placeholder="Bidang yang diajar" required />
                     </div>
                   </div>
                 )}
 
                 {kategori === "murid" && (
-                  <div className="grid gap-3 rounded-3xl bg-sky-50/70 p-4">
-                    <p className="text-sm font-black text-sky-900">Data Murid</p>
-                    <div className="grid gap-1.5">
-                      <label className="text-sm font-black text-sky-900" htmlFor="auth-tingkat">
+                  <div className="auth-subform">
+                    <p className="af-section-label">Data Murid</p>
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="auth-tingkat">
                         Tingkat
                       </label>
-                      <select className="field" id="auth-tingkat" name="tingkat" defaultValue="" required>
+                      <select className="af-input" id="auth-tingkat" name="tingkat" defaultValue="" required>
                         <option value="" disabled>
                           Pilih tingkat
                         </option>
@@ -297,28 +279,30 @@ export function AuthPage({
                         ))}
                       </select>
                     </div>
-                    <div className="grid gap-1.5">
-                      <label className="text-sm font-black text-sky-900" htmlFor="auth-umur">
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="auth-umur">
                         Umur
                       </label>
-                      <input className="field" id="auth-umur" name="umur" placeholder="Opsional" type="number" min={1} />
+                      <input className="af-input" id="auth-umur" name="umur" placeholder="Opsional" type="number" min={1} />
                     </div>
-                    <div className="grid gap-1.5">
-                      <label className="text-sm font-black text-sky-900" htmlFor="auth-alamat">
+                    <div className="auth-field">
+                      <label className="auth-label" htmlFor="auth-alamat">
                         Alamat
                       </label>
-                      <input className="field" id="auth-alamat" name="alamat" placeholder="Opsional" />
+                      <input className="af-input" id="auth-alamat" name="alamat" placeholder="Opsional" />
                     </div>
                   </div>
                 )}
               </>
             )}
 
-            <button className="btn-primary mt-3 px-6 py-4" type="submit" disabled={loading}>
-              {loading ? "Memproses..." : authMode === "login" ? "Masuk ke Dashboard" : "Buat Akun"}
+            <button className="af-btn" type="submit" disabled={loading}>
+              {loading ? "Memproses..." : authMode === "login" ? "Masuk" : "Buat Akun"}
             </button>
           </form>
         </div>
+
+        <p className="auth-footer">Teach SKL &copy; {new Date().getFullYear()}</p>
       </section>
     </main>
   );

@@ -2,7 +2,9 @@
 require_once __DIR__ . '/../../config/database.php';
 header('Content-Type: application/json; charset=utf-8');
 
-if (isset($_SESSION['user']) && $_SESSION['user']['kategori'] === 'murid' && ($_GET['scope'] ?? '') === 'me') {
+require_role_json(['murid', 'pengajar', 'admin']);
+
+if ($_SESSION['user']['kategori'] === 'murid' && ($_GET['scope'] ?? '') === 'me') {
     $muridId = (int) $_SESSION['user']['id'];
     $stmt = $pdo->prepare("SELECT u.nama, COALESCE(SUM(nq.nilai), 0) as total_nilai, COUNT(nq.id) as jumlah_quiz, COALESCE(AVG(nq.nilai), 0) as rata_rata
                           FROM users u
@@ -12,6 +14,10 @@ if (isset($_SESSION['user']) && $_SESSION['user']['kategori'] === 'murid' && ($_
     $stmt->execute([$muridId]);
     echo json_encode($stmt->fetch() ?: ['total_nilai' => 0, 'jumlah_quiz' => 0, 'rata_rata' => 0]);
     exit;
+}
+
+if ($_SESSION['user']['kategori'] === 'murid') {
+    json_forbidden('Akses ditolak', 403);
 }
 
 $stmt = $pdo->query("SELECT u.nama, SUM(nq.nilai) as total_nilai, COUNT(nq.id) as jumlah_quiz, AVG(nq.nilai) as rata_rata 

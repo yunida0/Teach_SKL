@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import type { Category, Tugas } from "@/types";
-import { PHP_BASE, readJson } from "@/lib/api";
+import { PHP_BASE, readJson, uploadWithProgress } from "@/lib/api";
 import { subjects } from "@/lib/utils";
 import { ListCard } from "@/components/ui/ListCard";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -11,6 +11,7 @@ import { AppDialog } from "@/components/ui/AppDialog";
 function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: () => void }) {
   const [msg, setMsg]         = useState("");
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,14 +20,21 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
     try {
       const data = new FormData(e.currentTarget);
       data.set("csrf_token", csrfToken);
-      const res  = await fetch(`${PHP_BASE}/backend/uploads/tugas`, { method: "POST", body: data, credentials: "include" });
-      const json = await res.json();
-      if (json.success) {
+      setProgress(1);
+      let json: { success?: boolean; error?: string } | null = null;
+      try {
+        json = await uploadWithProgress(`${PHP_BASE}/backend/uploads/tugas`, data, setProgress);
+      } catch (error) {
+        json = error as { success?: boolean; error?: string };
+      }
+      if (json?.success) {
         setMsg("Tugas berhasil ditambahkan.");
         (e.target as HTMLFormElement).reset();
+        window.setTimeout(() => setProgress(0), 900);
         onAdded();
       } else {
-        setMsg(json.error ?? "Gagal menyimpan tugas.");
+        setMsg(json?.error ?? "Gagal menyimpan tugas.");
+        setProgress(0);
       }
     } finally {
       setLoading(false);
@@ -51,6 +59,12 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
       <input accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.jpg,.png" className="field" name="file" type="file" />
       {msg && (
         <p className={`text-sm font-black ${msg.includes("berhasil") ? "text-emerald-700" : "text-rose-600"}`}>{msg}</p>
+      )}
+      {progress > 0 && (
+        <div className="rounded-2xl bg-sky-50 p-3">
+          <div className="flex items-center justify-between text-xs font-black text-sky-700"><span>Upload file</span><span>{progress}%</span></div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-sky-500 transition-all" style={{ width: `${progress}%` }} /></div>
+        </div>
       )}
       <button className="btn-primary px-6 py-3 disabled:opacity-50" disabled={loading} type="submit">
         {loading ? "Menyimpan..." : "Simpan Tugas"}

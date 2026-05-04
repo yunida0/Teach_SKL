@@ -1,9 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
-import type { Ebook } from "@/types";
-import { PHP_BASE, readJson } from "@/lib/api";
-import { subjects } from "@/lib/utils";
+import type { Category, Ebook } from "@/types";
+import { PHP_BASE, readJson, uploadWithProgress } from "@/lib/api";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AppDialog } from "@/components/ui/AppDialog";
 import { MateriReader } from "@/components/ui/MateriReader";
@@ -21,19 +20,47 @@ function parseTags(tags?: string) {
   return (tags ?? "").split(",").map((tag) => tag.trim()).filter(Boolean).slice(0, 6);
 }
 
+const levelPages = ["TK", "SD", "SMP"] as const;
+type EbookLevel = typeof levelPages[number];
+
+function parseLevel(value?: string | null): EbookLevel | null {
+  const level = (value ?? "").trim().toUpperCase();
+  if (level === "TK" || level === "SD" || level === "SMP") return level;
+  return null;
+}
+
+function levelOf(item: Ebook): EbookLevel | null {
+  return parseLevel(item.tingkat);
+}
+
+const subjectsByLevel: Record<EbookLevel, string[]> = {
+  TK: ["Literasi Awal", "Numerasi Awal", "Motorik", "Seni & Kreativitas", "Budi Pekerti"],
+  SD: ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "PKWU"],
+  SMP: ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "PKWU"],
+};
+
 export function EbookPage({
+  category,
   csrfToken,
   isPengajar,
   setMessage,
+  studentLevel,
 }: {
+  category: Category;
   csrfToken: string;
   isPengajar: boolean;
   setMessage: (message: string) => void;
+  studentLevel?: string | null;
 }) {
   const [items, setItems] = useState<Ebook[]>([]);
   const [editing, setEditing] = useState<Ebook | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Ebook | null>(null);
   const [selected, setSelected] = useState<Ebook | null>(null);
+  const [activeLevel, setActiveLevel] = useState<EbookLevel | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const muridLevel = category === "murid" ? parseLevel(studentLevel) : null;
+  const currentLevel = category === "murid" ? muridLevel : activeLevel;
+  const currentSubjects = currentLevel ? subjectsByLevel[currentLevel] : subjectsByLevel.SD;
 
   function load() {
     readJson<Ebook[]>(`${PHP_BASE}/backend/data/ebooks`)
@@ -51,7 +78,7 @@ export function EbookPage({
     return (
       <section className="grid gap-5">
         <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-          <button className="mb-4 rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-600 transition hover:bg-slate-200" onClick={() => setSelected(null)} type="button">← Kembali ke E-Book</button>
+          <button className="mb-4 rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-600 transition hover:bg-slate-200" onClick={() => setSelected(null)} type="button">← Kembali ke {currentLevel ? `E-Book ${currentLevel}` : "E-Book"}</button>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-3xl">
               <p className="m-0 text-xs font-black uppercase tracking-[0.16em] text-sky-600">{selected.pelajaran ?? "Materi"}</p>
@@ -78,19 +105,22 @@ export function EbookPage({
     const form = event.currentTarget;
     const data = new FormData(form);
     data.set("csrf_token", csrfToken);
-    const response = await fetch(`${PHP_BASE}/backend/uploads/upload_ebook.php`, {
-      method: "POST",
-      body: data,
-      credentials: "include",
-      headers: { Accept: "application/json", "X-Requested-With": "fetch" },
-    });
-    const payload = await response.json().catch(() => null) as { success?: boolean; error?: string; message?: string } | null;
-    if (!response.ok || !payload?.success) {
-      setMessage(payload?.error ?? "Upload gagal. Periksa format dan ukuran file.");
+    data.set("tingkat", currentLevel ?? "SD");
+    setUploadProgress(1);
+    let payload: { success?: boolean; error?: string; message?: string } | null = null;
+    try {
+      payload = await uploadWithProgress(`${PHP_BASE}/backend/uploads/upload_ebook.php`, data, setUploadProgress);
+    } catch (error) {
+      payload = error as { success?: boolean; error?: string; message?: string };
+    }
+    if (!payload?.success) {
+      setMessage(payload?.error ?? "Upload gagal. Periksa format, ukuran file, dan sesi login.");
+      setUploadProgress(0);
       return;
     }
     form.reset();
     setMessage(payload.message ?? "Materi berhasil diupload.");
+    window.setTimeout(() => setUploadProgress(0), 900);
     load();
   }
 
@@ -136,8 +166,41 @@ export function EbookPage({
     load();
   }
 
+  const grouped = levelPages.map((level) => ({
+    level,
+    items: items.filter((item) => levelOf(item) === level),
+  }));
+  const visibleItems = currentLevel ? items.filter((item) => levelOf(item) === currentLevel) : [];
+
+  if (category === "murid" && !muridLevel) {
+    return <EmptyState text="Tingkat akun belum diatur. Lengkapi profil dulu agar materi e-book bisa ditampilkan." />;
+  }
+
+  if (!currentLevel) {
+    return (
+      <section className="grid gap-5">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {grouped.map((group) => (
+            <button
+              className="rounded-[1.5rem] border border-sky-100 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md"
+              key={group.level}
+              onClick={() => setActiveLevel(group.level)}
+              type="button"
+            >
+              <span className="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700">{isPengajar ? "Kelola" : "Buka"}</span>
+              <h3 className="mt-4 text-3xl font-black text-slate-950">{group.level}</h3>
+              <p className="mt-1 text-sm font-bold text-slate-500">{group.items.length} materi tersedia</p>
+            </button>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="grid items-start gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+    <section className="grid gap-5">
+      {category !== "murid" && <button className="w-fit text-sm font-black text-sky-700 hover:underline" onClick={() => setActiveLevel(null)} type="button">← Semua tingkat</button>}
+      <div className="grid items-start gap-6 xl:grid-cols-[0.8fr_1.2fr]">
       {isPengajar && (
         <form className="glass-card grid gap-3 rounded-[1.5rem] p-4 md:rounded-[2rem] md:p-6" onSubmit={upload}>
           <div>
@@ -145,7 +208,7 @@ export function EbookPage({
             <p className="mt-1 text-sm font-semibold text-slate-500">Isi detail materi sebelum upload file.</p>
           </div>
           <select className="field" name="pelajaran" required>
-            {subjects.map((subject) => (
+            {currentSubjects.map((subject) => (
               <option key={subject}>{subject}</option>
             ))}
           </select>
@@ -153,50 +216,60 @@ export function EbookPage({
           <textarea className="field min-h-28 resize-y" maxLength={1200} name="deskripsi" placeholder="Deskripsi singkat materi, ringkasan isi, atau instruksi belajar" />
           <textarea className="field min-h-24 resize-y" maxLength={800} name="tujuan_pembelajaran" placeholder="Tujuan pembelajaran, contoh: Setelah membaca, murid mampu memahami..." />
           <div className="grid gap-3 sm:grid-cols-2">
-            <select className="field" name="tingkat" defaultValue="Umum">
-              <option>Umum</option>
-              <option>Pemula</option>
-              <option>Menengah</option>
-              <option>Lanjutan</option>
-              <option>Persiapan Ujian</option>
+            <select className="field" name="tingkat" defaultValue={currentLevel}>
+              {levelPages.map((level) => <option key={level}>{level}</option>)}
             </select>
             <input className="field" min="0" name="estimasi_menit" placeholder="Estimasi menit" type="number" />
           </div>
           <input className="field" maxLength={200} name="tags" placeholder="Tag: rangkuman, latihan, teori" />
           <input className="field" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" name="file" required type="file" />
+          {uploadProgress > 0 && (
+            <div className="rounded-2xl bg-sky-50 p-3">
+              <div className="flex items-center justify-between text-xs font-black text-sky-700"><span>Upload materi</span><span>{uploadProgress}%</span></div>
+              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-sky-500 transition-all" style={{ width: `${uploadProgress}%` }} /></div>
+            </div>
+          )}
           <button className="btn-primary px-6 py-3" type="submit">
             Upload Materi
           </button>
         </form>
       )}
       <div className="grid content-start gap-3">
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const tags = parseTags(item.tags);
           return (
-            <article key={item.id} className="glass-card rounded-[1.5rem] p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="m-0 text-xs font-black uppercase tracking-[0.16em] text-sky-600">{item.pelajaran ?? "Materi"}</p>
-                  <h3 className="mt-2 mb-0 text-xl font-black text-slate-950">{item.judul_materi ?? "Tanpa judul"}</h3>
+            <article key={item.id} className="group relative overflow-hidden rounded-[1.5rem] border border-white/75 bg-white/80 p-5 shadow-sm shadow-sky-950/5 ring-1 ring-sky-100/70 backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-sky-950/10">
+              <div className="pointer-events-none absolute -right-12 -top-12 h-28 w-28 rounded-full bg-slate-100/70 blur-2xl transition group-hover:bg-slate-200/80" />
+              <div className="relative grid gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-950 text-sm font-black text-white shadow-sm">
+                    {(item.pelajaran ?? "M").charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="m-0 text-[0.68rem] font-black uppercase tracking-[0.18em] text-sky-600">{item.pelajaran ?? "Materi"}</p>
+                    <h3 className="mt-1 mb-0 line-clamp-2 text-xl font-black leading-snug text-slate-950">{item.judul_materi ?? "Tanpa judul"}</h3>
+                  </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-3 py-2 text-right ring-1 ring-slate-100">
-                  <p className="m-0 text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Estimasi</p>
-                  <p className="m-0 text-sm font-black text-slate-800">{formatEstimasi(item.estimasi_menit)}</p>
-                </div>
-              </div>
-              {item.deskripsi && <p className="mt-3 mb-0 text-sm font-semibold leading-relaxed text-slate-600">{item.deskripsi}</p>}
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl bg-white/70 p-3 ring-1 ring-slate-100">
-                  <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Level</p>
-                  <p className="m-0 mt-1 text-sm font-black text-slate-800">{item.tingkat || "Umum"}</p>
-                </div>
-                <div className="rounded-2xl bg-white/70 p-3 ring-1 ring-slate-100">
-                  <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Upload</p>
-                  <p className="m-0 mt-1 text-sm font-black text-slate-800">{item.tanggal_upload ? new Date(item.tanggal_upload).toLocaleDateString("id-ID") : "-"}</p>
+
+                {item.deskripsi && <p className="m-0 line-clamp-3 text-sm font-semibold leading-relaxed text-slate-600">{item.deskripsi}</p>}
+
+                <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="rounded-2xl bg-sky-50/80 p-3 ring-1 ring-sky-100">
+                    <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-sky-500">Level</p>
+                    <p className="m-0 mt-1 text-sm font-black text-sky-950">{item.tingkat || "Umum"}</p>
+                  </div>
+                  <div className="rounded-2xl bg-emerald-50/80 p-3 ring-1 ring-emerald-100">
+                    <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-500">Estimasi</p>
+                    <p className="m-0 mt-1 text-sm font-black text-emerald-950">{formatEstimasi(item.estimasi_menit)}</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-50/90 p-3 ring-1 ring-slate-100">
+                    <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Upload</p>
+                    <p className="m-0 mt-1 text-sm font-black text-slate-800">{item.tanggal_upload ? new Date(item.tanggal_upload).toLocaleDateString("id-ID") : "-"}</p>
+                  </div>
                 </div>
               </div>
               {item.tujuan_pembelajaran && (
-                <div className="mt-3 rounded-2xl bg-sky-50 p-3 text-sm font-bold leading-relaxed text-sky-800">
+                <div className="relative mt-4 rounded-2xl bg-white/70 p-3 text-sm font-bold leading-relaxed text-sky-800 ring-1 ring-sky-100">
                   <span className="font-black">Tujuan: </span>{item.tujuan_pembelajaran}
                 </div>
               )}
@@ -207,14 +280,15 @@ export function EbookPage({
                   <button className="rounded-full bg-rose-50 px-4 py-2 text-xs font-black text-rose-700 transition hover:bg-rose-100" onClick={() => setDeleteTarget(item)} type="button">Hapus</button>
                 </div>
               )}
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button className="btn-primary px-4 py-2.5 text-sm" onClick={() => setSelected(item)} type="button">Baca Materi</button>
-                {item.file_path && <a className="rounded-full bg-slate-100 px-4 py-2.5 text-sm font-black text-slate-700 transition hover:bg-slate-200" download href={`${PHP_BASE}/${item.file_path}`}>Download</a>}
+              <div className="relative mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
+                <button className="btn-primary justify-center px-4 py-2.5 text-sm" onClick={() => setSelected(item)} type="button">Baca Materi</button>
+                {item.file_path && <a className="rounded-full bg-slate-100 px-4 py-2.5 text-center text-sm font-black text-slate-700 transition hover:bg-slate-200" download href={`${PHP_BASE}/${item.file_path}`}>Download</a>}
               </div>
             </article>
           );
         })}
-        {items.length === 0 && <EmptyState text="Belum ada e-book." />}
+        {visibleItems.length === 0 && <EmptyState text={`Belum ada e-book untuk ${currentLevel}.`} />}
+      </div>
       </div>
 
       {editing && (
@@ -223,13 +297,13 @@ export function EbookPage({
             <h3 className="m-0 text-xl font-black text-slate-950">Edit Detail Materi</h3>
             <p className="mt-1 mb-5 text-sm font-semibold text-slate-500">File tidak berubah, hanya informasi materi yang diperbarui.</p>
             <div className="grid gap-3">
-              <select className="field" name="pelajaran" defaultValue={editing.pelajaran ?? subjects[0]} required>{subjects.map((subject) => <option key={subject}>{subject}</option>)}</select>
+              <select className="field" name="pelajaran" defaultValue={currentSubjects.includes(editing.pelajaran ?? "") ? editing.pelajaran : currentSubjects[0]} required>{currentSubjects.map((subject) => <option key={subject}>{subject}</option>)}</select>
               <input className="field" maxLength={200} name="judul_materi" defaultValue={editing.judul_materi ?? ""} placeholder="Judul materi" required />
               <textarea className="field min-h-28 resize-y" maxLength={1200} name="deskripsi" defaultValue={editing.deskripsi ?? ""} placeholder="Deskripsi materi" />
               <textarea className="field min-h-24 resize-y" maxLength={800} name="tujuan_pembelajaran" defaultValue={editing.tujuan_pembelajaran ?? ""} placeholder="Tujuan pembelajaran" />
               <div className="grid gap-3 sm:grid-cols-2">
-                <select className="field" name="tingkat" defaultValue={editing.tingkat || "Umum"}>
-                  <option>Umum</option><option>Pemula</option><option>Menengah</option><option>Lanjutan</option><option>Persiapan Ujian</option>
+                <select className="field" name="tingkat" defaultValue={levelOf(editing) ?? currentLevel ?? "SD"}>
+                  {levelPages.map((level) => <option key={level}>{level}</option>)}
                 </select>
                 <input className="field" min="0" name="estimasi_menit" defaultValue={editing.estimasi_menit ?? 0} placeholder="Estimasi menit" type="number" />
               </div>

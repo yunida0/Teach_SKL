@@ -39,7 +39,7 @@ function api_teacher_registration_token() {
         return trim($token);
     }
 
-    return 'PENGAJAR-TEACH-SKL-2026';
+    return '';
 }
 
 $action = $_GET['action'] ?? 'me';
@@ -149,7 +149,8 @@ if ($action === 'register') {
             $dbTokenValid = (bool) $stmtTok->fetch();
 
             // Fall back to env / hardcoded master token
-            if (!$dbTokenValid && !hash_equals(api_teacher_registration_token(), $teacherToken)) {
+            $masterToken = api_teacher_registration_token();
+            if (!$dbTokenValid && ($masterToken === '' || !hash_equals($masterToken, $teacherToken))) {
                 throw new RuntimeException('Token admin pengajar tidak valid');
             }
 
@@ -189,8 +190,8 @@ if ($action === 'setup-admin') {
     api_require_post();
 
     $secret = $_POST['setup_secret'] ?? '';
-    $envSecret = getenv('ADMIN_SETUP_SECRET') ?: 'SETUP-TEACH-SKL-2026';
-    if (!hash_equals($envSecret, $secret)) {
+    $envSecret = getenv('ADMIN_SETUP_SECRET');
+    if (!is_string($envSecret) || trim($envSecret) === '' || !hash_equals(trim($envSecret), $secret)) {
         api_json(['success' => false, 'error' => 'Secret tidak valid'], 403);
     }
 

@@ -1,4 +1,4 @@
-import type { Category, PageKey } from "@/types";
+import type { AdminSection, Category, PageKey } from "@/types";
 
 export const subjects = ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "PKWU"];
 
@@ -15,11 +15,24 @@ export const pageLabels: Record<PageKey, string> = {
   absensipengajar: "Absensi Pengajar",
   dokumentasi: "Dokumentasi",
   ulasan: "Beri Ulasan",
+  donasi: "Donasi",
   adminpanel: "Admin Panel",
 };
 
+export const adminNav: Array<[AdminSection, string]> = [
+  ["overview", "Overview"],
+  ["create", "Buat Akun"],
+  ["tokens", "Token Pengajar"],
+  ["users", "Pengguna"],
+  ["content", "Konten"],
+  ["absensi", "Absensi"],
+  ["laporan", "Laporan"],
+  ["activity", "Aktivitas"],
+];
+
 export function pageLabelFor(page: PageKey, category?: Category): string {
   if (page === "pointmurid") return category === "murid" ? "Poin Saya" : "Point Murid";
+  if (page === "absensimurid") return category === "murid" ? "Absensi Saya" : "Absensi Murid";
   return pageLabels[page];
 }
 
@@ -45,12 +58,12 @@ export function studyRemaining(createdAt?: string) {
 
 export function navFor(category: Category): PageKey[] {
   if (category === "admin") return ["adminpanel"];
+  if (category === "tamu") return ["dokumentasi", "donasi", "ulasan"];
   const base: PageKey[] = ["dashboard", "ebook"];
-  if (category !== "tamu") base.push("banktugas", "quiz", "pointmurid");
+  base.push("banktugas", "quiz", "pointmurid");
   if (category === "pengajar") {
     base.push("daftarmurid", "absensimurid", "absensipengajar", "raport", "dokumentasi");
   }
   if (category === "murid") base.push("absensimurid", "raport", "dokumentasi");
-  if (category === "tamu") base.push("dokumentasi", "ulasan");
   return base;
 }

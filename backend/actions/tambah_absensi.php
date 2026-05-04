@@ -1,15 +1,14 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 
-if (!isset($_SESSION['user'])) {
-    header('Location: ../index.php');
-    exit;
-}
+require_role_json(['pengajar', 'murid']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../dashboard.php?page=absensi&error=' . urlencode('Metode tidak valid'));
     exit;
 }
+
+csrf_verify();
 
 $user = $_SESSION['user'];
 $kategori = $user['kategori'];

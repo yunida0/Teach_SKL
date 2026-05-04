@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
-if (!isset($_SESSION['user'])) {
-    die(json_encode(['error' => 'Unauthorized']));
-}
+require_role_json(['pengajar', 'admin']);
 
 $ebook = $pdo->query("SELECT COUNT(*) FROM ebook")->fetchColumn();
 $tugas = $pdo->query("SELECT COUNT(*) FROM bank_tugas")->fetchColumn();

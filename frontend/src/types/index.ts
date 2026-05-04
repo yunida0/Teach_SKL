@@ -13,7 +13,10 @@ export type PageKey =
   | "absensipengajar"
   | "dokumentasi"
   | "ulasan"
+  | "donasi"
   | "adminpanel";
+
+export type AdminSection = "overview" | "create" | "tokens" | "users" | "content" | "absensi" | "laporan" | "activity";
 
 export type TeacherToken = {
   id: number | string;

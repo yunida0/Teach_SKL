@@ -34,4 +34,28 @@ session_start();
 require_once __DIR__ . '/csrf.php';
 require_once __DIR__ . '/validation.php';
 require_once __DIR__ . '/logging.php';
+
+function json_forbidden(string $message = 'Akses ditolak', int $statusCode = 403): void {
+    http_response_code($statusCode);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => false, 'error' => $message]);
+    exit;
+}
+
+function current_role(): ?string {
+    return $_SESSION['user']['kategori'] ?? null;
+}
+
+function require_login_json(): void {
+    if (!isset($_SESSION['user'])) {
+        json_forbidden('Unauthorized', 401);
+    }
+}
+
+function require_role_json(array $roles): void {
+    require_login_json();
+    if (!in_array(current_role(), $roles, true)) {
+        json_forbidden('Akses ditolak', 403);
+    }
+}
 ?>

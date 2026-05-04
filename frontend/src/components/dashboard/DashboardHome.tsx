@@ -32,7 +32,7 @@ export function DashboardHome({ user }: { user: User }) {
           {greeting()}
         </p>
         <h2 className="relative mt-2 text-3xl font-black uppercase tracking-tight md:mt-3 md:text-5xl">{user.nama}</h2>
-        <p className="relative mt-2 text-sm font-extrabold text-sky-100 md:mt-3 md:text-base">Dashboard Akademik</p>
+        <p className="relative mt-2 text-sm font-extrabold text-sky-100 md:mt-3 md:text-base">Sekolah Kolong Langit</p>
       </section>
 
       <article className="rounded-[1.4rem] border border-sky-100 bg-white p-4 shadow-sm md:p-6">

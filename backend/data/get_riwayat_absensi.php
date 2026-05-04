@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 
-if (!isset($_SESSION['user'])) {
-    http_response_code(401);
-    die(json_encode(['error' => 'Unauthorized']));
-}
+require_role_json(['pengajar', 'admin']);
 
 $tipe = $_GET['tipe'] ?? 'murid';
 

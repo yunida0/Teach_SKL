@@ -136,6 +136,8 @@ $routes = [
     'upload_foto' => 'uploads/upload_foto.php',
     'uploads/tugas' => 'uploads/upload_tugas.php',
     'upload_tugas' => 'uploads/upload_tugas.php',
+    'uploads/donasi' => 'uploads/upload_donasi.php',
+    'upload_donasi' => 'uploads/upload_donasi.php',
 
     // Admin data
     'data/admin-tokens' => 'data/get_admin_tokens.php',
