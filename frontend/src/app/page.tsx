@@ -117,6 +117,11 @@ export default function Home() {
     if (user?.kategori === "admin") setActiveAdminSection("overview");
   }
 
+  function changeAdminSection(section: AdminSection) {
+    setActiveAdminSection(section);
+    if (user?.kategori === "admin") setActivePage("adminpanel");
+  }
+
   async function logout() {
     if (loggingOut) return;
     setLoggingOut(true);
@@ -164,7 +169,7 @@ export default function Home() {
       <Sidebar
         activePage={effectiveActivePage}
         activeAdminSection={activeAdminSection}
-        onAdminSectionChange={setActiveAdminSection}
+        onAdminSectionChange={changeAdminSection}
         onLogout={logout}
         loggingOut={loggingOut}
         onNavigate={navigate}
@@ -174,7 +179,7 @@ export default function Home() {
       <MobileNav
         activePage={effectiveActivePage}
         activeAdminSection={activeAdminSection}
-        onAdminSectionChange={setActiveAdminSection}
+        onAdminSectionChange={changeAdminSection}
         onLogout={logout}
         loggingOut={loggingOut}
         onNavigate={navigate}
@@ -194,7 +199,7 @@ export default function Home() {
             setDetail={setDetail}
             setMessage={setMessage}
             setUser={setUser}
-            onAdminSectionChange={setActiveAdminSection}
+            onAdminSectionChange={changeAdminSection}
             user={user}
           />
         </div>
