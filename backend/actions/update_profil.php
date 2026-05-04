@@ -40,7 +40,7 @@ try {
     $stmt = $pdo->prepare('UPDATE users SET nama = ? WHERE id = ?');
     $stmt->execute([$nama, $userId]);
 
-    if ($kategori === 'pengajar') {
+    if (in_array($kategori, ['pengajar', 'admin', 'tamu'], true)) {
         $universitas = trim($_POST['universitas'] ?? '');
         $bidang = trim($_POST['bidang'] ?? '');
         $telepon = trim($_POST['telepon'] ?? '');
@@ -80,7 +80,7 @@ try {
     $_SESSION['user']['nama'] = $nama;
 
     $detail = null;
-    if ($kategori === 'pengajar') {
+    if (in_array($kategori, ['pengajar', 'admin', 'tamu'], true)) {
         $stmt = $pdo->prepare('SELECT * FROM pengajar WHERE user_id = ?');
         $stmt->execute([$userId]);
         $detail = $stmt->fetch(PDO::FETCH_ASSOC) ?: null;

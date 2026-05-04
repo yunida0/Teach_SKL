@@ -86,7 +86,7 @@ if ($action === 'login') {
         'created_at' => $user['created_at']
     ];
 
-    if ($user['kategori'] === 'pengajar') {
+    if (in_array($user['kategori'], ['pengajar', 'admin', 'tamu'], true)) {
         $stmt = $pdo->prepare('SELECT * FROM pengajar WHERE user_id = ? LIMIT 1');
         $stmt->execute([$user['id']]);
         $_SESSION['detail'] = $stmt->fetch();

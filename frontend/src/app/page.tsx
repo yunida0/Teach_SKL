@@ -25,6 +25,7 @@ import { MobileNav } from "@/components/layout/MobileNav";
 
 const SESSION_CACHE_KEY = "teach_skl_session_snapshot";
 const SESSION_CACHE_TTL = 1000 * 60 * 60 * 8;
+const PROFILE_PAGE: PageKey = "profil";
 
 type SessionSnapshot = {
   expiresAt: number;
@@ -106,8 +107,15 @@ export default function Home() {
   }, []);
 
   const visibleNav = useMemo(() => (user ? navFor(user.kategori) : []), [user]);
-  const allowedPages = useMemo(() => (user ? [...visibleNav, "profil" as PageKey] : visibleNav), [user, visibleNav]);
+  const allowedPages = useMemo(() => (user ? [...visibleNav, PROFILE_PAGE] : visibleNav), [user, visibleNav]);
   const effectiveActivePage = user && !allowedPages.includes(activePage) ? visibleNav[0] ?? "dashboard" : activePage;
+
+  function navigate(page: PageKey) {
+    setActivePage(page);
+    if (page === PROFILE_PAGE) return;
+    if (page === "adminpanel" && user?.kategori === "admin") return;
+    if (user?.kategori === "admin") setActiveAdminSection("overview");
+  }
 
   async function logout() {
     if (loggingOut) return;
@@ -159,7 +167,7 @@ export default function Home() {
         onAdminSectionChange={setActiveAdminSection}
         onLogout={logout}
         loggingOut={loggingOut}
-        onNavigate={setActivePage}
+        onNavigate={navigate}
         user={user}
         visibleNav={visibleNav}
       />
@@ -169,7 +177,7 @@ export default function Home() {
         onAdminSectionChange={setActiveAdminSection}
         onLogout={logout}
         loggingOut={loggingOut}
-        onNavigate={setActivePage}
+        onNavigate={navigate}
         user={user}
         visibleNav={visibleNav}
       />

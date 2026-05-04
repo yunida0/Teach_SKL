@@ -20,7 +20,7 @@ type Props = {
 };
 
 export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -68,7 +68,7 @@ export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
     data.set("csrf_token", csrfToken);
     data.set("nama", nama.trim());
 
-    if (user.kategori === "pengajar") {
+    if (user.kategori === "pengajar" || user.kategori === "admin" || user.kategori === "tamu") {
       data.set("universitas", universitas);
       data.set("bidang", bidang);
       data.set("telepon", telepon);
@@ -266,7 +266,7 @@ export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
               <input className="profile-input" readOnly value={user.username} />
             </Field>
 
-            {user.kategori === "pengajar" && (
+            {(user.kategori === "pengajar" || user.kategori === "admin" || user.kategori === "tamu") && (
               <>
                 <Field label="Universitas">
                   <input
@@ -356,7 +356,7 @@ export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
             <InfoRow label="Nama" value={user.nama} />
             <InfoRow label="Username" value={`@${user.username}`} />
             <InfoRow label="Kategori" value={user.kategori} />
-            {user.kategori === "pengajar" && (
+            {(user.kategori === "pengajar" || user.kategori === "admin" || user.kategori === "tamu") && (
               <>
                 {detail?.universitas && <InfoRow label="Universitas" value={detail.universitas} />}
                 {detail?.bidang && <InfoRow label="Bidang Studi" value={detail.bidang} />}
