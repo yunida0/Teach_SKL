@@ -82,6 +82,8 @@ $routes = [
     'get_stats' => 'data/get_stats.php',
     'data/tugas' => 'data/get_tugas.php',
     'get_tugas' => 'data/get_tugas.php',
+    'data/pengumpulan-tugas' => 'data/get_pengumpulan_tugas.php',
+    'get_pengumpulan_tugas' => 'data/get_pengumpulan_tugas.php',
     'data/ulasan' => 'data/get_ulasan.php',
     'get_ulasan' => 'data/get_ulasan.php',
 
@@ -126,6 +128,8 @@ $routes = [
     'update_ebook' => 'actions/update_ebook.php',
     'actions/ganti-password' => 'actions/ganti_password.php',
     'ganti_password' => 'actions/ganti_password.php',
+    'actions/nilai-pengumpulan-tugas' => 'actions/nilai_pengumpulan_tugas.php',
+    'nilai_pengumpulan_tugas' => 'actions/nilai_pengumpulan_tugas.php',
 
     // Uploads
     'uploads/dokumentasi' => 'uploads/upload_dokumentasi.php',
@@ -136,6 +140,8 @@ $routes = [
     'upload_foto' => 'uploads/upload_foto.php',
     'uploads/tugas' => 'uploads/upload_tugas.php',
     'upload_tugas' => 'uploads/upload_tugas.php',
+    'uploads/pengumpulan-tugas' => 'uploads/upload_pengumpulan_tugas.php',
+    'upload_pengumpulan_tugas' => 'uploads/upload_pengumpulan_tugas.php',
     'uploads/donasi' => 'uploads/upload_donasi.php',
     'upload_donasi' => 'uploads/upload_donasi.php',
 

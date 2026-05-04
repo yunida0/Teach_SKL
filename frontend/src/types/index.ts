@@ -105,6 +105,23 @@ export type Tugas = {
   file_path?: string;
 };
 
+export type PengumpulanTugas = {
+  id: number | string;
+  tugas_id: number | string;
+  murid_id: number | string;
+  file_path?: string;
+  catatan?: string;
+  nilai?: number | string | null;
+  feedback?: string | null;
+  tanggal_upload?: string;
+  tanggal_nilai?: string | null;
+  judul_tugas?: string;
+  pelajaran?: string;
+  deadline?: string;
+  nama_murid?: string;
+  username?: string;
+};
+
 export type Quiz = {
   id: number | string;
   pelajaran?: string;
