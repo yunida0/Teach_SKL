@@ -353,23 +353,25 @@ function TokenPanel({ copied, creatingToken, message, onCopy, onCreate, onReveal
         <button className="btn-primary shrink-0 rounded-xl px-4 py-2 text-sm" disabled={creatingToken} type="submit">{creatingToken ? "..." : "Generate"}</button>
       </form>
       {message && <Message state={message} />}
-      <div className="mt-4 max-h-[32rem] overflow-y-auto rounded-2xl border border-sky-50">
-        {tokens.length === 0 ? <Empty text="Belum ada token" /> : tokens.map((t) => {
-          const isRev = revealed.has(t.id);
-          return (
-            <div className="flex items-center gap-3 border-b border-sky-50 px-4 py-3 last:border-b-0" key={t.id}>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-black text-slate-500">{t.label || "Tanpa label"}</p>
-                <code className={`mt-1 inline-flex rounded-lg px-2 py-1 text-xs font-bold ${isRev ? "bg-sky-50 text-sky-800" : "bg-slate-100 text-slate-400"}`}>
-                  {isRev ? t.token : "••••••••••••••••••"}
-                </code>
+      <div className="mt-4 max-h-[32rem] overflow-auto rounded-2xl border border-sky-50">
+        <div className="min-w-[420px]">
+          {tokens.length === 0 ? <Empty text="Belum ada token" /> : tokens.map((t) => {
+            const isRev = revealed.has(t.id);
+            return (
+              <div className="flex items-center gap-3 border-b border-sky-50 px-4 py-3 last:border-b-0" key={t.id}>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-black text-slate-500">{t.label || "Tanpa label"}</p>
+                  <code className={`mt-1 inline-flex rounded-lg px-2 py-1 text-xs font-bold ${isRev ? "bg-sky-50 text-sky-800" : "bg-slate-100 text-slate-400"}`}>
+                    {isRev ? t.token : "••••••••••••••••••"}
+                  </code>
+                </div>
+                <button className="text-xs font-black text-slate-500 hover:text-slate-700" onClick={() => onReveal(t.id)} type="button">{isRev ? "Sembunyikan" : "Lihat"}</button>
+                {isRev && <button className="text-xs font-black text-sky-600" onClick={() => onCopy(t.id, t.token)} type="button">{copied === t.id ? "Tersalin!" : "Salin"}</button>}
+                <button className="rounded-lg bg-red-50 px-2.5 py-1 text-xs font-black text-red-500 hover:bg-red-100" onClick={() => onRevoke(t.id)} type="button">Cabut</button>
               </div>
-              <button className="text-xs font-black text-slate-500 hover:text-slate-700" onClick={() => onReveal(t.id)} type="button">{isRev ? "Sembunyikan" : "Lihat"}</button>
-              {isRev && <button className="text-xs font-black text-sky-600" onClick={() => onCopy(t.id, t.token)} type="button">{copied === t.id ? "Tersalin!" : "Salin"}</button>}
-              <button className="rounded-lg bg-red-50 px-2.5 py-1 text-xs font-black text-red-500 hover:bg-red-100" onClick={() => onRevoke(t.id)} type="button">Cabut</button>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </Panel>
   );
@@ -402,31 +404,33 @@ function UsersPanel({ counts, currentUserId, filter, message, onDelete, onEdit, 
         ))}
       </div>
       {message && <Message state={message} />}
-      <div className="mt-4 max-h-[34rem] overflow-y-auto rounded-2xl border border-sky-50">
-        {shownUsers.length === 0 ? <Empty text="Tidak ada pengguna" /> : shownUsers.map((target) => (
-          <div className="flex items-center gap-3 border-b border-sky-50 px-4 py-3 last:border-b-0" key={target.id}>
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-sky-50 text-sm font-black text-sky-800">{target.nama?.charAt(0) ?? "U"}</div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <p className="truncate font-black text-slate-800">{target.nama}</p>
-                <KategoriBadge kategori={target.kategori} />
+      <div className="mt-4 max-h-[34rem] overflow-auto rounded-2xl border border-sky-50">
+        <div className="min-w-[480px]">
+          {shownUsers.length === 0 ? <Empty text="Tidak ada pengguna" /> : shownUsers.map((target) => (
+            <div className="flex items-center gap-3 border-b border-sky-50 px-4 py-3 last:border-b-0" key={target.id}>
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-sky-50 text-sm font-black text-sky-800">{target.nama?.charAt(0) ?? "U"}</div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate font-black text-slate-800">{target.nama}</p>
+                  <KategoriBadge kategori={target.kategori} />
+                </div>
+                <p className="text-xs font-bold text-slate-400">
+                  @{target.username}
+                  {target.kategori === "murid" && target.tingkat ? ` · ${target.tingkat}` : ""}
+                  {target.kategori === "pengajar" && target.universitas ? ` · ${target.universitas}` : ""}
+                  {" · "}{target.created_at ?? "-"}
+                </p>
               </div>
-              <p className="text-xs font-bold text-slate-400">
-                @{target.username}
-                {target.kategori === "murid" && target.tingkat ? ` · ${target.tingkat}` : ""}
-                {target.kategori === "pengajar" && target.universitas ? ` · ${target.universitas}` : ""}
-                {" · "}{target.created_at ?? "-"}
-              </p>
+              <div className="flex shrink-0 gap-1">
+                <button className="rounded-lg bg-slate-50 px-2.5 py-1 text-xs font-black text-slate-600 hover:bg-slate-100" onClick={() => onEdit(target)} type="button">Edit</button>
+                <button className="rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-600 hover:bg-amber-100" onClick={() => onReset(target)} type="button">Reset PW</button>
+                {target.id !== currentUserId && (
+                  <button className="rounded-lg bg-red-50 px-2.5 py-1 text-xs font-black text-red-500 hover:bg-red-100" onClick={() => onDelete(target.id, target.nama ?? String(target.id))} type="button">Hapus</button>
+                )}
+              </div>
             </div>
-            <div className="flex shrink-0 gap-1">
-              <button className="rounded-lg bg-slate-50 px-2.5 py-1 text-xs font-black text-slate-600 hover:bg-slate-100" onClick={() => onEdit(target)} type="button">Edit</button>
-              <button className="rounded-lg bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-600 hover:bg-amber-100" onClick={() => onReset(target)} type="button">Reset PW</button>
-              {target.id !== currentUserId && (
-                <button className="rounded-lg bg-red-50 px-2.5 py-1 text-xs font-black text-red-500 hover:bg-red-100" onClick={() => onDelete(target.id, target.nama ?? String(target.id))} type="button">Hapus</button>
-              )}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </Panel>
   );
