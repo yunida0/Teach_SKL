@@ -221,31 +221,29 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
   return (
     <div className="grid gap-6">
 
-      {/* ── hero ── */}
-      <section className="relative overflow-hidden rounded-[2rem] bg-sky-950 p-6 text-white shadow-xl md:p-8">
-        <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-sky-300/10" />
-        <div className="absolute -bottom-28 left-1/3 h-56 w-56 rounded-full bg-white/10" />
-        <div className="relative grid gap-6 xl:grid-cols-[1fr_auto] xl:items-start">
-          <div>
-            <h1 className="text-4xl font-black tracking-tight md:text-5xl">{greeting()}, {user.nama}</h1>
-          </div>
-          <div className="grid min-w-56 gap-2 rounded-3xl border border-white/10 bg-white/10 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase tracking-wide text-sky-200">System Health</span>
-              <strong>{healthScore}%</strong>
-            </div>
-            <div className="h-2 overflow-hidden rounded-full bg-white/15">
-              <div className="h-full rounded-full bg-sky-300" style={{ width: `${healthScore}%` }} />
-            </div>
-            <p className="text-xs font-bold text-sky-100">{activeTokens} token aktif · {users.length} pengguna</p>
-          </div>
-        </div>
-      </section>
-
       <div className="min-w-0 grid gap-6">
           {/* ── overview ── */}
           {activeSection === "overview" && (
             <div className="grid gap-6">
+          <section className="relative overflow-hidden rounded-[2rem] bg-sky-950 p-6 text-white shadow-xl md:p-8">
+            <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-sky-300/10" />
+            <div className="absolute -bottom-28 left-1/3 h-56 w-56 rounded-full bg-white/10" />
+            <div className="relative grid gap-6 xl:grid-cols-[1fr_auto] xl:items-start">
+              <div>
+                <h1 className="text-4xl font-black tracking-tight md:text-5xl">{greeting()}, {user.nama}</h1>
+              </div>
+              <div className="grid min-w-56 gap-2 rounded-3xl border border-white/10 bg-white/10 p-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wide text-sky-200">System Health</span>
+                  <strong>{healthScore}%</strong>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-white/15">
+                  <div className="h-full rounded-full bg-sky-300" style={{ width: `${healthScore}%` }} />
+                </div>
+                <p className="text-xs font-bold text-sky-100">{activeTokens} token aktif · {users.length} pengguna</p>
+              </div>
+            </div>
+          </section>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:grid-cols-8">
             <StatCard label="Pengajar"    value={counts.pengajar} tone="bg-sky-500" />
             <StatCard label="Murid"       value={counts.murid}    tone="bg-emerald-500" />
