@@ -2,11 +2,7 @@
 require_once __DIR__ . '/../../config/database.php';
 header('Content-Type: application/json; charset=utf-8');
 
-if (!isset($_SESSION['user']) || $_SESSION['user']['kategori'] !== 'pengajar') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'Akses ditolak']);
-    exit;
-}
+require_role_json(['pengajar', 'admin']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -26,6 +22,10 @@ $opsiC     = trim($_POST['opsi_c'] ?? '');
 $opsiD     = trim($_POST['opsi_d'] ?? '');
 $jawaban   = strtoupper(trim($_POST['jawaban_benar'] ?? ''));
 
+if (mb_strlen($pelajaran) > 255) {
+    $pelajaran = mb_substr($pelajaran, 0, 255);
+}
+
 if ($id <= 0 || $pelajaran === '' || $soal === '' || !in_array($tipe, ['benar_salah', 'pilihan_ganda'], true)
     || $opsiA === '' || $opsiB === '' || !in_array($jawaban, ['A', 'B', 'C', 'D'], true)) {
     http_response_code(400);
@@ -42,6 +42,8 @@ if ($tipe === 'benar_salah') {
         exit;
     }
 }
+
+$pdo->exec('ALTER TABLE quiz MODIFY pelajaran VARCHAR(255)');
 
 $stmt = $pdo->prepare('UPDATE quiz SET pelajaran = ?, soal = ?, tipe = ?, opsi_a = ?, opsi_b = ?, opsi_c = ?, opsi_d = ?, jawaban_benar = ? WHERE id = ?');
 $stmt->execute([$pelajaran, $soal, $tipe, $opsiA, $opsiB, $opsiC, $opsiD, $jawaban, $id]);

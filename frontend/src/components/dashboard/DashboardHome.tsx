@@ -9,11 +9,24 @@ export function DashboardHome({ user }: { user: User }) {
   const [stats, setStats] = useState<Stats>({ ebook: "-", tugas: "-", murid: "-", quiz: "-" });
 
   useEffect(() => {
-    readJson<Stats | { error: string }>(`${PHP_BASE}/backend/data/stats`)
+    let mounted = true;
+    const loadStats = () => readJson<Stats | { error: string }>(`${PHP_BASE}/backend/data/stats?ts=${Date.now()}`)
       .then((payload) => {
-        if (!("error" in payload)) setStats(payload);
+        if (mounted && !("error" in payload)) setStats(payload);
       })
       .catch(() => undefined);
+    loadStats();
+    const onFocus = () => loadStats();
+    const onVisible = () => { if (!document.hidden) loadStats(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    const timer = window.setInterval(loadStats, 30_000);
+    return () => {
+      mounted = false;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.clearInterval(timer);
+    };
   }, []);
 
   const statCards = [

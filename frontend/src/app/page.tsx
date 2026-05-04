@@ -106,7 +106,8 @@ export default function Home() {
   }, []);
 
   const visibleNav = useMemo(() => (user ? navFor(user.kategori) : []), [user]);
-  const effectiveActivePage = user && !visibleNav.includes(activePage) ? visibleNav[0] ?? "dashboard" : activePage;
+  const allowedPages = useMemo(() => (user ? [...visibleNav, "profil" as PageKey] : visibleNav), [user, visibleNav]);
+  const effectiveActivePage = user && !allowedPages.includes(activePage) ? visibleNav[0] ?? "dashboard" : activePage;
 
   async function logout() {
     if (loggingOut) return;

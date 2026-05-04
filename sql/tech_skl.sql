@@ -78,7 +78,7 @@ CREATE TABLE bank_tugas (
 -- Tabel quiz
 CREATE TABLE quiz (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    pelajaran VARCHAR(50),
+    pelajaran VARCHAR(255),
     soal TEXT,
     tipe ENUM('benar_salah','pilihan_ganda'),
     opsi_a VARCHAR(255),

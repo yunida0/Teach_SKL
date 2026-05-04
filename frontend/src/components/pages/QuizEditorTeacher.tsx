@@ -25,6 +25,8 @@ const defaultMeta: Omit<QuizMeta, "cleanTitle"> = {
   showResult: true,
 };
 
+const MAX_SUBJECT_LENGTH = 255;
+
 function encodeMetaValue(value: string) {
   return value.replace(/[|\]\\]/g, " ").trim();
 }
@@ -68,7 +70,9 @@ export function formatSubject(meta: Omit<QuizMeta, "cleanTitle">, title: string)
     `shuffle=${meta.shuffle ? "1" : "0"}`,
     `result=${meta.showResult ? "1" : "0"}`,
   ].filter(Boolean).join("|");
-  return `[${meta.type.toUpperCase()}|${params}] ${title.trim()}`;
+  const prefix = `[${meta.type.toUpperCase()}|${params}] `;
+  const titleLimit = Math.max(1, MAX_SUBJECT_LENGTH - prefix.length);
+  return `${prefix}${title.trim().slice(0, titleLimit)}`;
 }
 
 function formatDeadline(deadline: string) {

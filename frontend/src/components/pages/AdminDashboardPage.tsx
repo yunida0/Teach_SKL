@@ -47,10 +47,11 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
 
   /* ── fetch ───────────────────────────────────────────────────── */
   function refreshAdminData() {
-    readJson<Stats>(`${PHP_BASE}/backend/data/stats`).then(setStats).catch(() => undefined);
-    readJson<AdminUser[]>(`${PHP_BASE}/backend/data/admin-users`).then(setUsers).catch(() => setUsers([]));
-    readJson<TeacherToken[]>(`${PHP_BASE}/backend/data/admin-tokens`).then(setTokens).catch(() => setTokens([]));
-    readJson<AdminActivity[]>(`${PHP_BASE}/backend/data/admin-activity`).then(setActivity).catch(() => setActivity([]));
+    const stamp = Date.now();
+    readJson<Stats>(`${PHP_BASE}/backend/data/stats?ts=${stamp}`).then(setStats).catch(() => undefined);
+    readJson<AdminUser[]>(`${PHP_BASE}/backend/data/admin-users?ts=${stamp}`).then(setUsers).catch(() => setUsers([]));
+    readJson<TeacherToken[]>(`${PHP_BASE}/backend/data/admin-tokens?ts=${stamp}`).then(setTokens).catch(() => setTokens([]));
+    readJson<AdminActivity[]>(`${PHP_BASE}/backend/data/admin-activity?ts=${stamp}`).then(setActivity).catch(() => setActivity([]));
   }
 
   useEffect(() => { refreshAdminData(); }, []);
@@ -58,7 +59,7 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
   useEffect(() => {
     if (activeSection === "content" && !loadedRef.current.has("content")) {
       loadedRef.current.add("content");
-      readJson<AdminContent>(`${PHP_BASE}/backend/data/admin-content`).then(setContent).catch(() => setContent(null));
+      readJson<AdminContent>(`${PHP_BASE}/backend/data/admin-content?ts=${Date.now()}`).then(setContent).catch(() => setContent(null));
     }
     if (activeSection === "absensi" && !loadedRef.current.has("absensi")) {
       loadedRef.current.add("absensi");
