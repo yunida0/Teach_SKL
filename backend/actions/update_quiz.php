@@ -43,8 +43,6 @@ if ($tipe === 'benar_salah') {
     }
 }
 
-$pdo->exec('ALTER TABLE quiz MODIFY pelajaran VARCHAR(255)');
-
 $stmt = $pdo->prepare('UPDATE quiz SET pelajaran = ?, soal = ?, tipe = ?, opsi_a = ?, opsi_b = ?, opsi_c = ?, opsi_d = ?, jawaban_benar = ? WHERE id = ?');
 $stmt->execute([$pelajaran, $soal, $tipe, $opsiA, $opsiB, $opsiC, $opsiD, $jawaban, $id]);
 
