@@ -477,11 +477,24 @@ function QuizForm({
 
       <div>
         <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Jawaban Benar</label>
-        <select value={jawaban} onChange={e => setJawaban(e.target.value)} className="field cursor-pointer font-bold text-sky-900">
+        <div className="grid gap-2 sm:grid-cols-2">
           {keys.map(k => (
-            <option key={k} value={k}>Opsi {k}{opsiMap[k] ? ` — ${opsiMap[k]}` : ""}</option>
+            <button
+              key={k}
+              type="button"
+              onClick={() => setJawaban(k)}
+              className={`rounded-2xl border px-3 py-3 text-left transition-all ${jawaban === k ? 'border-emerald-200 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-100' : 'border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:bg-sky-50'}`}
+            >
+              <span className="flex items-start gap-2">
+                <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-xl text-xs font-black ${jawaban === k ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500'}`}>{k}</span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-black">Opsi {k}</span>
+                  <span className="mt-0.5 block truncate text-xs font-bold opacity-75">{opsiMap[k] || "Belum diisi"}</span>
+                </span>
+              </span>
+            </button>
           ))}
-        </select>
+        </div>
       </div>
 
       {msg && (
