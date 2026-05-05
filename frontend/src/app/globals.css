@@ -44,7 +44,7 @@ button:disabled {
 }
 
 .title-font {
-  font-family: var(--font-playfair), "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-family: var(--font-jakarta), "Plus Jakarta Sans", sans-serif;
 }
 
 .glass-card {
