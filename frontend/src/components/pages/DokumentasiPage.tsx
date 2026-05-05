@@ -219,7 +219,7 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
 
   const isPengajar = category === "pengajar";
 
-  if (category === "tamu") {
+  if (category === "tamu" || category === "murid") {
     return <GuestDocumentationCanvas />;
   }
 
