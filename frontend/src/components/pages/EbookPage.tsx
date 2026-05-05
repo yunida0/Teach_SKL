@@ -200,7 +200,7 @@ export function EbookPage({
   return (
     <section className="grid gap-5">
       {category !== "murid" && <button className="w-fit text-sm font-black text-sky-700 hover:underline" onClick={() => setActiveLevel(null)} type="button">← Semua tingkat</button>}
-      <div className="grid items-start gap-6 xl:grid-cols-[0.8fr_1.2fr]">
+      <div className={`grid items-start gap-6 ${isPengajar ? "xl:grid-cols-[0.8fr_1.2fr]" : ""}`}>
       {isPengajar && (
         <form className="glass-card grid gap-3 rounded-[1.5rem] p-4 md:rounded-[2rem] md:p-6" onSubmit={upload}>
           <div>
@@ -234,7 +234,7 @@ export function EbookPage({
           </button>
         </form>
       )}
-      <div className="grid content-start gap-4 sm:grid-cols-2 xl:grid-cols-2">
+      <div className={`grid content-start gap-4 sm:grid-cols-2 ${isPengajar ? "" : "lg:grid-cols-3"}`}>
         {visibleItems.map((item) => {
           const tags = parseTags(item.tags);
           return (
