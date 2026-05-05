@@ -15,13 +15,25 @@ if ($isPengajar) {
 
 if ($isMurid) {
     $muridId = (int) $_SESSION['user']['id'];
-    $stmt = $pdo->prepare("SELECT q.id, q.pelajaran, q.soal, q.tipe, q.opsi_a, q.opsi_b, q.opsi_c, q.opsi_d,
-        CASE WHEN nq.id IS NULL THEN 0 ELSE 1 END AS sudah_dikerjakan,
-        nq.nilai
-        FROM quiz q
-        LEFT JOIN nilai_quiz nq ON nq.quiz_id = q.id AND nq.murid_id = ?
-        ORDER BY q.pelajaran ASC, q.id DESC");
-    $stmt->execute([$muridId]);
+    $tingkat = trim($_SESSION['detail']['tingkat'] ?? $_SESSION['user']['tingkat'] ?? '');
+    if ($tingkat !== '') {
+        $stmt = $pdo->prepare("SELECT q.id, q.pelajaran, q.soal, q.tipe, q.opsi_a, q.opsi_b, q.opsi_c, q.opsi_d,
+            CASE WHEN nq.id IS NULL THEN 0 ELSE 1 END AS sudah_dikerjakan,
+            nq.nilai
+            FROM quiz q
+            LEFT JOIN nilai_quiz nq ON nq.quiz_id = q.id AND nq.murid_id = ?
+            WHERE q.tingkat = ? OR q.tingkat = '' OR q.tingkat IS NULL OR q.tingkat = 'Umum'
+            ORDER BY q.pelajaran ASC, q.id DESC");
+        $stmt->execute([$muridId, $tingkat]);
+    } else {
+        $stmt = $pdo->prepare("SELECT q.id, q.pelajaran, q.soal, q.tipe, q.opsi_a, q.opsi_b, q.opsi_c, q.opsi_d,
+            CASE WHEN nq.id IS NULL THEN 0 ELSE 1 END AS sudah_dikerjakan,
+            nq.nilai
+            FROM quiz q
+            LEFT JOIN nilai_quiz nq ON nq.quiz_id = q.id AND nq.murid_id = ?
+            ORDER BY q.pelajaran ASC, q.id DESC");
+        $stmt->execute([$muridId]);
+    }
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     exit;
 }

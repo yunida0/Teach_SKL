@@ -384,6 +384,7 @@ function QuizForm({
 }) {
   const [soal, setSoal]         = useState(quiz?.soal ?? "");
   const [tipe, setTipe]         = useState(quiz?.tipe ?? "pilihan_ganda");
+  const [tingkat, setTingkat]   = useState("SD");
   const [poin, setPoin]         = useState("10");
   const [opsiA, setOpsiA]       = useState(quiz?.opsi_a ?? "");
   const [opsiB, setOpsiB]       = useState(quiz?.opsi_b ?? "");
@@ -410,6 +411,7 @@ function QuizForm({
     fd.set("opsi_c", tipe === "pilihan_ganda" ? opsiC : "");
     fd.set("opsi_d", tipe === "pilihan_ganda" ? opsiD : "");
     fd.set("jawaban_benar", jawaban);
+    fd.set("tingkat", tingkat);
     if (!isNew) fd.set("id", String(quiz!.id));
     const url = isNew ? `${PHP_BASE}/backend/actions/tambah_quiz.php` : `${PHP_BASE}/backend/actions/update_quiz.php`;
     try {
@@ -456,9 +458,17 @@ function QuizForm({
         </div>
       </div>
 
-      <div>
-        <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Poin</label>
-        <input type="number" value={poin} onChange={e => setPoin(e.target.value)} min="1" className="field w-24" />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Poin</label>
+          <input type="number" value={poin} onChange={e => setPoin(e.target.value)} min="1" className="field w-24" />
+        </div>
+        <div>
+          <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Tingkat</label>
+          <select value={tingkat} onChange={e => setTingkat(e.target.value)} className="field">
+            {["TK", "SD", "SMP", "SMA", "Umum"].map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+        </div>
       </div>
 
       <div>

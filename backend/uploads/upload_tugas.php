@@ -16,6 +16,7 @@ $pelajaran = trim($_POST['pelajaran'] ?? '');
 $judul     = trim($_POST['judul_tugas'] ?? '');
 $deskripsi = trim($_POST['deskripsi'] ?? '');
 $deadline  = trim($_POST['deadline'] ?? '');
+$tingkat   = trim($_POST['tingkat'] ?? 'Umum');
 
 if ($pelajaran === '' || $judul === '' || $deskripsi === '' || $deadline === '') {
     http_response_code(400);
@@ -74,8 +75,16 @@ if (!empty($_FILES['file']['name'])) {
     }
 }
 
-$pdo->prepare('INSERT INTO bank_tugas (pelajaran, judul_tugas, deskripsi, file_path, deadline) VALUES (?, ?, ?, ?, ?)')
-    ->execute([$pelajaran, $judul, $deskripsi, $filePath, $deadline]);
+// Auto-add tingkat column if missing
+try {
+    $cols = $pdo->query('SHOW COLUMNS FROM bank_tugas')->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('tingkat', $cols)) {
+        $pdo->exec("ALTER TABLE bank_tugas ADD COLUMN tingkat VARCHAR(80) DEFAULT 'Umum' AFTER pelajaran");
+    }
+} catch (Exception $e) {}
+
+$pdo->prepare('INSERT INTO bank_tugas (pelajaran, judul_tugas, deskripsi, file_path, deadline, tingkat) VALUES (?, ?, ?, ?, ?, ?)')
+    ->execute([$pelajaran, $judul, $deskripsi, $filePath, $deadline, $tingkat]);
 
 echo json_encode(['success' => true]);
 ?>

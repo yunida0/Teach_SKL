@@ -20,6 +20,7 @@ $opsiB     = trim($_POST['opsi_b'] ?? '');
 $opsiC     = trim($_POST['opsi_c'] ?? '');
 $opsiD     = trim($_POST['opsi_d'] ?? '');
 $jawaban   = strtoupper(trim($_POST['jawaban_benar'] ?? ''));
+$tingkat   = trim($_POST['tingkat'] ?? 'Umum');
 
 if (mb_strlen($pelajaran) > 255) {
     $pelajaran = mb_substr($pelajaran, 0, 255);
@@ -42,8 +43,16 @@ if ($tipe === 'benar_salah') {
     }
 }
 
-$pdo->prepare('INSERT INTO quiz (pelajaran, soal, tipe, opsi_a, opsi_b, opsi_c, opsi_d, jawaban_benar) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-    ->execute([$pelajaran, $soal, $tipe, $opsiA, $opsiB, $opsiC, $opsiD, $jawaban]);
+// Auto-add tingkat column if missing
+try {
+    $cols = $pdo->query('SHOW COLUMNS FROM quiz')->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('tingkat', $cols)) {
+        $pdo->exec("ALTER TABLE quiz ADD COLUMN tingkat VARCHAR(80) DEFAULT 'Umum'");
+    }
+} catch (Exception $e) {}
+
+$pdo->prepare('INSERT INTO quiz (pelajaran, soal, tipe, opsi_a, opsi_b, opsi_c, opsi_d, jawaban_benar, tingkat) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    ->execute([$pelajaran, $soal, $tipe, $opsiA, $opsiB, $opsiC, $opsiD, $jawaban, $tingkat]);
 
 echo json_encode(['success' => true, 'message' => 'Quiz berhasil ditambahkan']);
 ?>

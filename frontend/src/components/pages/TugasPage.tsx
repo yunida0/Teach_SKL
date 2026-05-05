@@ -47,9 +47,14 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
         <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Form Tugas</p>
         <h2 className="title-font text-2xl font-black text-slate-950">Tambah Tugas</h2>
       </div>
-      <select className="field" name="pelajaran" required>
-        {subjects.map((s) => <option key={s}>{s}</option>)}
-      </select>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <select className="field" name="pelajaran" required>
+          {subjects.map((s) => <option key={s}>{s}</option>)}
+        </select>
+        <select className="field" name="tingkat" defaultValue="SD">
+          {["TK", "SD", "SMP", "SMA", "Umum"].map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
       <input className="field" maxLength={200} name="judul_tugas" placeholder="Judul tugas" required />
       <textarea className="field min-h-[80px] resize-y" name="deskripsi" placeholder="Deskripsi tugas..." required />
       <div>
