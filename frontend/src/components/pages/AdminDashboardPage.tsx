@@ -255,9 +255,9 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
             <StatCard label="Bank Tugas"  value={stats.tugas}     tone="bg-rose-400" />
             <StatCard label="Token Aktif" value={activeTokens}    tone="bg-indigo-500" />
           </div>
+          <LogoSettingsPanel csrfToken={csrfToken} />
           <div className="grid gap-6 xl:grid-cols-[1fr_0.7fr]">
             <ActivityPanel activity={activity.slice(0, 6)} />
-            <div className="grid gap-6 content-start">
             <Panel title="Quick Actions" caption="Pintasan ke operasi admin yang sering digunakan.">
               <div className="grid gap-3">
                 <QuickAction title="Buat akun baru"     text="Admin, pengajar, murid, atau tamu."           onClick={() => onSectionChange("create")} />
@@ -268,8 +268,6 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
                 <QuickAction title="Laporan &amp; nilai" text="Top scorer, raport, dan ulasan tamu."        onClick={() => onSectionChange("laporan")} />
               </div>
             </Panel>
-            <LogoSettingsPanel csrfToken={csrfToken} />
-            </div>
           </div>
             </div>
           )}
