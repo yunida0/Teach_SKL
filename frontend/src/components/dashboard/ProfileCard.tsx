@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { Detail, User } from "@/types";
 import { PHP_BASE, readJson, uploadWithProgress } from "@/lib/api";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 type SaveResponse = {
   success: boolean;
@@ -303,15 +304,7 @@ export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
             {user.kategori === "murid" && (
               <>
                 <Field label="Tingkat">
-                  <select
-                    className="profile-input"
-                    onChange={(e) => setTingkat(e.target.value)}
-                    value={tingkat}
-                  >
-                    {["TK", "SD", "SMP", "SMA"].map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
+                  <CustomSelect value={tingkat} onChange={setTingkat} options={["TK","SD","SMP","SMA"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
                 </Field>
                 <Field label="Umur">
                   <input

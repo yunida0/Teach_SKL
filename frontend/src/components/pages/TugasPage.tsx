@@ -7,6 +7,7 @@ import { subjects } from "@/lib/utils";
 import { ListCard } from "@/components/ui/ListCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AppDialog } from "@/components/ui/AppDialog";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 function MapelInput({ name, defaultValue = "" }: { name: string; defaultValue?: string }) {
   const [value, setValue] = useState(defaultValue);
@@ -85,9 +86,7 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <MapelInput name="pelajaran" />
-        <select className="field" name="tingkat" defaultValue="SD">
-          {["TK", "SD", "SMP", "SMA", "Umum"].map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
+        <CustomSelect name="tingkat" defaultValue="SD" options={["TK","SD","SMP","SMA","Umum"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
       </div>
       <input className="field" maxLength={200} name="judul_tugas" placeholder="Judul tugas" required />
       <textarea className="field min-h-[80px] resize-y" name="deskripsi" placeholder="Deskripsi tugas..." required />

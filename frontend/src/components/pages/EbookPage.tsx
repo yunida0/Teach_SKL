@@ -6,6 +6,7 @@ import { PHP_BASE, readJson, uploadWithProgress } from "@/lib/api";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AppDialog } from "@/components/ui/AppDialog";
 import { MateriReader } from "@/components/ui/MateriReader";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 function MapelInput({ name, subjects: list, defaultValue = "" }: { name: string; subjects: string[]; defaultValue?: string }) {
   const [value, setValue] = useState(defaultValue);
@@ -248,9 +249,7 @@ export function EbookPage({
           <textarea className="field min-h-28 resize-y" maxLength={1200} name="deskripsi" placeholder="Deskripsi singkat materi, ringkasan isi, atau instruksi belajar" />
           <textarea className="field min-h-24 resize-y" maxLength={800} name="tujuan_pembelajaran" placeholder="Tujuan pembelajaran, contoh: Setelah membaca, murid mampu memahami..." />
           <div className="grid gap-3 sm:grid-cols-2">
-            <select className="field" name="tingkat" defaultValue={currentLevel}>
-              {levelPages.map((level) => <option key={level}>{level}</option>)}
-            </select>
+          <CustomSelect name="tingkat" defaultValue={currentLevel} options={levelPages.map(l => ({ value: l, label: l }))} placeholder="Tingkat" />
             <input className="field" min="0" name="estimasi_menit" placeholder="Estimasi menit" type="number" />
           </div>
           <input className="field" maxLength={200} name="tags" placeholder="Tag: rangkuman, latihan, teori" />
@@ -329,14 +328,12 @@ export function EbookPage({
             <h3 className="m-0 text-xl font-black text-slate-950">Edit Detail Materi</h3>
             <p className="mt-1 mb-5 text-sm font-semibold text-slate-500">File tidak berubah, hanya informasi materi yang diperbarui.</p>
             <div className="grid gap-3">
-              <select className="field" name="pelajaran" defaultValue={currentSubjects.includes(editing.pelajaran ?? "") ? editing.pelajaran : currentSubjects[0]} required>{currentSubjects.map((subject) => <option key={subject}>{subject}</option>)}</select>
+              <MapelInput name="pelajaran" subjects={currentSubjects} defaultValue={currentSubjects.includes(editing.pelajaran ?? "") ? editing.pelajaran! : currentSubjects[0]} />
               <input className="field" maxLength={200} name="judul_materi" defaultValue={editing.judul_materi ?? ""} placeholder="Judul materi" required />
               <textarea className="field min-h-28 resize-y" maxLength={1200} name="deskripsi" defaultValue={editing.deskripsi ?? ""} placeholder="Deskripsi materi" />
               <textarea className="field min-h-24 resize-y" maxLength={800} name="tujuan_pembelajaran" defaultValue={editing.tujuan_pembelajaran ?? ""} placeholder="Tujuan pembelajaran" />
               <div className="grid gap-3 sm:grid-cols-2">
-                <select className="field" name="tingkat" defaultValue={levelOf(editing) ?? currentLevel ?? "SD"}>
-                  {levelPages.map((level) => <option key={level}>{level}</option>)}
-                </select>
+                <CustomSelect name="tingkat" defaultValue={levelOf(editing) ?? currentLevel ?? "SD"} options={levelPages.map(l => ({ value: l, label: l }))} placeholder="Tingkat" />
                 <input className="field" min="0" name="estimasi_menit" defaultValue={editing.estimasi_menit ?? 0} placeholder="Estimasi menit" type="number" />
               </div>
               <input className="field" maxLength={200} name="tags" defaultValue={editing.tags ?? ""} placeholder="Tag: rangkuman, latihan, teori" />

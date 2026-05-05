@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { Category, MuridListItem, RaportItem } from "@/types";
 import { PHP_BASE, readJson } from "@/lib/api";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
@@ -104,12 +105,7 @@ function InputRaportForm({ csrfToken, onSaved }: { csrfToken: string; onSaved: (
         <h2 className="title-font text-2xl font-black text-slate-950 md:text-3xl">Input Raport</h2>
       </div>
       <div className="grid gap-3">
-      <select className="field" name="murid_id" required>
-        <option value="">-- Pilih murid --</option>
-        {murids.map((m) => (
-          <option key={m.id} value={m.id}>{m.nama ?? `Murid #${m.id}`} — {m.tingkat ?? "-"}</option>
-        ))}
-      </select>
+      <CustomSelect name="murid_id" required options={murids.map(m => ({ value: String(m.id), label: `${m.nama ?? `Murid #${m.id}`} — ${m.tingkat ?? "-"}` }))} placeholder="-- Pilih murid --" />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Tahun</label>
@@ -117,9 +113,7 @@ function InputRaportForm({ csrfToken, onSaved }: { csrfToken: string; onSaved: (
         </div>
         <div>
           <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Bulan</label>
-          <select className="field" defaultValue={new Date().getMonth() + 1} name="bulan" required>
-            {monthNames.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
-          </select>
+          <CustomSelect name="bulan" defaultValue={String(new Date().getMonth() + 1)} required options={monthNames.map((m, i) => ({ value: String(i + 1), label: m }))} placeholder="Bulan" />
         </div>
       </div>
       <p className="text-xs font-bold text-slate-400">Nilai mingguan (0–100 masing-masing):</p>

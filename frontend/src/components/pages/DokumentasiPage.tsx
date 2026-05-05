@@ -5,6 +5,7 @@ import type { Category, DokumentasiItem } from "@/types";
 import { PHP_BASE, readJson, uploadWithProgress } from "@/lib/api";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AppDialog } from "@/components/ui/AppDialog";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 const drivePhotos = [
   { id: "1OIxeDLxPxzDaS5ViLAAinXx9Ls52Uj4_", title: "Kegiatan Belajar 01" },
@@ -179,10 +180,7 @@ function UploadDokumentasiForm({ csrfToken, onUploaded }: { csrfToken: string; o
         <h2 className="title-font text-2xl font-black text-slate-950">Tambah Dokumentasi</h2>
       </div>
       <input className="field" maxLength={200} name="judul" placeholder="Judul dokumentasi" required />
-      <select className="field" name="tipe" onChange={(e) => setTipe(e.target.value)} value={tipe}>
-        <option value="foto">Foto</option>
-        <option value="video">Video</option>
-      </select>
+      <CustomSelect name="tipe" value={tipe} onChange={setTipe} options={[{ value: "foto", label: "Foto" }, { value: "video", label: "Video" }]} placeholder="Tipe" />
       <input className="field" defaultValue={thisYear} max={thisYear + 5} min={2000} name="tahun" required type="number" />
       <input
         accept={tipe === "foto" ? ".jpg,.jpeg,.png,.webp" : ".mp4,.webm,.mov"}
