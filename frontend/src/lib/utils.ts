@@ -1,6 +1,6 @@
 import type { AdminSection, Category, PageKey } from "@/types";
 
-export const subjects = ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "PKWU"];
+export const subjects = ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "PKWU", "Literasi Awal", "Seni Budaya", "Pendidikan Agama", "PJOK", "Lainnya"];
 
 export const pageLabels: Record<PageKey, string> = {
   dashboard: "Dashboard",

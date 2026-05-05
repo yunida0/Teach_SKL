@@ -207,11 +207,12 @@ export function EbookPage({
             <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-3xl">Upload Materi</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">Isi detail materi sebelum upload file.</p>
           </div>
-          <select className="field" name="pelajaran" required>
-            {currentSubjects.map((subject) => (
-              <option key={subject}>{subject}</option>
-            ))}
-          </select>
+          <div>
+            <input className="field" list="mapel-ebook-list" name="pelajaran" placeholder="Ketik atau pilih mapel" required />
+            <datalist id="mapel-ebook-list">
+              {currentSubjects.map((subject) => <option key={subject} value={subject} />)}
+            </datalist>
+          </div>
           <input className="field" maxLength={200} name="judul_materi" placeholder="Judul materi" required />
           <textarea className="field min-h-28 resize-y" maxLength={1200} name="deskripsi" placeholder="Deskripsi singkat materi, ringkasan isi, atau instruksi belajar" />
           <textarea className="field min-h-24 resize-y" maxLength={800} name="tujuan_pembelajaran" placeholder="Tujuan pembelajaran, contoh: Setelah membaca, murid mampu memahami..." />

@@ -48,9 +48,12 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
         <h2 className="title-font text-2xl font-black text-slate-950">Tambah Tugas</h2>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <select className="field" name="pelajaran" required>
-          {subjects.map((s) => <option key={s}>{s}</option>)}
-        </select>
+        <div>
+          <input className="field" list="mapel-tugas-list" name="pelajaran" placeholder="Ketik atau pilih mapel" required />
+          <datalist id="mapel-tugas-list">
+            {subjects.map((s) => <option key={s} value={s} />)}
+          </datalist>
+        </div>
         <select className="field" name="tingkat" defaultValue="SD">
           {["TK", "SD", "SMP", "SMA", "Umum"].map((t) => <option key={t} value={t}>{t}</option>)}
         </select>
