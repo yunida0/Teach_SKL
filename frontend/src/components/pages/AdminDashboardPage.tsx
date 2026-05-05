@@ -8,6 +8,7 @@ import type {
 import { PHP_BASE, readJson } from "@/lib/api";
 import { greeting } from "@/lib/utils";
 import { AppDialog } from "@/components/ui/AppDialog";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 type MsgState = { type: "ok" | "err"; text: string } | null;
 type CreateUserResponse = { success: boolean; error?: string; user?: AdminUser };
@@ -302,12 +303,7 @@ function CreateUserPanel({ createRole, creatingUser, message, onRoleChange, onSu
           <input className="field" name="nama"     placeholder="Nama lengkap" required />
           <input className="field" name="username" placeholder="Username"     required />
           <input className="field" name="password" placeholder="Password awal" type="password" minLength={6} required />
-          <select className="field" value={createRole} onChange={(e) => onRoleChange(e.target.value as Category)}>
-            <option value="murid">Murid</option>
-            <option value="pengajar">Pengajar</option>
-            <option value="tamu">Tamu</option>
-            <option value="admin">Admin</option>
-          </select>
+          <CustomSelect value={createRole} onChange={(v) => onRoleChange(v as Category)} options={[{value:"murid",label:"Murid"},{value:"pengajar",label:"Pengajar"},{value:"tamu",label:"Tamu"},{value:"admin",label:"Admin"}]} placeholder="Role" />
         </div>
         {createRole === "pengajar" && (
           <div className="grid gap-3 md:grid-cols-2">
@@ -319,10 +315,7 @@ function CreateUserPanel({ createRole, creatingUser, message, onRoleChange, onSu
         )}
         {createRole === "murid" && (
           <div className="grid gap-3 md:grid-cols-3">
-            <select className="field" name="tingkat" defaultValue="SD">
-              <option value="TK">TK</option><option value="SD">SD</option>
-              <option value="SMP">SMP</option>
-            </select>
+            <CustomSelect name="tingkat" defaultValue="SD" options={[{value:"TK",label:"TK"},{value:"SD",label:"SD"},{value:"SMP",label:"SMP"}]} placeholder="Tingkat" />
             <input className="field" name="umur"   placeholder="Umur" type="number" min={1} />
             <input className="field" name="alamat" placeholder="Alamat" />
           </div>
@@ -625,10 +618,7 @@ function EditUserModal({ onClose, onSubmit, user }: {
         </div>
         <div className="grid gap-3 md:grid-cols-2">
           <input className="field" name="nama" defaultValue={user.nama} placeholder="Nama" required />
-          <select className="field" name="kategori" value={role} onChange={(e) => setRole(e.target.value as Category)}>
-            <option value="murid">Murid</option><option value="pengajar">Pengajar</option>
-            <option value="tamu">Tamu</option><option value="admin">Admin</option>
-          </select>
+          <CustomSelect name="kategori" value={role} onChange={(v) => setRole(v as Category)} options={[{value:"murid",label:"Murid"},{value:"pengajar",label:"Pengajar"},{value:"tamu",label:"Tamu"},{value:"admin",label:"Admin"}]} placeholder="Role" />
         </div>
         {role === "pengajar" && (
           <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -640,10 +630,7 @@ function EditUserModal({ onClose, onSubmit, user }: {
         )}
         {role === "murid" && (
           <div className="mt-3 grid gap-3 md:grid-cols-3">
-            <select className="field" name="tingkat" defaultValue={user.tingkat ?? "SD"}>
-              <option value="TK">TK</option><option value="SD">SD</option>
-              <option value="SMP">SMP</option>
-            </select>
+            <CustomSelect name="tingkat" defaultValue={user.tingkat ?? "SD"} options={[{value:"TK",label:"TK"},{value:"SD",label:"SD"},{value:"SMP",label:"SMP"}]} placeholder="Tingkat" />
             <input className="field" name="umur"   defaultValue={user.umur}   placeholder="Umur" type="number" />
             <input className="field" name="alamat" defaultValue={user.alamat} placeholder="Alamat" />
           </div>

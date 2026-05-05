@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { AuthResponse, Detail, User } from "@/types";
 import { API_AUTH, readJson } from "@/lib/api";
+import { CustomSelect } from "@/components/ui/CustomSelect";
 
 type AuthMode = "login" | "register";
 
@@ -211,22 +212,14 @@ export function AuthPage({
                   <label className="auth-label" htmlFor="auth-kategori">
                     Kategori
                   </label>
-                  <select
-                    className="af-input"
-                    id="auth-kategori"
+                  <CustomSelect
                     name="kategori"
-                    required
                     value={kategori}
-                    onChange={(e) => setKategori(e.target.value)}
-                    style={{ color: kategori ? "#184454" : "#88AAB5" }}
-                  >
-                    <option value="" disabled>
-                      Pilih kategori
-                    </option>
-                    <option value="pengajar">Pengajar</option>
-                    <option value="murid">Murid</option>
-                    <option value="tamu">Tamu</option>
-                  </select>
+                    onChange={setKategori}
+                    required
+                    options={[{value:"pengajar",label:"Pengajar"},{value:"murid",label:"Murid"},{value:"tamu",label:"Tamu"}]}
+                    placeholder="Pilih kategori"
+                  />
                 </div>
 
                 {kategori === "pengajar" && (
@@ -268,16 +261,12 @@ export function AuthPage({
                       <label className="auth-label" htmlFor="auth-tingkat">
                         Tingkat
                       </label>
-                      <select className="af-input" id="auth-tingkat" name="tingkat" defaultValue="" required>
-                        <option value="" disabled>
-                          Pilih tingkat
-                        </option>
-                        {["TK", "SD", "SMP"].map((level) => (
-                          <option key={level} value={level}>
-                            {level}
-                          </option>
-                        ))}
-                      </select>
+                      <CustomSelect
+                        name="tingkat"
+                        required
+                        options={[{value:"TK",label:"TK"},{value:"SD",label:"SD"},{value:"SMP",label:"SMP"}]}
+                        placeholder="Pilih tingkat"
+                      />
                     </div>
                     <div className="auth-field">
                       <label className="auth-label" htmlFor="auth-umur">
