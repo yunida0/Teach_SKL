@@ -198,7 +198,7 @@ function MuridSelfAbsensi({ csrfToken, onSaved }: { csrfToken: string; onSaved: 
         <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Absensi Hari Ini</p>
         <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">Absen Mandiri</h2>
         <p className="mt-2 text-sm font-semibold text-slate-500">
-          Pilih status kehadiran lalu tekan tombol absen. Untuk status <strong>Hadir</strong>, lokasi GPS akan diminta sebagai verifikasi (radius 200m dari sekolah).
+          Pilih status kehadiran lalu tekan tombol absen. Untuk status <strong>Hadir</strong>, lokasi GPS akan direkam sebagai bukti kehadiran.
         </p>
       </div>
 
@@ -226,7 +226,7 @@ function MuridSelfAbsensi({ csrfToken, onSaved }: { csrfToken: string; onSaved: 
 
       {status === "hadir" && (
         <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
-          <span className="font-black">📍 Verifikasi Lokasi:</span> GPS akan diminta saat kamu tekan Absen. Pastikan kamu berada di area sekolah (maks 200m).
+          <span className="font-black">📍 Rekam Lokasi:</span> GPS akan diminta saat kamu tekan Absen untuk merekam posisi kehadiranmu.
           {locStatus === "loading" && <span className="ml-2 animate-pulse">Mengambil lokasi...</span>}
           {locStatus === "denied" && <span className="ml-2 text-rose-600">Akses lokasi ditolak. Aktifkan GPS dan izinkan akses.</span>}
         </div>

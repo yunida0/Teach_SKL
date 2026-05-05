@@ -10,11 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 csrf_verify();
 
-// Koordinat sekolah (default sementara — ganti dengan koordinat asli)
-define('SCHOOL_LAT', -7.7956);
-define('SCHOOL_LNG', 110.3695);
-define('MAX_RADIUS_METERS', 200);
-
 $muridId = (int) $_SESSION['user']['id'];
 $lat = isset($_POST['lat']) ? (float) $_POST['lat'] : null;
 $lng = isset($_POST['lng']) ? (float) $_POST['lng'] : null;
@@ -27,31 +22,11 @@ if (!in_array($status, ['hadir', 'izin', 'sakit'], true)) {
     exit;
 }
 
-// Untuk status hadir, wajib ada koordinat dan dalam radius
+// Untuk status hadir, wajib ada koordinat (rekam lokasi saja, tanpa validasi radius)
 if ($status === 'hadir') {
     if ($lat === null || $lng === null || $lat == 0 || $lng == 0) {
         http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Izinkan akses lokasi untuk absen hadir']);
-        exit;
-    }
-
-    // Haversine formula
-    $earthRadius = 6371000; // meter
-    $dLat = deg2rad($lat - SCHOOL_LAT);
-    $dLng = deg2rad($lng - SCHOOL_LNG);
-    $a = sin($dLat / 2) * sin($dLat / 2) +
-         cos(deg2rad(SCHOOL_LAT)) * cos(deg2rad($lat)) *
-         sin($dLng / 2) * sin($dLng / 2);
-    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-    $distance = $earthRadius * $c;
-
-    if ($distance > MAX_RADIUS_METERS) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Kamu terlalu jauh dari sekolah (' . round($distance) . 'm). Maksimal ' . MAX_RADIUS_METERS . 'm.',
-            'distance' => round($distance),
-        ]);
         exit;
     }
 }
