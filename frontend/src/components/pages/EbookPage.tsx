@@ -7,6 +7,42 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { AppDialog } from "@/components/ui/AppDialog";
 import { MateriReader } from "@/components/ui/MateriReader";
 
+function MapelInput({ name, subjects: list, defaultValue = "" }: { name: string; subjects: string[]; defaultValue?: string }) {
+  const [value, setValue] = useState(defaultValue);
+  const [open, setOpen] = useState(false);
+  const filtered = list.filter((s) => s.toLowerCase().includes(value.toLowerCase()));
+
+  return (
+    <div className="relative">
+      <input
+        className="field"
+        name={name}
+        value={value}
+        onChange={(e) => { setValue(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        placeholder="Ketik atau pilih mapel"
+        required
+        autoComplete="off"
+      />
+      {open && filtered.length > 0 && (
+        <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-2xl border border-sky-100 bg-white shadow-xl">
+          {filtered.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className="w-full px-4 py-2.5 text-left text-sm font-bold text-slate-700 transition hover:bg-sky-50 hover:text-sky-800"
+              onMouseDown={(e) => { e.preventDefault(); setValue(s); setOpen(false); }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+      {open && <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />}
+    </div>
+  );
+}
+
 function formatEstimasi(value?: number | string) {
   const minutes = Number(value ?? 0);
   if (!minutes) return "Fleksibel";
@@ -207,12 +243,7 @@ export function EbookPage({
             <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-3xl">Upload Materi</h2>
             <p className="mt-1 text-sm font-semibold text-slate-500">Isi detail materi sebelum upload file.</p>
           </div>
-          <div>
-            <input className="field" list="mapel-ebook-list" name="pelajaran" placeholder="Ketik atau pilih mapel" required />
-            <datalist id="mapel-ebook-list">
-              {currentSubjects.map((subject) => <option key={subject} value={subject} />)}
-            </datalist>
-          </div>
+          <MapelInput name="pelajaran" subjects={currentSubjects} />
           <input className="field" maxLength={200} name="judul_materi" placeholder="Judul materi" required />
           <textarea className="field min-h-28 resize-y" maxLength={1200} name="deskripsi" placeholder="Deskripsi singkat materi, ringkasan isi, atau instruksi belajar" />
           <textarea className="field min-h-24 resize-y" maxLength={800} name="tujuan_pembelajaran" placeholder="Tujuan pembelajaran, contoh: Setelah membaca, murid mampu memahami..." />
