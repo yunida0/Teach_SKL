@@ -234,7 +234,7 @@ export function EbookPage({
           </button>
         </form>
       )}
-      <div className="grid content-start gap-3">
+      <div className="grid content-start gap-4 sm:grid-cols-2 xl:grid-cols-2">
         {visibleItems.map((item) => {
           const tags = parseTags(item.tags);
           return (
