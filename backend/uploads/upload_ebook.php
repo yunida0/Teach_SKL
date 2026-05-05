@@ -58,10 +58,10 @@ $errors = collect_errors([
     validate_required($pelajaran, 'Pelajaran'),
     validate_required($judul, 'Judul materi'),
     validate_length($judul, 'Judul materi', 1, 200),
-    validate_length($deskripsi, 'Deskripsi', 0, 1200),
-    validate_length($tujuan, 'Tujuan pembelajaran', 0, 800),
+    validate_length($deskripsi, 'Deskripsi', 0, 5000),
+    validate_length($tujuan, 'Tujuan pembelajaran', 0, 5000),
     validate_length($tingkat, 'Tingkat', 1, 80),
-    validate_length($tagRaw, 'Tag', 0, 200),
+    validate_length($tagRaw, 'Tag', 0, 500),
     empty($_FILES['file']['name']) ? 'File wajib diupload' : null
 ]);
 
@@ -86,9 +86,12 @@ $allowedMimeTypes = [
     'application/vnd.ms-powerpoint',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip',
+    'application/x-zip-compressed',
+    'application/octet-stream',
 ];
-$maxFileSize = 25 * 1024 * 1024; // 25MB
+$maxFileSize = 100 * 1024 * 1024; // 100MB
 
 if (!isset($_FILES['file']) || ($_FILES['file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
     $uploadErrors = [
