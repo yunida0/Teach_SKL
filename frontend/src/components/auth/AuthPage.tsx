@@ -131,10 +131,18 @@ export function AuthPage({
       <section className="auth-shell" aria-labelledby="auth-title">
         <div className="auth-card">
           <div className="auth-card-brand">
-            <div className="auth-mark" aria-hidden="true" style={siteSettings.logo_path ? { padding: 0, overflow: 'hidden' } : undefined}>
+            <div
+              className="auth-mark"
+              aria-hidden="true"
+              style={siteSettings.logo_path ? { width: siteSettings.logo_size, height: siteSettings.logo_size, padding: 0, overflow: 'hidden' } : undefined}
+            >
               {siteSettings.logo_path ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={`${PHP_BASE}/${siteSettings.logo_path}`} alt="Logo" style={{ width: siteSettings.logo_size, height: siteSettings.logo_size, objectFit: 'contain' }} />
+                <img
+                  src={`${PHP_BASE}/${siteSettings.logo_path}`}
+                  alt="Logo"
+                  style={{ maxWidth: '100%', maxHeight: '100%', width: '100%', height: '100%', objectFit: 'contain', display: 'block', margin: 'auto' }}
+                />
               ) : "T"}
             </div>
             <div>

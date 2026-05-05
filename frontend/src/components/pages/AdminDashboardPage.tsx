@@ -794,7 +794,9 @@ function LogoSettingsPanel({ csrfToken }: { csrfToken: string }) {
         {logoPath && (
           <div className="flex items-center gap-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`${PHP_BASE}/${logoPath}`} alt="Logo" className="rounded-2xl border border-sky-100 bg-white object-contain p-2" style={{ width: logoSize, height: logoSize }} />
+            <div className="grid place-items-center rounded-2xl bg-sky-900 p-2 shadow-sm" style={{ width: logoSize, height: logoSize }}>
+              <img src={`${PHP_BASE}/${logoPath}`} alt="Logo" className="object-contain" style={{ maxWidth: '100%', maxHeight: '100%' }} />
+            </div>
             <p className="text-xs font-bold text-slate-500">Preview ({logoSize}px)</p>
           </div>
         )}
