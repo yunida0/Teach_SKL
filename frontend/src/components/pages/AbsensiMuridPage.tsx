@@ -15,6 +15,7 @@ const statusColor: Record<StatusLabel, string> = {
   alpha: "bg-rose-100 text-rose-800",
 };
 
+// ── Pengajar: input absensi batch ────────────────────────────────────────────
 function PengajarAbsensiForm({
   csrfToken,
   onSaved,
@@ -118,6 +119,138 @@ function PengajarAbsensiForm({
   );
 }
 
+// ── Murid: absensi mandiri dengan geolokasi ──────────────────────────────────
+function MuridSelfAbsensi({ csrfToken, onSaved }: { csrfToken: string; onSaved: () => void }) {
+  const [status, setStatus] = useState<"hadir" | "izin" | "sakit">("hadir");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [locStatus, setLocStatus] = useState<"idle" | "loading" | "granted" | "denied">("idle");
+
+  function getLocation(): Promise<{ lat: number; lng: number } | null> {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        setLocStatus("denied");
+        resolve(null);
+        return;
+      }
+      setLocStatus("loading");
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setLocStatus("granted");
+          resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        },
+        () => {
+          setLocStatus("denied");
+          resolve(null);
+        },
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      );
+    });
+  }
+
+  async function submit() {
+    setLoading(true);
+    setMsg("");
+
+    let lat: number | null = null;
+    let lng: number | null = null;
+
+    if (status === "hadir") {
+      const loc = await getLocation();
+      if (!loc) {
+        setMsg("Izinkan akses lokasi untuk absen hadir. Pastikan GPS aktif.");
+        setLoading(false);
+        return;
+      }
+      lat = loc.lat;
+      lng = loc.lng;
+    }
+
+    const data = new FormData();
+    data.set("csrf_token", csrfToken);
+    data.set("status", status);
+    if (lat !== null) data.set("lat", String(lat));
+    if (lng !== null) data.set("lng", String(lng));
+
+    try {
+      const res = await fetch(`${PHP_BASE}/backend/actions/absensi-mandiri-murid`, {
+        method: "POST",
+        body: data,
+        credentials: "include",
+      });
+      const json = await res.json();
+      if (json.success) {
+        setMsg(`Absensi "${status}" berhasil dicatat.`);
+        onSaved();
+      } else {
+        setMsg(json.error ?? "Gagal mencatat absensi.");
+      }
+    } catch {
+      setMsg("Tidak dapat menghubungi server.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="glass-card grid gap-5 rounded-[1.5rem] p-5 md:rounded-[2rem] md:p-7">
+      <div>
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Absensi Hari Ini</p>
+        <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">Absen Mandiri</h2>
+        <p className="mt-2 text-sm font-semibold text-slate-500">
+          Pilih status kehadiran lalu tekan tombol absen. Untuk status <strong>Hadir</strong>, lokasi GPS akan diminta sebagai verifikasi (radius 200m dari sekolah).
+        </p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        {(["hadir", "izin", "sakit"] as const).map((st) => (
+          <button
+            key={st}
+            type="button"
+            onClick={() => setStatus(st)}
+            className={`rounded-2xl border-2 px-4 py-4 text-center font-black transition-all ${
+              status === st
+                ? st === "hadir"
+                  ? "border-emerald-300 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-100"
+                  : st === "izin"
+                  ? "border-sky-300 bg-sky-50 text-sky-800 ring-2 ring-sky-100"
+                  : "border-amber-300 bg-amber-50 text-amber-800 ring-2 ring-amber-100"
+                : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+            }`}
+          >
+            <span className="block text-2xl">{st === "hadir" ? "✓" : st === "izin" ? "📋" : "🤒"}</span>
+            <span className="mt-2 block text-sm uppercase tracking-wide">{st}</span>
+          </button>
+        ))}
+      </div>
+
+      {status === "hadir" && (
+        <div className="rounded-2xl bg-emerald-50 p-4 text-sm font-bold text-emerald-800">
+          <span className="font-black">📍 Verifikasi Lokasi:</span> GPS akan diminta saat kamu tekan Absen. Pastikan kamu berada di area sekolah (maks 200m).
+          {locStatus === "loading" && <span className="ml-2 animate-pulse">Mengambil lokasi...</span>}
+          {locStatus === "denied" && <span className="ml-2 text-rose-600">Akses lokasi ditolak. Aktifkan GPS dan izinkan akses.</span>}
+        </div>
+      )}
+
+      {msg && (
+        <div className={`rounded-2xl p-4 text-sm font-black ${msg.includes("berhasil") ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+          {msg}
+        </div>
+      )}
+
+      <button
+        className="btn-primary px-6 py-4 text-base disabled:opacity-50"
+        disabled={loading}
+        onClick={submit}
+        type="button"
+      >
+        {loading ? "Memproses..." : `Absen ${status.charAt(0).toUpperCase() + status.slice(1)}`}
+      </button>
+    </div>
+  );
+}
+
+// ── Main Page ────────────────────────────────────────────────────────────────
 export function AbsensiMuridPage({ category, csrfToken }: { category: Category; csrfToken: string }) {
   const [records, setRecords] = useState<AbsensiRecord[]>([]);
   const [stats, setStats] = useState<AbsensiSaya["stats"] | null>(null);
@@ -142,6 +275,10 @@ export function AbsensiMuridPage({ category, csrfToken }: { category: Category; 
         <PengajarAbsensiForm csrfToken={csrfToken} onSaved={loadRecords} />
       )}
 
+      {category === "murid" && (
+        <MuridSelfAbsensi csrfToken={csrfToken} onSaved={loadRecords} />
+      )}
+
       {category === "murid" && stats && (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 md:gap-3">
           {statusLabels.map((st) => (
@@ -160,6 +297,9 @@ export function AbsensiMuridPage({ category, csrfToken }: { category: Category; 
       <div>
         {category === "pengajar" && (
           <h2 className="title-font mb-3 text-xl font-black text-slate-800">Riwayat Absensi Murid</h2>
+        )}
+        {category === "murid" && records.length > 0 && (
+          <h2 className="title-font mb-3 text-xl font-black text-slate-800">Riwayat Absensi</h2>
         )}
         <div className="grid gap-3">
           {records.map((record, i) => (
