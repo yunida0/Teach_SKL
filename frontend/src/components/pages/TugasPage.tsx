@@ -3,16 +3,17 @@
 import { FormEvent, useEffect, useState } from "react";
 import type { Category, PengumpulanTugas, Tugas } from "@/types";
 import { PHP_BASE, readJson, uploadWithProgress } from "@/lib/api";
-import { subjects } from "@/lib/utils";
+import { subjects, subjectsByLevel } from "@/lib/utils";
 import { ListCard } from "@/components/ui/ListCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AppDialog } from "@/components/ui/AppDialog";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
-function MapelInput({ name, defaultValue = "" }: { name: string; defaultValue?: string }) {
+function MapelInput({ name, defaultValue = "", subjectList }: { name: string; defaultValue?: string; subjectList?: string[] }) {
+  const list = subjectList ?? subjects;
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
-  const filtered = subjects.filter((s) => s.toLowerCase().includes(value.toLowerCase()));
+  const filtered = list.filter((s) => s.toLowerCase().includes(value.toLowerCase()));
 
   return (
     <div className="relative">
@@ -49,6 +50,8 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
   const [msg, setMsg]         = useState("");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [tingkat, setTingkat] = useState("SD");
+  const mapelList = subjectsByLevel[tingkat] ?? subjects;
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -85,8 +88,8 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
         <h2 className="title-font text-2xl font-black text-slate-950">Tambah Tugas</h2>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <MapelInput name="pelajaran" />
-        <CustomSelect name="tingkat" defaultValue="SD" options={["TK","SD","SMP"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
+        <CustomSelect name="tingkat" value={tingkat} onChange={setTingkat} options={["TK","SD","SMP"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
+        <MapelInput name="pelajaran" key={tingkat} subjectList={mapelList} />
       </div>
       <input className="field" maxLength={200} name="judul_tugas" placeholder="Judul tugas" required />
       <textarea className="field min-h-[80px] resize-y" name="deskripsi" placeholder="Deskripsi tugas..." required />

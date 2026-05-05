@@ -2,6 +2,12 @@ import type { AdminSection, Category, PageKey } from "@/types";
 
 export const subjects = ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "PKWU", "Literasi Awal", "Seni Budaya", "Pendidikan Agama", "PJOK", "Lainnya"];
 
+export const subjectsByLevel: Record<string, string[]> = {
+  TK: ["Literasi Awal", "Numerasi Awal", "Motorik", "Seni & Kreativitas", "Budi Pekerti"],
+  SD: ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "PKWU"],
+  SMP: ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "IPS", "PKWU", "Seni Budaya", "PJOK"],
+};
+
 export const pageLabels: Record<PageKey, string> = {
   dashboard: "Dashboard",
   profil: "Profil",
