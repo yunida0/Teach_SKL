@@ -167,7 +167,7 @@ if ($action === 'register') {
             $tingkat = $_POST['tingkat'] ?? '';
             $umur = isset($_POST['umur']) ? (int) $_POST['umur'] : null;
             $alamat = trim($_POST['alamat'] ?? '');
-            if (!in_array($tingkat, ['TK', 'SD', 'SMP', 'SMA'], true)) {
+            if (!in_array($tingkat, ['TK', 'SD', 'SMP'], true)) {
                 throw new RuntimeException('Tingkat murid wajib dipilih');
             }
             $stmt = $pdo->prepare('INSERT INTO murid (user_id, tingkat, umur, alamat) VALUES (?, ?, ?, ?)');

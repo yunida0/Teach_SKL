@@ -58,7 +58,7 @@ try {
 
     if ($kategori === 'murid') {
         $tingkat = $_POST['tingkat'] ?? 'SD';
-        if (!in_array($tingkat, ['TK', 'SD', 'SMP', 'SMA'], true)) $tingkat = 'SD';
+        if (!in_array($tingkat, ['TK', 'SD', 'SMP'], true)) $tingkat = 'SD';
         $umur = isset($_POST['umur']) && $_POST['umur'] !== '' ? (int) $_POST['umur'] : null;
         $alamat = trim($_POST['alamat'] ?? '');
         $stmt = $pdo->prepare('INSERT INTO murid (user_id, tingkat, umur, alamat) VALUES (?, ?, ?, ?)

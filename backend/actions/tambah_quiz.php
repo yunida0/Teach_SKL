@@ -20,7 +20,7 @@ $opsiB     = trim($_POST['opsi_b'] ?? '');
 $opsiC     = trim($_POST['opsi_c'] ?? '');
 $opsiD     = trim($_POST['opsi_d'] ?? '');
 $jawaban   = strtoupper(trim($_POST['jawaban_benar'] ?? ''));
-$tingkat   = trim($_POST['tingkat'] ?? 'Umum');
+$tingkat   = trim($_POST['tingkat'] ?? 'SD');
 
 if (mb_strlen($pelajaran) > 255) {
     $pelajaran = mb_substr($pelajaran, 0, 255);

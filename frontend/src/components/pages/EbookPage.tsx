@@ -125,7 +125,7 @@ export function EbookPage({
             {fileUrl && <a className="btn-primary inline-flex shrink-0 justify-center px-5 py-3 text-sm" download href={fileUrl}>Download Materi</a>}
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl bg-slate-50 p-4"><p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Level</p><p className="m-0 mt-1 text-sm font-black text-slate-800">{selected.tingkat || "Umum"}</p></div>
+            <div className="rounded-2xl bg-slate-50 p-4"><p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Level</p><p className="m-0 mt-1 text-sm font-black text-slate-800">{selected.tingkat || "SD"}</p></div>
             <div className="rounded-2xl bg-slate-50 p-4"><p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Estimasi</p><p className="m-0 mt-1 text-sm font-black text-slate-800">{formatEstimasi(selected.estimasi_menit)}</p></div>
             <div className="rounded-2xl bg-slate-50 p-4"><p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Upload</p><p className="m-0 mt-1 text-sm font-black text-slate-800">{selected.tanggal_upload ? new Date(selected.tanggal_upload).toLocaleDateString("id-ID") : "-"}</p></div>
           </div>
@@ -287,7 +287,7 @@ export function EbookPage({
                 <div className="grid gap-2 sm:grid-cols-3">
                   <div className="rounded-2xl bg-sky-50/80 p-3 ring-1 ring-sky-100">
                     <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-sky-500">Level</p>
-                    <p className="m-0 mt-1 text-sm font-black text-sky-950">{item.tingkat || "Umum"}</p>
+                    <p className="m-0 mt-1 text-sm font-black text-sky-950">{item.tingkat || "SD"}</p>
                   </div>
                   <div className="rounded-2xl bg-emerald-50/80 p-3 ring-1 ring-emerald-100">
                     <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-500">Estimasi</p>

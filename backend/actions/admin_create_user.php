@@ -53,7 +53,7 @@ try {
 
     if ($kategori === 'murid') {
         $tingkat = $_POST['tingkat'] ?? 'SD';
-        if (!in_array($tingkat, ['TK', 'SD', 'SMP', 'SMA'], true)) {
+        if (!in_array($tingkat, ['TK', 'SD', 'SMP'], true)) {
             $tingkat = 'SD';
         }
         $umur = isset($_POST['umur']) && $_POST['umur'] !== '' ? (int) $_POST['umur'] : null;

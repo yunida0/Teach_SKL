@@ -89,7 +89,7 @@ try {
         $umur = isset($_POST['umur']) ? (int) $_POST['umur'] : null;
         $alamat = trim($_POST['alamat'] ?? '');
 
-        $allowedTingkat = ['TK', 'SD', 'SMP', 'SMA'];
+        $allowedTingkat = ['TK', 'SD', 'SMP'];
         if (!in_array($tingkat, $allowedTingkat, true)) {
             throw new RuntimeException('Tingkat murid tidak valid');
         }

@@ -25,7 +25,7 @@ if ($nama === '' || $username === '' || $password === '') {
     die(json_encode(['success' => false, 'error' => 'Nama, username, dan password wajib diisi']));
 }
 
-if (!in_array($tingkat, ['TK', 'SD', 'SMP', 'SMA'], true)) {
+if (!in_array($tingkat, ['TK', 'SD', 'SMP'], true)) {
     http_response_code(400);
     die(json_encode(['success' => false, 'error' => 'Tingkat murid tidak valid']));
 }

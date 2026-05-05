@@ -304,7 +304,7 @@ export function ProfileCard({ csrfToken, detail, user, onUpdate }: Props) {
             {user.kategori === "murid" && (
               <>
                 <Field label="Tingkat">
-                  <CustomSelect value={tingkat} onChange={setTingkat} options={["TK","SD","SMP","SMA"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
+                  <CustomSelect value={tingkat} onChange={setTingkat} options={["TK","SD","SMP"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
                 </Field>
                 <Field label="Umur">
                   <input

@@ -272,7 +272,7 @@ export function AuthPage({
                         <option value="" disabled>
                           Pilih tingkat
                         </option>
-                        {["TK", "SD", "SMP", "SMA"].map((level) => (
+                        {["TK", "SD", "SMP"].map((level) => (
                           <option key={level} value={level}>
                             {level}
                           </option>

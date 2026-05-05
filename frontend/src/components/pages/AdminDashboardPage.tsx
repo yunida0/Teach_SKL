@@ -321,7 +321,7 @@ function CreateUserPanel({ createRole, creatingUser, message, onRoleChange, onSu
           <div className="grid gap-3 md:grid-cols-3">
             <select className="field" name="tingkat" defaultValue="SD">
               <option value="TK">TK</option><option value="SD">SD</option>
-              <option value="SMP">SMP</option><option value="SMA">SMA</option>
+              <option value="SMP">SMP</option>
             </select>
             <input className="field" name="umur"   placeholder="Umur" type="number" min={1} />
             <input className="field" name="alamat" placeholder="Alamat" />
@@ -642,7 +642,7 @@ function EditUserModal({ onClose, onSubmit, user }: {
           <div className="mt-3 grid gap-3 md:grid-cols-3">
             <select className="field" name="tingkat" defaultValue={user.tingkat ?? "SD"}>
               <option value="TK">TK</option><option value="SD">SD</option>
-              <option value="SMP">SMP</option><option value="SMA">SMA</option>
+              <option value="SMP">SMP</option>
             </select>
             <input className="field" name="umur"   defaultValue={user.umur}   placeholder="Umur" type="number" />
             <input className="field" name="alamat" defaultValue={user.alamat} placeholder="Alamat" />

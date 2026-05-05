@@ -86,7 +86,7 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <MapelInput name="pelajaran" />
-        <CustomSelect name="tingkat" defaultValue="SD" options={["TK","SD","SMP","SMA","Umum"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
+        <CustomSelect name="tingkat" defaultValue="SD" options={["TK","SD","SMP"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
       </div>
       <input className="field" maxLength={200} name="judul_tugas" placeholder="Judul tugas" required />
       <textarea className="field min-h-[80px] resize-y" name="deskripsi" placeholder="Deskripsi tugas..." required />

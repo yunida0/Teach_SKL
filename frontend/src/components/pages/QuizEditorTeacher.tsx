@@ -268,7 +268,7 @@ export function QuizHomeTable({
 
             <div className="mb-4">
               <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Tingkat</label>
-              <CustomSelect value={newTingkat} onChange={setNewTingkat} options={["TK","SD","SMP","SMA","Umum"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
+              <CustomSelect value={newTingkat} onChange={setNewTingkat} options={["TK","SD","SMP"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
             </div>
 
             <div className="mb-6">
@@ -473,7 +473,7 @@ function QuizForm({
         </div>
         <div>
           <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Tingkat</label>
-          <CustomSelect value={tingkat} onChange={setTingkat} options={["TK","SD","SMP","SMA","Umum"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
+          <CustomSelect value={tingkat} onChange={setTingkat} options={["TK","SD","SMP"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
         </div>
       </div>
 
