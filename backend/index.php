@@ -86,6 +86,8 @@ $routes = [
     'get_pengumpulan_tugas' => 'data/get_pengumpulan_tugas.php',
     'data/ulasan' => 'data/get_ulasan.php',
     'get_ulasan' => 'data/get_ulasan.php',
+    'data/site-settings' => 'data/get_site_settings.php',
+    'get_site_settings' => 'data/get_site_settings.php',
 
     // Actions
     'actions/input-raport' => 'actions/input_nilai_raport.php',
@@ -130,6 +132,8 @@ $routes = [
     'update_ebook' => 'actions/update_ebook.php',
     'actions/ganti-password' => 'actions/ganti_password.php',
     'ganti_password' => 'actions/ganti_password.php',
+    'actions/upload-logo' => 'actions/upload_logo.php',
+    'upload_logo' => 'actions/upload_logo.php',
     'actions/nilai-pengumpulan-tugas' => 'actions/nilai_pengumpulan_tugas.php',
     'nilai_pengumpulan_tugas' => 'actions/nilai_pengumpulan_tugas.php',
 

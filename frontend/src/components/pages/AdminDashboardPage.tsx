@@ -257,6 +257,7 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
           </div>
           <div className="grid gap-6 xl:grid-cols-[1fr_0.7fr]">
             <ActivityPanel activity={activity.slice(0, 6)} />
+            <div className="grid gap-6 content-start">
             <Panel title="Quick Actions" caption="Pintasan ke operasi admin yang sering digunakan.">
               <div className="grid gap-3">
                 <QuickAction title="Buat akun baru"     text="Admin, pengajar, murid, atau tamu."           onClick={() => onSectionChange("create")} />
@@ -267,6 +268,8 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
                 <QuickAction title="Laporan &amp; nilai" text="Top scorer, raport, dan ulasan tamu."        onClick={() => onSectionChange("laporan")} />
               </div>
             </Panel>
+            <LogoSettingsPanel csrfToken={csrfToken} />
+            </div>
           </div>
             </div>
           )}
@@ -734,4 +737,85 @@ function KategoriBadge({ kategori }: { kategori?: Category | string }) {
     admin:    "bg-purple-100 text-purple-700",
   };
   return <span className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${map[kategori ?? ""] ?? "bg-slate-100 text-slate-500"}`}>{kategori}</span>;
+}
+
+function LogoSettingsPanel({ csrfToken }: { csrfToken: string }) {
+  const [logoPath, setLogoPath] = useState<string | null>(null);
+  const [logoSize, setLogoSize] = useState(64);
+  const [uploading, setUploading] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  useEffect(() => {
+    readJson<{ logo_path: string | null; logo_size: number }>(`${PHP_BASE}/backend/data/site-settings`)
+      .then((d) => { setLogoPath(d.logo_path); setLogoSize(d.logo_size || 64); })
+      .catch(() => {});
+  }, []);
+
+  async function handleUpload(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setUploading(true);
+    setMsg("");
+    const fd = new FormData(e.currentTarget);
+    fd.set("csrf_token", csrfToken);
+    fd.set("logo_size", String(logoSize));
+    try {
+      const res = await fetch(`${PHP_BASE}/backend/actions/upload-logo`, { method: "POST", body: fd, credentials: "include" });
+      const json = await res.json();
+      if (json.success) {
+        setMsg("Logo berhasil diperbarui.");
+        if (json.path) setLogoPath(json.path);
+        if (json.size) setLogoSize(json.size);
+      } else {
+        setMsg(json.error ?? "Gagal upload logo.");
+      }
+    } catch {
+      setMsg("Gagal menghubungi server.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleSizeOnly() {
+    setMsg("");
+    const fd = new FormData();
+    fd.set("csrf_token", csrfToken);
+    fd.set("logo_size", String(logoSize));
+    try {
+      const res = await fetch(`${PHP_BASE}/backend/actions/upload-logo`, { method: "POST", body: fd, credentials: "include" });
+      const json = await res.json();
+      if (json.success) setMsg("Ukuran logo diperbarui.");
+      else setMsg(json.error ?? "Gagal.");
+    } catch {
+      setMsg("Gagal menghubungi server.");
+    }
+  }
+
+  return (
+    <Panel title="Logo Halaman Login" caption="Upload logo dan atur ukuran tampilan.">
+      <div className="grid gap-4">
+        {logoPath && (
+          <div className="flex items-center gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`${PHP_BASE}/${logoPath}`} alt="Logo" className="rounded-2xl border border-sky-100 bg-white object-contain p-2" style={{ width: logoSize, height: logoSize }} />
+            <p className="text-xs font-bold text-slate-500">Preview ({logoSize}px)</p>
+          </div>
+        )}
+        <div>
+          <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Ukuran Logo (px)</label>
+          <div className="flex items-center gap-3">
+            <input type="range" min="32" max="160" value={logoSize} onChange={(e) => setLogoSize(Number(e.target.value))} className="flex-1" />
+            <span className="w-10 text-center text-sm font-black text-slate-800">{logoSize}</span>
+            <button type="button" onClick={handleSizeOnly} className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600 hover:bg-slate-200">Simpan</button>
+          </div>
+        </div>
+        <form onSubmit={handleUpload} className="grid gap-2">
+          <input accept=".jpg,.jpeg,.png,.webp,.svg" className="field" name="logo" type="file" />
+          <button className="btn-primary px-4 py-2.5 text-sm disabled:opacity-50" disabled={uploading} type="submit">
+            {uploading ? "Mengupload..." : "Upload Logo Baru"}
+          </button>
+        </form>
+        {msg && <p className={`text-xs font-black ${msg.includes("berhasil") ? "text-emerald-700" : "text-rose-600"}`}>{msg}</p>}
+      </div>
+    </Panel>
+  );
 }

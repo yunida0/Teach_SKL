@@ -3,10 +3,11 @@
 import { FormEvent, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import type { AuthResponse, Detail, User } from "@/types";
-import { API_AUTH, readJson } from "@/lib/api";
+import { API_AUTH, PHP_BASE, readJson } from "@/lib/api";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
 type AuthMode = "login" | "register";
+type SiteSettings = { logo_path: string | null; logo_size: number };
 
 export function AuthPage({
   csrfToken,
@@ -26,6 +27,13 @@ export function AuthPage({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [kategori, setKategori] = useState("");
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>({ logo_path: null, logo_size: 64 });
+
+  useEffect(() => {
+    readJson<SiteSettings>(`${PHP_BASE}/backend/data/site-settings`)
+      .then(setSiteSettings)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (csrfToken) return;
@@ -123,7 +131,12 @@ export function AuthPage({
       <section className="auth-shell" aria-labelledby="auth-title">
         <div className="auth-card">
           <div className="auth-card-brand">
-            <div className="auth-mark" aria-hidden="true">T</div>
+            <div className="auth-mark" aria-hidden="true" style={siteSettings.logo_path ? { padding: 0, overflow: 'hidden' } : undefined}>
+              {siteSettings.logo_path ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={`${PHP_BASE}/${siteSettings.logo_path}`} alt="Logo" style={{ width: siteSettings.logo_size, height: siteSettings.logo_size, objectFit: 'contain' }} />
+              ) : "T"}
+            </div>
             <div>
               <p className="auth-kicker">Portal Akademik Digital</p>
               <h1 id="auth-title" className="auth-card-title">Teach SKL</h1>
