@@ -105,6 +105,7 @@ export function QuizHomeTable({
   const [newAttempts, setNewAttempts] = useState(1);
   const [newShuffle, setNewShuffle] = useState(false);
   const [newShowResult, setNewShowResult] = useState(true);
+  const [newTingkat, setNewTingkat] = useState("SD");
   const [notice, setNotice] = useState<{ title: string; description: string } | null>(null);
 
   const subjectStats = allItems.reduce<Record<string, { count: number; choices: number; trueFalse: number }>>((acc, q) => {
@@ -131,6 +132,7 @@ export function QuizHomeTable({
     setNewAttempts(1);
     setNewShuffle(false);
     setNewShowResult(true);
+    setNewTingkat("SD");
   }
 
   async function handleRename(e: FormEvent) {
@@ -261,6 +263,13 @@ export function QuizHomeTable({
                 <input type="number" min="1" max="10" value={effectiveNewAttempts} disabled={newType === "ujian"} onChange={e => setNewAttempts(parseInt(e.target.value) || 1)} className="field disabled:bg-slate-100 disabled:text-slate-400" />
                 {newType === "ujian" && <p className="mt-1 text-[10px] font-bold text-rose-500">Ujian selalu 1x percobaan.</p>}
               </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Tingkat</label>
+              <select value={newTingkat} onChange={e => setNewTingkat(e.target.value)} className="field">
+                {["TK", "SD", "SMP", "SMA", "Umum"].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
             </div>
 
             <div className="mb-6">
