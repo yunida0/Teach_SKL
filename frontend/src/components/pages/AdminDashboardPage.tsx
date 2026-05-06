@@ -793,8 +793,8 @@ function LogoSettingsPanel({ csrfToken }: { csrfToken: string }) {
       <div className="grid gap-4">
         {logoPath && (
           <div className="flex items-center gap-4">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <div className="grid place-items-center rounded-2xl bg-sky-900 p-2 shadow-sm" style={{ width: logoSize, height: logoSize }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`${PHP_BASE}/${logoPath}`} alt="Logo" className="object-contain" style={{ maxWidth: '100%', maxHeight: '100%' }} />
             </div>
             <p className="text-xs font-bold text-slate-500">Preview ({logoSize}px)</p>
