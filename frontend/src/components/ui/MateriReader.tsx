@@ -18,24 +18,28 @@ function getExt(filePath: string) {
 }
 
 type PdfState =
-  | { status: "loading" }
+  | { status: "loading"; pages: string[]; message: string }
   | { status: "ready"; pages: string[] }
   | { status: "error"; message: string };
 
 export function PdfCanvasReader({ title, url }: { title: string; url: string }) {
-  const [pdf, setPdf] = useState<PdfState>({ status: "loading" });
+  const [pdf, setPdf] = useState<PdfState>({ status: "loading", pages: [], message: "Menyiapkan reader PDF..." });
 
   useEffect(() => {
     let cancelled = false;
 
     async function renderPdf() {
       try {
-        const pdfjs = await import("pdfjs-dist");
-        pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
-        const documentProxy = await pdfjs.getDocument({ url, withCredentials: true }).promise;
+        const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+        pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.mjs", import.meta.url).toString();
+        const response = await fetch(url, { credentials: "include" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.arrayBuffer();
+        const documentProxy = await pdfjs.getDocument({ data }).promise;
         const renderedPages: string[] = [];
         for (let pageNumber = 1; pageNumber <= documentProxy.numPages; pageNumber += 1) {
           if (cancelled) return;
+          if (!cancelled) setPdf({ status: "loading", pages: renderedPages, message: `Memuat halaman ${pageNumber}/${documentProxy.numPages}...` });
           const page = await documentProxy.getPage(pageNumber);
           const baseViewport = page.getViewport({ scale: 1 });
           const width = Math.min(980, Math.max(320, window.innerWidth - 32));
@@ -48,6 +52,7 @@ export function PdfCanvasReader({ title, url }: { title: string; url: string }) 
           canvas.height = Math.ceil(viewport.height);
           await page.render({ canvas, canvasContext: context, viewport }).promise;
           renderedPages.push(canvas.toDataURL("image/jpeg", 0.9));
+          if (!cancelled) setPdf({ status: "loading", pages: [...renderedPages], message: `Memuat halaman ${pageNumber}/${documentProxy.numPages}...` });
         }
         if (!cancelled) setPdf({ status: "ready", pages: renderedPages });
       } catch (error) {
@@ -60,7 +65,18 @@ export function PdfCanvasReader({ title, url }: { title: string; url: string }) 
   }, [url]);
 
   if (pdf.status === "loading") {
-    return <div className="grid min-h-[70svh] place-items-center p-6 text-center font-black text-slate-400">Menyiapkan reader PDF...</div>;
+    return (
+      <div className="max-h-[calc(100svh-8rem)] overflow-y-auto overscroll-contain bg-slate-100 p-3 [-webkit-overflow-scrolling:touch] sm:p-5">
+        {pdf.pages.length === 0 ? <div className="grid min-h-[70svh] place-items-center p-6 text-center font-black text-slate-400">{pdf.message}</div> : null}
+        <div className="mx-auto grid max-w-5xl gap-4">
+          {pdf.pages.map((src, index) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={src} alt={`${title} halaman ${index + 1}`} className="mx-auto h-auto w-full rounded-xl bg-white shadow-sm" src={src} />
+          ))}
+          {pdf.pages.length > 0 && <p className="rounded-2xl bg-white px-4 py-3 text-center text-sm font-black text-slate-500 shadow-sm">{pdf.message}</p>}
+        </div>
+      </div>
+    );
   }
 
   if (pdf.status === "error") {
