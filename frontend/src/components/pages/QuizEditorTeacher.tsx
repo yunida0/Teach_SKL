@@ -383,14 +383,12 @@ function QuizForm({
   csrfToken,
   isNew,
   onSaved,
-  onCancel,
 }: {
   quiz?: Quiz;
   subject: string;
   csrfToken: string;
   isNew: boolean;
   onSaved: () => void;
-  onCancel: () => void;
 }) {
   const [soal, setSoal]         = useState(quiz?.soal ?? "");
   const [tipe, setTipe]         = useState(quiz?.tipe ?? "pilihan_ganda");
@@ -525,9 +523,6 @@ function QuizForm({
         className="btn-primary w-full py-3.5 text-sm mt-2">
         {loading ? "Menyimpan..." : isNew ? "Simpan Soal" : "Perbarui Soal"}
       </button>
-      <button type="button" onClick={onCancel} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700">
-        Kembali ke Daftar Soal
-      </button>
     </form>
   );
 }
@@ -547,30 +542,24 @@ export function QuizEditor({
   onRefresh: () => Promise<Quiz[]>;
 }) {
   const quizzes = allItems.filter(q => q.pelajaran === subject);
-  const [activeId, setActiveId] = useState<number | string | "new">("new");
-  const [editorMode, setEditorMode] = useState<"list" | "form">("list");
+  const [activeId, setActiveId] = useState<number | string | "new">(() => quizzes[0]?.id ?? "new");
   const [deleteTarget, setDeleteTarget] = useState<Quiz | null>(null);
 
   const { type, cleanTitle } = parseSubject(subject);
   const isUjian = type === "ujian";
 
   const activeQuiz = activeId !== "new" ? quizzes.find(q => String(q.id) === String(activeId)) : undefined;
-  const isNew = activeId === "new";
-
-  function openForm(id: number | string | "new") {
-    setActiveId(id);
-    setEditorMode("form");
-  }
+  const resolvedActiveId = activeId !== "new" && activeQuiz ? activeId : "new";
+  const isNew = resolvedActiveId === "new";
 
   async function refreshAfterSave() {
     const latest = await onRefresh();
     if (isNew) {
       const added = latest.find(q => q.pelajaran === subject);
       setActiveId(added?.id ?? "new");
-    } else {
-      setActiveId(activeQuiz?.id ?? activeId);
+      return;
     }
-    setEditorMode("list");
+    setActiveId(activeQuiz?.id ?? activeId);
   }
 
   async function handleDelete(quiz: Quiz) {
@@ -588,8 +577,9 @@ export function QuizEditor({
 
   return (
     <div className="flex min-h-[calc(100vh-80px)] flex-col">
+      {/* Top bar */}
       <div className="shrink-0 rounded-[1.5rem] border border-slate-200/80 bg-white/85 p-4 shadow-sm shadow-slate-900/5 backdrop-blur">
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-4">
         <button onClick={onBack} type="button"
           className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-2 text-xs font-black text-slate-500 shadow-sm transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700">
           ← Kembali
@@ -607,91 +597,79 @@ export function QuizEditor({
         </div>
       </div>
 
-      {editorMode === "list" ? (
-        <div className="py-5 pb-8">
-          <div className="rounded-[1.75rem] border border-slate-200/80 bg-white/90 p-5 shadow-sm shadow-slate-900/5 backdrop-blur">
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div>
-                <p className="m-0 text-[10px] font-black uppercase tracking-[0.18em] text-sky-600">Daftar Soal</p>
-                <h3 className="m-0 mt-1 text-2xl font-black tracking-tight text-slate-950">Pilih nomor soal seperti kursi bioskop</h3>
-              </div>
-              <button type="button" onClick={() => openForm("new")} className="btn-primary px-5 py-3 text-sm">+ Tambah Soal</button>
+      {/* Split body */}
+      <div className="grid flex-1 grid-cols-1 items-start gap-5 py-5 pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.82fr)]">
+        {/* Kiri: Daftar Soal */}
+        <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/85 p-5 shadow-sm shadow-slate-900/5 backdrop-blur">
+          <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
+            <h4 className="m-0 text-xs font-black uppercase tracking-[0.14em] text-slate-600">Daftar Soal</h4>
+            <span className="text-xs font-black text-slate-400">{quizzes.length} soal</span>
+          </div>
+
+          {quizzes.length === 0 && (
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-8 text-center">
+              <p className="m-0 text-sm font-bold text-slate-500">Belum ada soal. Tambah dari form di kanan.</p>
             </div>
+          )}
 
-            <div className="mb-5 rounded-[1.5rem] bg-slate-950 px-5 py-3 text-center text-[11px] font-black uppercase tracking-[0.25em] text-sky-100 shadow-inner shadow-black/30">
-              Layar Daftar Soal
-            </div>
-
-            {quizzes.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
-                <p className="m-0 text-sm font-bold text-slate-500">Belum ada soal. Tekan tombol tambah soal untuk membuat soal pertama.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
-                {quizzes.map((quiz, i) => (
-                  <button
-                    key={quiz.id}
-                    type="button"
-                    onClick={() => openForm(quiz.id)}
-                    className="group relative min-h-24 rounded-[1.35rem] border border-slate-200 bg-gradient-to-b from-white to-slate-50 p-3 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-sky-300 hover:shadow-xl hover:shadow-sky-100 focus:outline-none focus:ring-4 focus:ring-sky-100"
-                    title={`Edit soal ${i + 1}`}
-                  >
-                    <span className="absolute -top-2 left-1/2 h-3 w-12 -translate-x-1/2 rounded-t-xl bg-slate-200 transition group-hover:bg-sky-200" />
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="grid h-9 w-9 place-items-center rounded-2xl bg-slate-950 text-sm font-black text-white shadow-sm group-hover:bg-sky-700">{i + 1}</span>
-                      <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-black text-emerald-700 ring-1 ring-emerald-100">{quiz.jawaban_benar || "-"}</span>
-                    </span>
-                    <span className="mt-3 line-clamp-2 block text-xs font-bold leading-snug text-slate-700">{quiz.soal}</span>
-                    <span className="mt-2 block text-[10px] font-black uppercase tracking-wide text-slate-400">Klik untuk edit</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {quizzes.length > 0 && (
-              <div className="mt-5 grid gap-3">
-                {quizzes.map((quiz, i) => (
-                  <div key={quiz.id} className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm">
-                    <div className="mb-2 flex items-center justify-between gap-3">
-                      <span className="text-[11px] font-black uppercase tracking-wider text-slate-400">Soal {i + 1} · {quiz.tingkat || "SD"}</span>
-                      <div className="flex shrink-0 items-center gap-1.5">
-                        <button type="button" onClick={() => openForm(quiz.id)} className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-[10px] font-black text-sky-700 transition hover:bg-sky-100">Edit</button>
-                        <button type="button" onClick={() => setDeleteTarget(quiz)} className="rounded-full border border-rose-100 bg-rose-50 px-3 py-1.5 text-[10px] font-black text-rose-600 transition hover:bg-rose-100">Hapus</button>
-                      </div>
-                    </div>
-                    <p className="m-0 mb-3 text-sm font-bold leading-snug text-slate-800">{quiz.soal}</p>
-                    <div className="grid gap-1.5 sm:grid-cols-2">
-                      {[quiz.opsi_a, quiz.opsi_b, quiz.opsi_c, quiz.opsi_d].filter(Boolean).map((opt, idx) => {
-                        const k = ["A","B","C","D"][idx];
-                        const correct = quiz.jawaban_benar?.toUpperCase() === k;
-                        return (
-                          <span key={idx} className={`rounded-xl px-2.5 py-2 text-xs ${correct ? 'bg-emerald-50 font-black text-emerald-700 ring-1 ring-emerald-100' : 'bg-slate-50 font-bold text-slate-500'}`}>
-                            <span className="inline-block w-4">{k}.</span> {opt} {correct && <span className="ml-1">✓</span>}
-                          </span>
-                        );
-                      })}
+          <div className="flex flex-col gap-3">
+            {quizzes.map((quiz, i) => {
+                const active = String(quiz.id) === String(resolvedActiveId);
+              return (
+                <div key={quiz.id}
+                  className={`cursor-pointer rounded-2xl border p-4 transition-all ${active ? 'border-sky-200 bg-sky-50/80 shadow-sm ring-2 ring-sky-100' : 'border-slate-200/80 bg-white hover:border-sky-200 hover:shadow-sm'}`}
+                  onClick={() => setActiveId(quiz.id)}>
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <span className={`text-[11px] font-black uppercase tracking-wider ${active ? 'text-sky-700' : 'text-slate-400'}`}>Soal {i + 1} · 10 poin</span>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <button type="button"
+                        onClick={e => { e.stopPropagation(); setActiveId(quiz.id); document.getElementById("quiz-question-form")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                        className={`cursor-pointer rounded-full border px-2.5 py-1 text-[10px] font-black transition-colors ${active ? 'border-sky-200 bg-white text-sky-700' : 'border-sky-100 bg-sky-50 text-sky-600 hover:bg-sky-100'}`}>
+                        Edit
+                      </button>
+                      <button type="button"
+                      onClick={e => { e.stopPropagation(); setDeleteTarget(quiz); }}
+                      className="cursor-pointer rounded-full border border-rose-100 bg-rose-50 px-2.5 py-1 text-[10px] font-black text-rose-600 transition-colors hover:bg-rose-100">
+                      Hapus
+                    </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                  <p className="m-0 mb-3 text-sm font-bold leading-snug text-slate-800">{quiz.soal}</p>
+                  <div className="grid gap-1.5 sm:grid-cols-2">
+                    {[quiz.opsi_a, quiz.opsi_b, quiz.opsi_c, quiz.opsi_d].filter(Boolean).map((opt, idx) => {
+                      const k = ["A","B","C","D"][idx];
+                      const correct = quiz.jawaban_benar?.toUpperCase() === k;
+                      return (
+                        <span key={idx} className={`rounded-xl px-2.5 py-2 text-xs ${correct ? 'bg-emerald-50 font-black text-emerald-700 ring-1 ring-emerald-100' : 'bg-slate-50 font-bold text-slate-500'}`}>
+                          <span className="inline-block w-4">{k}.</span> {opt} {correct && <span className="ml-1">✓</span>}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
+
+          {/* Tombol tambah soal baru */}
+          <button type="button" onClick={() => setActiveId("new")}
+            className={`mt-4 w-full rounded-2xl border border-dashed p-3 text-sm font-black transition-all ${isNew ? 'border-sky-300 bg-sky-50 text-sky-700 ring-2 ring-sky-100' : 'border-slate-300 bg-white/60 text-slate-600 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700'}`}>
+            + Tambah Soal Baru
+          </button>
         </div>
-      ) : (
-        <div className="py-5 pb-8">
-          <div className="mx-auto max-w-3xl rounded-[1.75rem] border border-slate-200/80 bg-white/95 p-6 shadow-xl shadow-slate-900/5 backdrop-blur">
-            <QuizForm
-              key={String(activeId)}
-              quiz={activeQuiz}
-              subject={subject}
-              csrfToken={csrfToken}
-              isNew={isNew}
-              onSaved={refreshAfterSave}
-              onCancel={() => setEditorMode("list")}
-            />
-          </div>
+
+        {/* Kanan: Form */}
+        <div id="quiz-question-form" className="scroll-mt-5 rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-6 shadow-xl shadow-slate-900/5 backdrop-blur lg:sticky lg:top-4">
+          <QuizForm
+            key={String(resolvedActiveId)}
+            quiz={activeQuiz}
+            subject={subject}
+            csrfToken={csrfToken}
+            isNew={isNew}
+            onSaved={refreshAfterSave}
+          />
         </div>
-      )}
+      </div>
       <AppDialog
         open={Boolean(deleteTarget)}
         title="Hapus soal?"
