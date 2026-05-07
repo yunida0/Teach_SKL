@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { PHP_BASE } from "@/lib/api";
+import { PdfCanvasReader } from "./MateriReader";
 
 type ViewState =
   | { status: "idle" }
@@ -116,11 +117,7 @@ export function FileViewerModal({
           )}
 
           {view.status === "pdf" && (
-            <iframe
-              className="h-[78svh] min-h-[32rem] w-full border-0 sm:h-[72vh]"
-              src={view.url}
-              title={title}
-            />
+            <PdfCanvasReader title={title} url={view.url} />
           )}
 
           {view.status === "image" && (

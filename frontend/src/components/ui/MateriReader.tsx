@@ -17,6 +17,68 @@ function getExt(filePath: string) {
   return (filePath.split(".").pop() ?? "").toLowerCase();
 }
 
+type PdfState =
+  | { status: "loading" }
+  | { status: "ready"; pages: string[] }
+  | { status: "error"; message: string };
+
+export function PdfCanvasReader({ title, url }: { title: string; url: string }) {
+  const [pdf, setPdf] = useState<PdfState>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function renderPdf() {
+      try {
+        const pdfjs = await import("pdfjs-dist");
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+        const documentProxy = await pdfjs.getDocument({ url, withCredentials: true }).promise;
+        const renderedPages: string[] = [];
+        for (let pageNumber = 1; pageNumber <= documentProxy.numPages; pageNumber += 1) {
+          if (cancelled) return;
+          const page = await documentProxy.getPage(pageNumber);
+          const baseViewport = page.getViewport({ scale: 1 });
+          const width = Math.min(980, Math.max(320, window.innerWidth - 32));
+          const scale = width / baseViewport.width;
+          const viewport = page.getViewport({ scale });
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          if (!context) throw new Error("Canvas tidak didukung browser ini.");
+          canvas.width = Math.ceil(viewport.width);
+          canvas.height = Math.ceil(viewport.height);
+          await page.render({ canvas, canvasContext: context, viewport }).promise;
+          renderedPages.push(canvas.toDataURL("image/jpeg", 0.9));
+        }
+        if (!cancelled) setPdf({ status: "ready", pages: renderedPages });
+      } catch (error) {
+        if (!cancelled) setPdf({ status: "error", message: String(error) });
+      }
+    }
+
+    renderPdf();
+    return () => { cancelled = true; };
+  }, [url]);
+
+  if (pdf.status === "loading") {
+    return <div className="grid min-h-[70svh] place-items-center p-6 text-center font-black text-slate-400">Menyiapkan reader PDF...</div>;
+  }
+
+  if (pdf.status === "error") {
+    return <div className="grid min-h-[70svh] place-items-center p-6 text-center"><div><p className="text-lg font-black text-rose-700">PDF belum bisa dirender di browser ini.</p><p className="mt-1 text-sm font-bold text-slate-500">{pdf.message}</p><a className="mt-4 inline-flex rounded-full bg-sky-900 px-5 py-3 text-sm font-black text-white" href={url} rel="noreferrer" target="_blank">Buka / Download PDF</a></div></div>;
+  }
+
+  return (
+    <div className="max-h-[calc(100svh-8rem)] overflow-y-auto overscroll-contain bg-slate-100 p-3 [-webkit-overflow-scrolling:touch] sm:p-5">
+      <div className="mx-auto grid max-w-5xl gap-4">
+        {pdf.pages.map((src, index) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={src} alt={`${title} halaman ${index + 1}`} className="mx-auto h-auto w-full rounded-xl bg-white shadow-sm" src={src} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function MateriReader({ filePath, title }: { filePath: string; title: string }) {
   const [reader, setReader] = useState<ReaderState>({ status: "loading" });
   const fileUrl = `${PHP_BASE}/${filePath}`;
@@ -54,9 +116,7 @@ export function MateriReader({ filePath, title }: { filePath: string; title: str
     <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
       {reader.status === "loading" && <div className="grid h-80 place-items-center font-black text-slate-400">Memuat materi...</div>}
       {reader.status === "pdf" && (
-        <div className="max-h-[calc(100svh-8rem)] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
-          <iframe className="h-[78svh] min-h-[32rem] w-full border-0" src={reader.url} title={title} />
-        </div>
+        <PdfCanvasReader title={title} url={reader.url} />
       )}
       {reader.status === "image" && (
         <div className="max-h-[calc(100svh-8rem)] overflow-y-auto overscroll-contain p-4 [-webkit-overflow-scrolling:touch] sm:p-6">
