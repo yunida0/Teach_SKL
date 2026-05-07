@@ -273,7 +273,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
                 <p className="m-0 mt-1 text-sm font-bold leading-relaxed text-slate-600">{wrongSaved > 0 ? `Masih ada ${wrongSaved} soal yang perlu dipelajari lagi. Lihat review untuk tahu bagian yang salah.` : "Semua jawaban benar. Pertahankan pemahamanmu."}</p>
               </div>
               {showResult && savedEvaluation && (
-                <button className="mt-4 btn-primary px-5 py-3 text-sm" onClick={() => { setResults(Object.fromEntries(savedEvaluation.answers.map((answer) => [String(answer.id), { quizId: answer.id, benar: Number(answer.nilai ?? 0) >= 100 }]))); setSavedAnswers(Object.fromEntries(savedEvaluation.answers.map((answer) => [String(answer.id), answer.jawaban_user ?? ""]))); setFinished(true); setShowReview(true); }} type="button">Lihat Review Jawaban →</button>
+                <button className="mt-4 btn-primary px-5 py-3 text-sm" onClick={() => { setResults(Object.fromEntries(savedEvaluation.answers.map((answer) => [String(answer.id), { quizId: answer.id, benar: Number(answer.nilai ?? 0) >= 100 }]))); setSavedAnswers(Object.fromEntries(savedEvaluation.answers.map((answer) => [String(answer.id), answer.jawaban_user ?? ""]))); setSessionStarted(true); setFinished(true); setShowReview(true); }} type="button">Lihat Review Jawaban →</button>
               )}
             </>
           )}
