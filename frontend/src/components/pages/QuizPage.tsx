@@ -9,6 +9,7 @@ import { QuizEditor, QuizHomeTable, parseSubject } from "./QuizEditorTeacher";
 
 type QuizResult = { quizId: number | string; benar: boolean };
 type WarningModal = { title: string; message: string; tone: "rose" | "amber" } | null;
+type SavedEvaluation = { total: number; answered: number; correct: number; wrong: number; score: number; answers: Array<Quiz & { nilai?: number | string; jawaban_user?: string }> } | null;
 
 // ── Student Quiz Session ──────────────────────────────────────────────────────
 
@@ -32,6 +33,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
   const [finished, setFinished]               = useState(false);
   const [showReview, setShowReview]           = useState(false);
   const [warningModal, setWarningModal]       = useState<WarningModal>(null);
+  const [savedEvaluation, setSavedEvaluation] = useState<SavedEvaluation>(null);
 
   const parsed = selectedSubject ? parseSubject(selectedSubject) : null;
   const isUjian = parsed?.type === "ujian";
@@ -124,6 +126,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
     setWarningModal(null);
     setSubmitting(false);
     setTimeLeft(null);
+    setSavedEvaluation(null);
   }
 
   const activeQuizzes = useMemo(
@@ -134,10 +137,22 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
     () => activeQuizzes.filter((q) => String(q.sudah_dikerjakan ?? 0) !== "1"),
     [activeQuizzes],
   );
+  const reviewQuizzes = playable.length > 0 ? playable : activeQuizzes;
   const current   = playable[currentIndex];
   const correct   = Object.values(results).filter((r) => r.benar).length;
   const answered  = Boolean(results[String(current?.id)]);
   const ansResult = results[String(current?.id)];
+
+  useEffect(() => {
+    if (!selectedSubject || playable.length > 0 || finished) return;
+    let active = true;
+    const qs = new URLSearchParams({ pelajaran: selectedSubject });
+    fetch(`${PHP_BASE}/backend/data/quiz-evaluation?${qs.toString()}`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((json) => { if (active && json.success) setSavedEvaluation(json); })
+      .catch(() => { if (active) setSavedEvaluation(null); })
+    return () => { active = false; };
+  }, [selectedSubject, playable.length, finished]);
 
   async function confirm() {
     if (!current || !selected || submitting) return;
@@ -235,15 +250,34 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
 
   // ── 2. All done ───────────────────────────────────────────────────────────
   if (playable.length === 0 && !finished) {
+    const pct = savedEvaluation?.score ?? 0;
+    const correctSaved = savedEvaluation?.correct ?? 0;
+    const totalSaved = savedEvaluation?.total ?? activeQuizzes.length;
+    const wrongSaved = savedEvaluation?.wrong ?? 0;
     return (
       <section className="grid place-items-center py-10">
-        <div className="w-full max-w-md rounded-[1.75rem] border border-emerald-200 bg-white p-8 text-center shadow-sm">
+        <div className="w-full max-w-2xl rounded-[1.75rem] border border-emerald-200 bg-white p-8 text-center shadow-sm">
           <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-2xl text-emerald-700">✓</div>
           <h2 className="title-font mt-3 text-2xl font-black text-slate-950">{cleanTitle}</h2>
-          <p className="mt-2 text-sm font-bold text-slate-500">Semua soal sudah dikerjakan sebelumnya.</p>
-          <button className="mt-5 rounded-full bg-sky-900 px-6 py-3 text-sm font-black text-white transition hover:bg-sky-800" onClick={() => setSelectedSubject(null)} type="button">
-            ← Kembali
-          </button>
+          {!savedEvaluation ? (
+            <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500">Memuat evaluasi pengerjaan...</p>
+          ) : (
+            <>
+              <p className="mt-2 text-sm font-bold text-slate-500">Quiz ini sudah selesai dikerjakan. Berikut evaluasimu.</p>
+              <div className="mx-auto mt-5 grid h-28 w-28 place-items-center rounded-full border-4 border-emerald-200 bg-emerald-50">
+                <div><p className="m-0 text-3xl font-black text-emerald-800">{pct}%</p><p className="m-0 text-xs font-black text-slate-400">skor</p></div>
+              </div>
+              <p className="mt-4 text-lg font-black text-slate-800">{correctSaved} dari {totalSaved} benar</p>
+              <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-left">
+                <p className="m-0 text-sm font-black text-sky-800">Evaluasi tersimpan</p>
+                <p className="m-0 mt-1 text-sm font-bold leading-relaxed text-slate-600">{wrongSaved > 0 ? `Masih ada ${wrongSaved} soal yang perlu dipelajari lagi. Lihat review untuk tahu bagian yang salah.` : "Semua jawaban benar. Pertahankan pemahamanmu."}</p>
+              </div>
+              {showResult && savedEvaluation && (
+                <button className="mt-4 btn-primary px-5 py-3 text-sm" onClick={() => { setResults(Object.fromEntries(savedEvaluation.answers.map((answer) => [String(answer.id), { quizId: answer.id, benar: Number(answer.nilai ?? 0) >= 100 }]))); setSavedAnswers(Object.fromEntries(savedEvaluation.answers.map((answer) => [String(answer.id), answer.jawaban_user ?? ""]))); setFinished(true); setShowReview(true); }} type="button">Lihat Review Jawaban →</button>
+              )}
+            </>
+          )}
+          <button className="mt-3 rounded-full bg-slate-100 px-6 py-3 text-sm font-black text-slate-600 transition hover:bg-slate-200" onClick={() => setSelectedSubject(null)} type="button">← Kembali</button>
         </div>
       </section>
     );
@@ -322,7 +356,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
           <span className="ml-auto rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700">{cleanTitle}</span>
         </div>
         <div className="grid gap-3">
-          {playable.map((quiz, i) => {
+          {reviewQuizzes.map((quiz, i) => {
             const result     = results[String(quiz.id)];
             const userAnswer = savedAnswers[String(quiz.id)];
             const opts: [string, string | undefined][] = [
@@ -372,10 +406,10 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
 
   // ── 5. Results screen ─────────────────────────────────────────────────────
   if (finished) {
-    const total = playable.length;
+    const total = reviewQuizzes.length;
     const pct   = total > 0 ? Math.round((correct / total) * 100) : 0;
     const tone  = pct >= 80 ? "emerald" : pct >= 60 ? "sky" : pct >= 40 ? "amber" : "rose";
-    const wrongItems = playable.filter((quiz) => results[String(quiz.id)] && !results[String(quiz.id)]?.benar);
+    const wrongItems = reviewQuizzes.filter((quiz) => results[String(quiz.id)] && !results[String(quiz.id)]?.benar);
     const evaluationTitle = pct >= 80 ? "Bagus, pemahamanmu kuat." : pct >= 60 ? "Cukup baik, tinggal rapikan beberapa bagian." : pct >= 40 ? "Perlu latihan ulang di bagian yang salah." : "Ayo ulangi materi dasar dulu.";
     const evaluationText = pct >= 80
       ? "Pertahankan ritme belajar dan cek kembali soal yang masih keliru agar makin stabil."

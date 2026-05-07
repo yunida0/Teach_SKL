@@ -68,6 +68,7 @@ $routes = [
     'get_nilai_quiz_murid' => 'data/get_nilai_quiz_murid.php',
     'data/quizzes' => 'data/get_quizzes.php',
     'data/quiz-results' => 'data/get_quiz_results.php',
+    'data/quiz-evaluation' => 'data/get_quiz_evaluation.php',
     'data/ujian' => 'data/get_quizzes.php',
     'data/ujian-berproteksi' => 'data/get_quizzes.php',
     'get_quizzes' => 'data/get_quizzes.php',
