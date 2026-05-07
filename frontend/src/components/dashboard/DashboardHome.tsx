@@ -29,12 +29,19 @@ export function DashboardHome({ user }: { user: User }) {
     };
   }, []);
 
-  const statCards = [
-    { label: "E-Book", value: stats.ebook, detail: "Materi belajar", tone: "bg-sky-500" },
-    { label: "Bank Tugas", value: stats.tugas, detail: "Tugas aktif", tone: "bg-emerald-500" },
-    { label: "Murid", value: stats.murid, detail: "Terdaftar", tone: "bg-amber-400" },
-    { label: "Quiz", value: stats.quiz, detail: "Evaluasi", tone: "bg-cyan-600" },
-  ];
+  const statCards = user.kategori === "murid"
+    ? [
+        { label: "E-Book", value: stats.ebook, detail: "Materi tersedia", tone: "bg-sky-500" },
+        { label: "Bank Tugas", value: stats.tugas, detail: "Tugas untuk dikerjakan", tone: "bg-emerald-500" },
+        { label: "Status", value: "Aktif", detail: "Akun murid", tone: "bg-amber-400" },
+        { label: "Quiz", value: stats.quiz, detail: "Evaluasi tersedia", tone: "bg-cyan-600" },
+      ]
+    : [
+        { label: "E-Book", value: stats.ebook, detail: "Materi belajar", tone: "bg-sky-500" },
+        { label: "Bank Tugas", value: stats.tugas, detail: "Tugas aktif", tone: "bg-emerald-500" },
+        { label: "Murid", value: stats.murid, detail: "Terdaftar", tone: "bg-amber-400" },
+        { label: "Quiz", value: stats.quiz, detail: "Evaluasi", tone: "bg-cyan-600" },
+      ];
 
   return (
     <div className="grid gap-7">
