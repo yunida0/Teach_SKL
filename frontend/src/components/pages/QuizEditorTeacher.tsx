@@ -12,6 +12,7 @@ type QuizMeta = {
   duration: number;
   deadline: string;
   attempts: number;
+  kkm: number;
   shuffle: boolean;
   showResult: boolean;
   cleanTitle: string;
@@ -33,6 +34,7 @@ const defaultMeta: Omit<QuizMeta, "cleanTitle"> = {
   duration: 0,
   deadline: "",
   attempts: 1,
+  kkm: 75,
   shuffle: false,
   showResult: true,
 };
@@ -52,6 +54,7 @@ export function parseSubject(raw: string): QuizMeta {
       duration: Number(params.get("dur") ?? 0) || 0,
       deadline: params.get("due") ?? "",
       attempts: advanced[1].toLowerCase() === "ujian" ? 1 : Math.max(1, Number(params.get("try") ?? 1) || 1),
+      kkm: Math.min(100, Math.max(0, Number(params.get("kkm") ?? 75) || 75)),
       shuffle: params.get("shuffle") === "1",
       showResult: params.get("result") !== "0",
       cleanTitle: advanced[3],
@@ -65,6 +68,7 @@ export function parseSubject(raw: string): QuizMeta {
       type: match[1].toLowerCase() as QuizMode,
       duration: match[2] ? parseInt(match[2], 10) : 0,
       attempts: match[1].toLowerCase() === "ujian" ? 1 : defaultMeta.attempts,
+      kkm: defaultMeta.kkm,
       cleanTitle: match[3],
     };
   }
@@ -75,10 +79,12 @@ export function formatSubject(meta: Omit<QuizMeta, "cleanTitle">, title: string)
   // Metadata quiz masih ditaruh di kolom pelajaran agar tabel lama tetap aman
   // dipakai saat demo tanpa migrasi besar.
   const attempts = meta.type === "ujian" ? 1 : Math.max(1, Number(meta.attempts) || 1);
+  const kkm = Math.min(100, Math.max(0, Number(meta.kkm) || 75));
   const params = [
     `dur=${Math.max(0, Number(meta.duration) || 0)}`,
     meta.deadline ? `due=${encodeMetaValue(meta.deadline)}` : "",
     `try=${attempts}`,
+    `kkm=${kkm}`,
     `shuffle=${meta.shuffle ? "1" : "0"}`,
     `result=${meta.showResult ? "1" : "0"}`,
   ].filter(Boolean).join("|");
@@ -115,6 +121,7 @@ export function QuizHomeTable({
   const [newDuration, setNewDuration] = useState(0);
   const [newDeadline, setNewDeadline] = useState("");
   const [newAttempts, setNewAttempts] = useState(1);
+  const [newKkm, setNewKkm] = useState(75);
   const [newShuffle, setNewShuffle] = useState(false);
   const [newShowResult, setNewShowResult] = useState(true);
   const [newTingkat, setNewTingkat] = useState("SD");
@@ -137,7 +144,7 @@ export function QuizHomeTable({
   function handleCreate(e: FormEvent) {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    const fullTitle = formatSubject({ type: newType, duration: newDuration, deadline: newDeadline, attempts: effectiveNewAttempts, shuffle: newShuffle, showResult: newShowResult }, newTitle);
+    const fullTitle = formatSubject({ type: newType, duration: newDuration, deadline: newDeadline, attempts: effectiveNewAttempts, kkm: newKkm, shuffle: newShuffle, showResult: newShowResult }, newTitle);
     onOpen(fullTitle);
     setShowModal(false);
     setNewTitle("");
@@ -145,6 +152,7 @@ export function QuizHomeTable({
     setNewDuration(0);
     setNewDeadline("");
     setNewAttempts(1);
+    setNewKkm(75);
     setNewShuffle(false);
     setNewShowResult(true);
     setNewTingkat("SD");
@@ -340,7 +348,7 @@ export function QuizHomeTable({
         <div className="grid gap-3">
           {uniqueSubjects.map((subject) => {
             const stats = subjectStats[subject];
-            const { type, duration, deadline, attempts, shuffle, showResult, cleanTitle } = parseSubject(subject);
+            const { type, duration, deadline, attempts, kkm, shuffle, showResult, cleanTitle } = parseSubject(subject);
             const isUjian = type === "ujian";
 
             return (
@@ -374,7 +382,7 @@ export function QuizHomeTable({
                       <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Soal</p>
                     </div>
                     <div className="flex items-center gap-1.5">
-                  <button onClick={() => setEditModal({ oldSubject: subject, newTitle: cleanTitle, type, duration, deadline, attempts, shuffle, showResult })} type="button"
+                  <button onClick={() => setEditModal({ oldSubject: subject, newTitle: cleanTitle, type, duration, deadline, attempts, kkm, shuffle, showResult })} type="button"
                     className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700" title="Edit Judul">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </button>
@@ -411,7 +419,7 @@ export function QuizHomeTable({
               <input value={newTitle} onChange={e => setNewTitle(e.target.value)} required autoFocus placeholder="Contoh: Matematika Dasar / UTS Sejarah" className="field" />
             </div>
 
-            <div className="mb-4 grid gap-3 sm:grid-cols-3">
+            <div className="mb-4 grid gap-3 sm:grid-cols-4">
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Durasi (Menit)</label>
                 <input type="number" min="0" value={newDuration} onChange={e => setNewDuration(parseInt(e.target.value) || 0)} placeholder="0" className="field" />
@@ -424,6 +432,10 @@ export function QuizHomeTable({
                 <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Percobaan</label>
                 <input type="number" min="1" max="10" value={effectiveNewAttempts} disabled={newType === "ujian"} onChange={e => setNewAttempts(parseInt(e.target.value) || 1)} className="field disabled:bg-slate-100 disabled:text-slate-400" />
                 {newType === "ujian" && <p className="mt-1 text-[10px] font-bold text-rose-500">Ujian selalu 1x percobaan.</p>}
+              </div>
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">KKM</label>
+                <input type="number" min="0" max="100" value={newKkm} onChange={e => setNewKkm(parseInt(e.target.value) || 0)} className="field" />
               </div>
             </div>
 
@@ -477,7 +489,7 @@ export function QuizHomeTable({
               <input value={editModal.newTitle} onChange={e => setEditModal({ ...editModal, newTitle: e.target.value })} required autoFocus placeholder="Contoh: Matematika Dasar" className="field" />
             </div>
 
-            <div className="mb-4 grid gap-3 sm:grid-cols-3">
+            <div className="mb-4 grid gap-3 sm:grid-cols-4">
               <div>
                 <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Durasi (Menit)</label>
                 <input type="number" min="0" value={editModal.duration} onChange={e => setEditModal({ ...editModal, duration: parseInt(e.target.value) || 0 })} placeholder="0" className="field" />
@@ -490,6 +502,10 @@ export function QuizHomeTable({
                 <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">Percobaan</label>
                 <input type="number" min="1" max="10" value={editModal.type === "ujian" ? 1 : editModal.attempts} disabled={editModal.type === "ujian"} onChange={e => setEditModal({ ...editModal, attempts: parseInt(e.target.value) || 1 })} className="field disabled:bg-slate-100 disabled:text-slate-400" />
                 {editModal.type === "ujian" && <p className="mt-1 text-[10px] font-bold text-rose-500">Ujian selalu 1x percobaan.</p>}
+              </div>
+              <div>
+                <label className="block text-[11px] font-black uppercase tracking-[0.1em] text-slate-500 mb-1.5">KKM</label>
+                <input type="number" min="0" max="100" value={editModal.kkm} onChange={e => setEditModal({ ...editModal, kkm: parseInt(e.target.value) || 0 })} className="field" />
               </div>
             </div>
 

@@ -41,6 +41,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
   const timerDuration = parsed?.duration ?? 0;
   const deadline = parsed?.deadline ?? "";
   const attempts = parsed?.attempts ?? 1;
+  const kkm = parsed?.kkm ?? 75;
   const shuffle = parsed?.shuffle ?? false;
   const showResult = parsed?.showResult ?? true;
   const deadlineDate = deadline ? new Date(deadline) : null;
@@ -253,7 +254,6 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
     const pct = savedEvaluation?.score ?? 0;
     const correctSaved = savedEvaluation?.correct ?? 0;
     const totalSaved = savedEvaluation?.total ?? activeQuizzes.length;
-    const wrongSaved = savedEvaluation?.wrong ?? 0;
     return (
       <section className="grid place-items-center py-10">
         <div className="w-full max-w-2xl rounded-[1.75rem] border border-emerald-200 bg-white p-8 text-center shadow-sm">
@@ -269,8 +269,14 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
               </div>
               <p className="mt-4 text-lg font-black text-slate-800">{correctSaved} dari {totalSaved} benar</p>
               <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-left">
-                <p className="m-0 text-sm font-black text-sky-800">Evaluasi tersimpan</p>
-                <p className="m-0 mt-1 text-sm font-bold leading-relaxed text-slate-600">{wrongSaved > 0 ? `Masih ada ${wrongSaved} soal yang perlu dipelajari lagi. Lihat review untuk tahu bagian yang salah.` : "Semua jawaban benar. Pertahankan pemahamanmu."}</p>
+                <p className="m-0 text-sm font-black text-sky-800">Status nilai</p>
+                <p className="m-0 mt-1 text-sm font-bold leading-relaxed text-slate-600">
+                  {pct >= kkm
+                    ? `Nilaimu sudah mencapai KKM ${kkm}. Pertahankan pemahamanmu.`
+                    : showResult
+                      ? `Nilaimu masih di bawah KKM ${kkm}. Pelajari kembali bagian yang belum tepat melalui review jawaban.`
+                      : `Nilaimu masih di bawah KKM ${kkm}. Segera hubungi pengajar untuk evaluasi dan arahan belajar lanjutan.`}
+                </p>
               </div>
               {showResult && savedEvaluation && (
                 <button className="mt-4 btn-primary px-5 py-3 text-sm" onClick={() => { setResults(Object.fromEntries(savedEvaluation.answers.map((answer) => [String(answer.id), { quizId: answer.id, benar: Number(answer.nilai ?? 0) >= 100 }]))); setSavedAnswers(Object.fromEntries(savedEvaluation.answers.map((answer) => [String(answer.id), answer.jawaban_user ?? ""]))); setSessionStarted(true); setFinished(true); setShowReview(true); }} type="button">Lihat Review Jawaban →</button>
