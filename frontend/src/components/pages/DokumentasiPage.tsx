@@ -184,6 +184,66 @@ function EmbedDocumentationManager({ csrfToken, photos, onSaved }: { csrfToken: 
   );
 }
 
+function ManualDocumentationCanvas({ items, isManager, onDelete }: { items: DokumentasiItem[]; isManager: boolean; onDelete: (item: DokumentasiItem) => void }) {
+  const [activeItem, setActiveItem] = useState<DokumentasiItem | null>(null);
+  const hero = items[0];
+  const rest = hero ? items.filter((item) => item.id !== hero.id) : items;
+
+  function media(item: DokumentasiItem, className: string) {
+    const src = `${PHP_BASE}/${item.file_path}`;
+    if (item.tipe === "video") return <video className={className} controls={false} muted src={src} />;
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img alt={item.judul ?? "Dokumentasi"} className={className} src={src} />;
+  }
+
+  if (items.length === 0) return <EmptyState text="Belum ada dokumentasi upload manual." />;
+
+  return (
+    <>
+      {hero && (
+        <section className="relative overflow-hidden rounded-[2rem] border border-sky-100 bg-[#f8fbf7] p-4 shadow-sm md:p-6 xl:p-8">
+          <div className="relative grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
+            <div className="grid content-between gap-5 rounded-[1.7rem] border border-white/70 bg-white/75 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur md:p-7">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.22em] text-sky-700">Galeri Upload Manual</p>
+                <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-slate-950 md:text-5xl">Dokumentasi dari file website.</h2>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-2xl bg-emerald-50 p-4"><p className="text-2xl font-black text-emerald-800">{items.length}</p><p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Item</p></div>
+                <div className="rounded-2xl bg-sky-50 p-4"><p className="text-2xl font-black text-sky-800">{hero.tahun ?? "-"}</p><p className="text-xs font-black uppercase tracking-[0.14em] text-sky-600">Sorotan</p></div>
+                <div className="rounded-2xl bg-amber-50 p-4"><p className="text-2xl font-black text-amber-800">SKL</p><p className="text-xs font-black uppercase tracking-[0.14em] text-amber-600">Upload</p></div>
+              </div>
+            </div>
+            <button className="group relative min-h-[24rem] overflow-hidden rounded-[1.9rem] border border-white bg-slate-900 text-left shadow-[0_28px_90px_rgba(15,23,42,0.18)]" onClick={() => setActiveItem(hero)} type="button">
+              {media(hero, "absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105")}
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-5 text-white md:p-7"><p className="text-xs font-black uppercase tracking-[0.2em] text-sky-100">Sorotan</p><h3 className="mt-2 text-3xl font-black">{hero.judul}</h3></div>
+              {isManager && <button className="absolute right-4 top-4 z-10 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white" onClick={(e) => { e.stopPropagation(); onDelete(hero); }} type="button">Hapus</button>}
+            </button>
+          </div>
+        </section>
+      )}
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        {rest.map((item, index) => (
+          <button className={`group relative overflow-hidden rounded-[1.6rem] border border-white bg-white text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${index % 7 === 0 ? "sm:row-span-2" : ""}`} key={item.id} onClick={() => setActiveItem(item)} type="button">
+            <div className={`${index % 7 === 0 ? "h-[28rem]" : "h-64"} overflow-hidden bg-slate-100`}>{media(item, "h-full w-full object-cover transition duration-700 group-hover:scale-105")}</div>
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-4 pt-14 text-white opacity-95"><p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-sky-100">{item.tipe} · {item.tahun}</p><h3 className="mt-1 text-lg font-black">{item.judul}</h3></div>
+            {isManager && <span className="absolute right-3 top-3 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white shadow-sm" onClick={(e) => { e.stopPropagation(); onDelete(item); }}>Hapus</span>}
+          </button>
+        ))}
+      </section>
+      {activeItem && (
+        <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/80 p-4 backdrop-blur-md" onClick={() => setActiveItem(null)} role="presentation">
+          <div className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] bg-white p-2 shadow-2xl" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={activeItem.judul ?? "Dokumentasi"}>
+            <button className="absolute right-4 top-4 z-10 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-slate-900 shadow-sm" onClick={() => setActiveItem(null)} type="button">Tutup</button>
+            {activeItem.tipe === "video" ? <video className="max-h-[82vh] w-full rounded-[1.6rem] bg-slate-100" controls src={`${PHP_BASE}/${activeItem.file_path}`} /> : media(activeItem, "max-h-[82vh] w-full rounded-[1.6rem] bg-slate-100 object-contain")}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function UploadDokumentasiForm({ csrfToken, onUploaded }: { csrfToken: string; onUploaded: () => void }) {
   const [tipe, setTipe]       = useState("foto");
   const [msg, setMsg]         = useState("");
@@ -255,6 +315,7 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
   const [deleteTarget, setDeleteTarget] = useState<DokumentasiItem | null>(null);
   const [deleting, setDeleting]         = useState(false);
   const [embedPhotos, setEmbedPhotos]   = useState<DrivePhoto[]>([]);
+  const [managerSection, setManagerSection] = useState<"embed" | "manual">("embed");
 
   function load() {
     readJson<DokumentasiItem[]>(`${PHP_BASE}/backend/data/dokumentasi`).then(setItems).catch(() => setItems([]));
@@ -289,11 +350,18 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
   return (
     <>
       <section className="grid items-start gap-6">
-        {isManager && <EmbedDocumentationManager key={embedPhotos.map((photo) => photo.id).join("|")} csrfToken={csrfToken} photos={embedPhotos} onSaved={setEmbedPhotos} />}
-        {isManager && <GuestDocumentationCanvas photos={embedPhotos} />}
-        {isManager && <UploadDokumentasiForm csrfToken={csrfToken} onUploaded={load} />}
+        {isManager && (
+          <div className="grid gap-3 rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm sm:grid-cols-2">
+            <button className={`rounded-2xl px-4 py-4 text-left text-sm font-black transition ${managerSection === "embed" ? "bg-sky-900 text-white" : "bg-sky-50 text-sky-800"}`} onClick={() => setManagerSection("embed")} type="button">Kelola Embed Google Drive<span className="mt-1 block text-xs font-bold opacity-80">Galeri publik untuk tamu & murid</span></button>
+            <button className={`rounded-2xl px-4 py-4 text-left text-sm font-black transition ${managerSection === "manual" ? "bg-sky-900 text-white" : "bg-sky-50 text-sky-800"}`} onClick={() => setManagerSection("manual")} type="button">Upload Manual<span className="mt-1 block text-xs font-bold opacity-80">File foto/video langsung ke website</span></button>
+          </div>
+        )}
+        {isManager && managerSection === "embed" && <EmbedDocumentationManager key={embedPhotos.map((photo) => photo.id).join("|")} csrfToken={csrfToken} photos={embedPhotos} onSaved={setEmbedPhotos} />}
+        {isManager && managerSection === "embed" && <GuestDocumentationCanvas photos={embedPhotos} />}
+        {isManager && managerSection === "manual" && <UploadDokumentasiForm csrfToken={csrfToken} onUploaded={load} />}
+        {isManager && managerSection === "manual" && <ManualDocumentationCanvas items={items} isManager={isManager} onDelete={setDeleteTarget} />}
 
-        <div>
+        {!isManager && <div>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="title-font text-xl font-black text-slate-800">
               {isManager ? "Galeri Upload Manual" : "Dokumentasi"}
@@ -328,7 +396,7 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
           </div>
 
           {items.length === 0 && <EmptyState text="Belum ada dokumentasi." />}
-        </div>
+        </div>}
       </section>
 
       <AppDialog
