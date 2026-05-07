@@ -7,7 +7,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { AppDialog } from "@/components/ui/AppDialog";
 import { CustomSelect } from "@/components/ui/CustomSelect";
 
-const drivePhotos = [
+type DrivePhoto = { id: string; title: string };
+
+const defaultDrivePhotos: DrivePhoto[] = [
   { id: "1OIxeDLxPxzDaS5ViLAAinXx9Ls52Uj4_", title: "Kegiatan Belajar 01" },
   { id: "1hy9SMoNNB2_i0oRxfE881hhNWr9_GnsR", title: "Kegiatan Belajar 02" },
   { id: "1m1ooJxwa5Xsfvfqy1muVL1zGHalI4JGt", title: "Kegiatan Belajar 03" },
@@ -41,8 +43,9 @@ function driveThumb(id: string, size = 1200) {
   return `https://drive.google.com/thumbnail?id=${id}&sz=w${size}`;
 }
 
-function GuestDocumentationCanvas() {
-  const [activePhoto, setActivePhoto] = useState<(typeof drivePhotos)[number] | null>(null);
+function GuestDocumentationCanvas({ photos }: { photos: DrivePhoto[] }) {
+  const drivePhotos = photos.length > 0 ? photos : defaultDrivePhotos;
+  const [activePhoto, setActivePhoto] = useState<DrivePhoto | null>(null);
   const heroPhoto = drivePhotos[4] ?? drivePhotos[0];
   const restPhotos = drivePhotos.filter((photo) => photo.id !== heroPhoto.id);
 
@@ -60,9 +63,6 @@ function GuestDocumentationCanvas() {
               <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-slate-950 md:text-5xl">
                 Cerita kecil dari ruang belajar Kolong Langit.
               </h2>
-              <p className="mt-4 max-w-xl text-sm font-bold leading-7 text-slate-600 md:text-base">
-                Foto ditata satu per satu supaya pengunjung bisa menikmati momen kegiatan tanpa tampilan folder Google Drive.
-              </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-2xl bg-emerald-50 p-4">
@@ -133,6 +133,54 @@ function GuestDocumentationCanvas() {
         </div>
       )}
     </>
+  );
+}
+
+function EmbedDocumentationManager({ csrfToken, photos, onSaved }: { csrfToken: string; photos: DrivePhoto[]; onSaved: (photos: DrivePhoto[]) => void }) {
+  const [rows, setRows] = useState<DrivePhoto[]>(photos.length ? photos : defaultDrivePhotos);
+  const [msg, setMsg] = useState("");
+
+  function update(index: number, key: keyof DrivePhoto, value: string) {
+    setRows((prev) => prev.map((row, i) => (i === index ? { ...row, [key]: value } : row)));
+  }
+
+  async function save() {
+    setMsg("");
+    const fd = new FormData();
+    fd.set("csrf_token", csrfToken);
+    fd.set("photos", JSON.stringify(rows));
+    try {
+      const res = await fetch(`${PHP_BASE}/backend/actions/save-dokumentasi-embed`, { method: "POST", body: fd, credentials: "include" });
+      const json = await res.json();
+      if (json.success) { setMsg("Galeri embed berhasil disimpan."); onSaved(json.photos ?? rows); }
+      else setMsg(json.error ?? "Gagal menyimpan galeri embed.");
+    } catch {
+      setMsg("Gagal menghubungi server.");
+    }
+  }
+
+  return (
+    <div className="glass-card grid gap-3 rounded-[1.5rem] p-4 md:rounded-[2rem] md:p-6">
+      <div className="border-b border-sky-100 pb-3">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Embed Google Drive</p>
+        <h2 className="title-font text-2xl font-black text-slate-950">Kelola Galeri Publik</h2>
+        <p className="mt-1 text-sm font-bold text-slate-500">Galeri ini tampil untuk tamu dan murid.</p>
+      </div>
+      <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1">
+        {rows.map((row, index) => (
+          <div key={`${row.id}-${index}`} className="grid gap-2 rounded-2xl border border-sky-50 bg-white/70 p-3 md:grid-cols-[1fr_1.4fr_auto]">
+            <input className="field" placeholder="Google Drive file ID" value={row.id} onChange={(e) => update(index, "id", e.target.value)} />
+            <input className="field" placeholder="Judul" value={row.title} onChange={(e) => update(index, "title", e.target.value)} />
+            <button className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-black text-rose-600" onClick={() => setRows((prev) => prev.filter((_, i) => i !== index))} type="button">Hapus</button>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-black text-slate-600" onClick={() => setRows((prev) => [...prev, { id: "", title: "Dokumentasi Baru" }])} type="button">+ Tambah Foto Embed</button>
+        <button className="btn-primary px-4 py-2 text-xs" onClick={save} type="button">Simpan Galeri Embed</button>
+      </div>
+      {msg && <p className={`text-sm font-black ${msg.includes("berhasil") ? "text-emerald-700" : "text-rose-600"}`}>{msg}</p>}
+    </div>
   );
 }
 
@@ -209,16 +257,20 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
   const [items, setItems]               = useState<DokumentasiItem[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<DokumentasiItem | null>(null);
   const [deleting, setDeleting]         = useState(false);
+  const [embedPhotos, setEmbedPhotos]   = useState<DrivePhoto[]>([]);
 
   function load() {
     readJson<DokumentasiItem[]>(`${PHP_BASE}/backend/data/dokumentasi`).then(setItems).catch(() => setItems([]));
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    readJson<DrivePhoto[]>(`${PHP_BASE}/backend/data/dokumentasi-embed`).then(setEmbedPhotos).catch(() => setEmbedPhotos([]));
+  }, []);
 
   const isPengajar = category === "pengajar";
 
   if (category === "tamu" || category === "murid") {
-    return <GuestDocumentationCanvas />;
+    return <GuestDocumentationCanvas photos={embedPhotos} />;
   }
 
   async function handleDelete() {
@@ -240,6 +292,8 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
   return (
     <>
       <section className="grid items-start gap-6">
+        {isPengajar && <EmbedDocumentationManager key={embedPhotos.map((photo) => photo.id).join("|")} csrfToken={csrfToken} photos={embedPhotos} onSaved={setEmbedPhotos} />}
+        {isPengajar && <GuestDocumentationCanvas photos={embedPhotos} />}
         {isPengajar && <UploadDokumentasiForm csrfToken={csrfToken} onUploaded={load} />}
 
         <div>
