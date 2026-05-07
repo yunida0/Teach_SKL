@@ -108,6 +108,7 @@ export function QuizHomeTable({
   const [newShowResult, setNewShowResult] = useState(true);
   const [newTingkat, setNewTingkat] = useState("SD");
   const [notice, setNotice] = useState<{ title: string; description: string } | null>(null);
+  const [deleteSubject, setDeleteSubject] = useState<{ subject: string; title: string } | null>(null);
 
   const subjectStats = allItems.reduce<Record<string, { count: number; choices: number; trueFalse: number }>>((acc, q) => {
     if (!q.pelajaran) return acc;
@@ -163,6 +164,27 @@ export function QuizHomeTable({
       setNotice({ title: "Server tidak terhubung", description: "Gagal menghubungi server. Coba lagi beberapa saat." });
     } finally {
       setEditModal(null);
+    }
+  }
+
+  async function handleDeleteSubject() {
+    if (!deleteSubject) return;
+    const fd = new FormData();
+    fd.set("csrf_token", csrfToken);
+    fd.set("pelajaran", deleteSubject.subject);
+
+    try {
+      const res = await fetch(`${PHP_BASE}/backend/deletes/hapus_quiz.php`, { method: "POST", body: fd, credentials: "include" });
+      const json = await res.json();
+      if (json.success) {
+        await onRefresh();
+      } else {
+        setNotice({ title: "Gagal menghapus quiz", description: json.error || "Quiz belum bisa dihapus." });
+      }
+    } catch {
+      setNotice({ title: "Server tidak terhubung", description: "Gagal menghubungi server. Coba lagi beberapa saat." });
+    } finally {
+      setDeleteSubject(null);
     }
   }
 
@@ -224,6 +246,10 @@ export function QuizHomeTable({
                   <button onClick={() => setEditModal({ oldSubject: subject, newTitle: cleanTitle, type, duration, deadline, attempts, shuffle, showResult })} type="button"
                     className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700" title="Edit Judul">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  </button>
+                  <button onClick={() => setDeleteSubject({ subject, title: cleanTitle })} type="button"
+                    className="grid h-10 w-10 place-items-center rounded-full border border-rose-100 bg-rose-50 text-rose-600 transition-colors hover:border-rose-200 hover:bg-rose-100" title="Hapus Quiz">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
                   </button>
                   <button onClick={() => onOpen(subject)} type="button"
                     className="btn-primary px-4 py-2.5 text-xs inline-flex items-center gap-2" title="Kelola Soal">
@@ -362,6 +388,16 @@ export function QuizHomeTable({
           </form>
         </div>
       )}
+      <AppDialog
+        open={Boolean(deleteSubject)}
+        title="Hapus quiz?"
+        description={`Quiz "${deleteSubject?.title ?? "ini"}" dan semua soal di dalamnya akan dihapus permanen.`}
+        tone="danger"
+        cancelLabel="Batal"
+        confirmLabel="Hapus"
+        onCancel={() => setDeleteSubject(null)}
+        onConfirm={handleDeleteSubject}
+      />
       <AppDialog
         open={Boolean(notice)}
         title={notice?.title ?? "Terjadi kendala"}
