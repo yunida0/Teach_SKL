@@ -108,7 +108,7 @@ export function FileViewerModal({
         </div>
 
         {/* Body */}
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
           {view.status === "loading" && (
             <div className="flex h-64 items-center justify-center">
               <p className="font-black text-slate-400">Memuat file...</p>
@@ -116,17 +116,17 @@ export function FileViewerModal({
           )}
 
           {view.status === "pdf" && (
-            <embed
-              className="h-[70vh] w-full"
+            <iframe
+              className="h-[78svh] min-h-[32rem] w-full border-0 sm:h-[72vh]"
               src={view.url}
-              type="application/pdf"
+              title={title}
             />
           )}
 
           {view.status === "image" && (
-            <div className="flex justify-center p-6">
+            <div className="p-4 sm:p-6">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt={title} className="max-h-[65vh] max-w-full rounded-2xl object-contain shadow" src={view.url} />
+              <img alt={title} className="mx-auto h-auto max-w-full rounded-2xl object-contain shadow" src={view.url} />
             </div>
           )}
 

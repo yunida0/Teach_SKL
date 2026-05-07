@@ -53,14 +53,18 @@ export function MateriReader({ filePath, title }: { filePath: string; title: str
   return (
     <div className="overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white shadow-sm">
       {reader.status === "loading" && <div className="grid h-80 place-items-center font-black text-slate-400">Memuat materi...</div>}
-      {reader.status === "pdf" && <embed className="h-[76vh] w-full" src={reader.url} type="application/pdf" />}
-      {reader.status === "image" && (
-        <div className="flex justify-center p-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img alt={title} className="max-h-[72vh] max-w-full rounded-2xl object-contain" src={reader.url} />
+      {reader.status === "pdf" && (
+        <div className="max-h-[calc(100svh-8rem)] overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+          <iframe className="h-[78svh] min-h-[32rem] w-full border-0" src={reader.url} title={title} />
         </div>
       )}
-      {reader.status === "docx" && <div className="prose max-w-none overflow-x-auto p-5 text-slate-800 md:p-8 [&_h1]:font-black [&_h1]:text-sky-900 [&_h2]:font-black [&_h2]:text-sky-800 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-sky-50 [&_th]:px-3 [&_th]:py-2 [&_th]:font-black" dangerouslySetInnerHTML={{ __html: reader.html }} />}
+      {reader.status === "image" && (
+        <div className="max-h-[calc(100svh-8rem)] overflow-y-auto overscroll-contain p-4 [-webkit-overflow-scrolling:touch] sm:p-6">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img alt={title} className="mx-auto h-auto max-w-full rounded-2xl object-contain" src={reader.url} />
+        </div>
+      )}
+      {reader.status === "docx" && <div className="prose max-h-[calc(100svh-8rem)] max-w-none overflow-auto overscroll-contain p-5 text-slate-800 [-webkit-overflow-scrolling:touch] md:p-8 [&_h1]:font-black [&_h1]:text-sky-900 [&_h2]:font-black [&_h2]:text-sky-800 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-sky-50 [&_th]:px-3 [&_th]:py-2 [&_th]:font-black" dangerouslySetInnerHTML={{ __html: reader.html }} />}
       {reader.status === "unsupported" && <div className="grid h-80 place-items-center p-6 text-center"><div><p className="text-lg font-black text-slate-800">Preview .{reader.ext} belum tersedia.</p><p className="mt-1 text-sm font-bold text-slate-500">Silakan download file untuk membukanya.</p></div></div>}
       {reader.status === "error" && <div className="grid h-80 place-items-center p-6 text-center"><div><p className="text-lg font-black text-rose-700">Materi gagal dimuat.</p><p className="mt-1 text-sm font-bold text-slate-500">{reader.message}</p></div></div>}
     </div>
