@@ -376,11 +376,21 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
     const total = playable.length;
     const pct   = total > 0 ? Math.round((correct / total) * 100) : 0;
     const tone  = pct >= 80 ? "emerald" : pct >= 60 ? "sky" : pct >= 40 ? "amber" : "rose";
+    const wrongItems = playable.filter((quiz) => results[String(quiz.id)] && !results[String(quiz.id)]?.benar);
+    const evaluationTitle = pct >= 80 ? "Bagus, pemahamanmu kuat." : pct >= 60 ? "Cukup baik, tinggal rapikan beberapa bagian." : pct >= 40 ? "Perlu latihan ulang di bagian yang salah." : "Ayo ulangi materi dasar dulu.";
+    const evaluationText = pct >= 80
+      ? "Pertahankan ritme belajar dan cek kembali soal yang masih keliru agar makin stabil."
+      : pct >= 60
+        ? "Kamu sudah menangkap sebagian besar materi. Fokuskan belajar pada soal yang belum tepat."
+        : pct >= 40
+          ? "Nilai belum aman. Baca ulang materi, catat pola soal yang salah, lalu coba lagi jika pengajar mereset pengerjaan."
+          : "Jangan buru-buru lanjut. Pelajari ulang contoh soal dan minta arahan pengajar untuk bagian yang belum paham.";
     const ring  = { emerald: "border-emerald-300 bg-emerald-50", sky: "border-sky-300 bg-sky-50", amber: "border-amber-300 bg-amber-50", rose: "border-rose-300 bg-rose-50" }[tone];
     const score = { emerald: "text-emerald-800", sky: "text-sky-800", amber: "text-amber-800", rose: "text-rose-700" }[tone];
     return (
       <section className="grid place-items-center py-4">
-        <div className="w-full max-w-md rounded-[1.75rem] border border-sky-100 bg-white p-6 text-center shadow-sm md:p-8">
+        <div className="grid w-full max-w-3xl gap-4">
+        <div className="rounded-[1.75rem] border border-sky-100 bg-white p-6 text-center shadow-sm md:p-8">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-sky-600">{cleanTitle}</p>
           <h2 className="title-font mt-1 text-3xl font-black text-slate-950">Quiz Selesai!</h2>
           <div className={`mx-auto mt-7 grid h-32 w-32 place-items-center rounded-full border-4 ${ring}`}>
@@ -392,6 +402,21 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
           <p className="mt-5 text-xl font-black text-slate-800">
             {correct} <span className="font-bold text-slate-400">dari</span> {total} <span className="font-bold text-slate-400">benar</span>
           </p>
+          <div className={`mt-5 rounded-2xl border px-4 py-3 text-left ${ring}`}>
+            <p className={`m-0 text-sm font-black ${score}`}>Evaluasi: {evaluationTitle}</p>
+            <p className="m-0 mt-1 text-sm font-bold leading-relaxed text-slate-600">{evaluationText}</p>
+          </div>
+          {showResult && wrongItems.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50/70 px-4 py-3 text-left">
+              <p className="m-0 text-xs font-black uppercase tracking-wide text-rose-700">Yang perlu dipelajari lagi</p>
+              <ul className="mt-2 grid gap-1.5 pl-4 text-sm font-bold text-rose-800">
+                {wrongItems.slice(0, 3).map((quiz) => (
+                  <li key={quiz.id}>{quiz.soal}</li>
+                ))}
+              </ul>
+              {wrongItems.length > 3 && <p className="m-0 mt-2 text-xs font-bold text-rose-700">+{wrongItems.length - 3} soal lain ada di review jawaban.</p>}
+            </div>
+          )}
           <div className="mx-auto mt-6 flex max-w-xs flex-col gap-2.5">
             {showResult ? (
               <button className="btn-primary py-3.5 text-sm" onClick={() => setShowReview(true)} type="button">
@@ -404,6 +429,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
               Kembali ke Mapel
             </button>
           </div>
+        </div>
         </div>
       </section>
     );
