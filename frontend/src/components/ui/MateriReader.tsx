@@ -31,7 +31,7 @@ export function PdfCanvasReader({ title, url }: { title: string; url: string }) 
     async function renderPdf() {
       try {
         const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-        pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.mjs", import.meta.url).toString();
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
         const response = await fetch(url, { credentials: "include" });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.arrayBuffer();
