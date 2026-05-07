@@ -2,11 +2,7 @@
 require_once __DIR__ . '/../../config/database.php';
 header('Content-Type: application/json; charset=utf-8');
 
-if (!isset($_SESSION['user']) || $_SESSION['user']['kategori'] !== 'pengajar') {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'Akses ditolak']);
-    exit;
-}
+require_role_json(['pengajar', 'admin']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

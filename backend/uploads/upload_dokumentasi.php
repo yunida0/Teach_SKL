@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../config/database.php';
 header('Content-Type: application/json; charset=utf-8');
 
-require_role_json(['pengajar']);
+require_role_json(['pengajar', 'admin']);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

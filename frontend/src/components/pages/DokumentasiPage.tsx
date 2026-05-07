@@ -222,21 +222,18 @@ function UploadDokumentasiForm({ csrfToken, onUploaded }: { csrfToken: string; o
   const thisYear = new Date().getFullYear();
 
   return (
-    <form className="glass-card grid gap-3 rounded-[1.5rem] p-4 md:rounded-[2rem] md:p-6" onSubmit={submit}>
-      <div className="border-b border-sky-100 pb-3">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Upload</p>
-        <h2 className="title-font text-2xl font-black text-slate-950">Tambah Dokumentasi</h2>
+    <form className="rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6" onSubmit={submit}>
+      <div className="mb-4 rounded-2xl bg-sky-50 p-4">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Dokumentasi Internal</p>
+        <h2 className="title-font text-2xl font-black text-slate-950">Upload Foto / Video Manual</h2>
+        <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">Gunakan ini untuk file yang diunggah langsung ke website. Untuk galeri publik dari Google Drive, kelola di panel embed di atas.</p>
       </div>
-      <input className="field" maxLength={200} name="judul" placeholder="Judul dokumentasi" required />
-      <CustomSelect name="tipe" value={tipe} onChange={setTipe} options={[{ value: "foto", label: "Foto" }, { value: "video", label: "Video" }]} placeholder="Tipe" />
-      <input className="field" defaultValue={thisYear} max={thisYear + 5} min={2000} name="tahun" required type="number" />
-      <input
-        accept={tipe === "foto" ? ".jpg,.jpeg,.png,.webp" : ".mp4,.webm,.mov"}
-        className="field"
-        name="file"
-        required
-        type="file"
-      />
+      <div className="grid gap-3 md:grid-cols-2">
+        <label className="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-500">Judul<input className="field normal-case tracking-normal" maxLength={200} name="judul" placeholder="Contoh: Kegiatan Literasi" required /></label>
+        <label className="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-500">Tahun<input className="field normal-case tracking-normal" defaultValue={thisYear} max={thisYear + 5} min={2000} name="tahun" required type="number" /></label>
+        <label className="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-500">Tipe Media<CustomSelect name="tipe" value={tipe} onChange={setTipe} options={[{ value: "foto", label: "Foto" }, { value: "video", label: "Video" }]} placeholder="Tipe" /></label>
+        <label className="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-500">File<input accept={tipe === "foto" ? ".jpg,.jpeg,.png,.webp" : ".mp4,.webm,.mov"} className="field normal-case tracking-normal" name="file" required type="file" /></label>
+      </div>
       {msg && (
         <p className={`text-sm font-black ${msg.includes("berhasil") ? "text-emerald-700" : "text-rose-600"}`}>{msg}</p>
       )}
@@ -246,7 +243,7 @@ function UploadDokumentasiForm({ csrfToken, onUploaded }: { csrfToken: string; o
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-sky-500 transition-all" style={{ width: `${progress}%` }} /></div>
         </div>
       )}
-      <button className="btn-primary px-6 py-3 disabled:opacity-50" disabled={loading} type="submit">
+      <button className="btn-primary mt-3 px-6 py-3 disabled:opacity-50" disabled={loading} type="submit">
         {loading ? "Mengupload..." : "Upload"}
       </button>
     </form>
@@ -267,7 +264,7 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
     readJson<DrivePhoto[]>(`${PHP_BASE}/backend/data/dokumentasi-embed`).then(setEmbedPhotos).catch(() => setEmbedPhotos([]));
   }, []);
 
-  const isPengajar = category === "pengajar";
+  const isManager = category === "pengajar" || category === "admin";
 
   if (category === "tamu" || category === "murid") {
     return <GuestDocumentationCanvas photos={embedPhotos} />;
@@ -292,14 +289,14 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
   return (
     <>
       <section className="grid items-start gap-6">
-        {isPengajar && <EmbedDocumentationManager key={embedPhotos.map((photo) => photo.id).join("|")} csrfToken={csrfToken} photos={embedPhotos} onSaved={setEmbedPhotos} />}
-        {isPengajar && <GuestDocumentationCanvas photos={embedPhotos} />}
-        {isPengajar && <UploadDokumentasiForm csrfToken={csrfToken} onUploaded={load} />}
+        {isManager && <EmbedDocumentationManager key={embedPhotos.map((photo) => photo.id).join("|")} csrfToken={csrfToken} photos={embedPhotos} onSaved={setEmbedPhotos} />}
+        {isManager && <GuestDocumentationCanvas photos={embedPhotos} />}
+        {isManager && <UploadDokumentasiForm csrfToken={csrfToken} onUploaded={load} />}
 
         <div>
           <div className="mb-4 flex items-center justify-between">
             <h2 className="title-font text-xl font-black text-slate-800">
-              {isPengajar ? "Galeri Dokumentasi" : "Dokumentasi"}
+              {isManager ? "Galeri Upload Manual" : "Dokumentasi"}
             </h2>
             <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700">{items.length} item</span>
           </div>
@@ -317,7 +314,7 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">{item.tipe ?? "media"} &bull; {item.tahun ?? "-"}</p>
                   <h3 className="mt-2 text-xl font-black text-slate-950">{item.judul ?? "Dokumentasi"}</h3>
                 </div>
-                {isPengajar && (
+                {isManager && (
                   <button
                     className="absolute right-3 top-3 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-rose-700 sm:opacity-0 sm:group-hover:opacity-100"
                     onClick={() => setDeleteTarget(item)}
