@@ -121,6 +121,7 @@ export function QuizHomeTable({
   const [notice, setNotice] = useState<{ title: string; description: string } | null>(null);
   const [deleteSubject, setDeleteSubject] = useState<{ subject: string; title: string } | null>(null);
   const [resultModal, setResultModal] = useState<{ subject: string; title: string; total: number; students: QuizResultStudent[]; loading: boolean } | null>(null);
+  const [selectedResultStudent, setSelectedResultStudent] = useState<string | null>(null);
 
   const subjectStats = allItems.reduce<Record<string, { count: number; choices: number; trueFalse: number }>>((acc, q) => {
     if (!q.pelajaran) return acc;
@@ -202,11 +203,14 @@ export function QuizHomeTable({
 
   async function openResults(subject: string, title: string) {
     setResultModal({ subject, title, total: 0, students: [], loading: true });
+    setSelectedResultStudent(null);
     try {
       const qs = new URLSearchParams({ pelajaran: subject });
       const data = await fetch(`${PHP_BASE}/backend/data/quiz-results?${qs.toString()}`, { credentials: "include" }).then(r => r.json());
       if (data.success) {
         setResultModal({ subject, title, total: Number(data.total_questions ?? 0), students: data.students ?? [], loading: false });
+        const first = data.students?.[0]?.murid_id;
+        setSelectedResultStudent(first ? String(first) : null);
       } else {
         setResultModal(null);
         setNotice({ title: "Gagal memuat hasil", description: data.error || "Data pengerjaan belum bisa dimuat." });
@@ -231,6 +235,88 @@ export function QuizHomeTable({
     } catch {
       setNotice({ title: "Server tidak terhubung", description: "Gagal menghubungi server. Coba lagi beberapa saat." });
     }
+  }
+
+  if (resultModal) {
+    const selectedStudent = resultModal.students.find((student) => String(student.murid_id) === selectedResultStudent) ?? resultModal.students[0];
+    const averageScore = resultModal.students.length > 0 ? Math.round(resultModal.students.reduce((sum, student) => sum + Number(student.score || 0), 0) / resultModal.students.length) : 0;
+    const completed = resultModal.students.filter((student) => student.answered >= resultModal.total && resultModal.total > 0).length;
+
+    return (
+      <div className="pb-8">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
+          <div>
+            <p className="m-0 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600">Hasil Pengerjaan</p>
+            <h2 className="m-0 mt-1 text-2xl font-black tracking-tight text-slate-950">{resultModal.title}</h2>
+          </div>
+          <button type="button" onClick={() => setResultModal(null)} className="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-black text-slate-600 hover:bg-slate-50">← Kembali ke Bank Quiz</button>
+        </div>
+
+        {resultModal.loading ? (
+          <div className="rounded-2xl bg-white p-6 text-sm font-bold text-slate-500 shadow-sm">Memuat hasil pengerjaan...</div>
+        ) : (
+          <div className="grid gap-5">
+            <div className="grid gap-3 md:grid-cols-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><p className="m-0 text-[10px] font-black uppercase tracking-wide text-slate-400">Soal</p><p className="m-0 mt-1 text-2xl font-black text-slate-950">{resultModal.total}</p></div>
+              <div className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm"><p className="m-0 text-[10px] font-black uppercase tracking-wide text-slate-400">Mengerjakan</p><p className="m-0 mt-1 text-2xl font-black text-emerald-700">{resultModal.students.length}</p></div>
+              <div className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm"><p className="m-0 text-[10px] font-black uppercase tracking-wide text-slate-400">Tuntas</p><p className="m-0 mt-1 text-2xl font-black text-sky-700">{completed}</p></div>
+              <div className="rounded-2xl border border-amber-100 bg-white p-4 shadow-sm"><p className="m-0 text-[10px] font-black uppercase tracking-wide text-slate-400">Rata-rata</p><p className="m-0 mt-1 text-2xl font-black text-amber-700">{averageScore}</p></div>
+            </div>
+
+            {resultModal.students.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-white/80 p-8 text-center text-sm font-bold text-slate-500">Belum ada murid yang mengerjakan quiz ini.</div>
+            ) : (
+              <div className="grid gap-5 lg:grid-cols-[minmax(0,0.95fr)_minmax(360px,1.05fr)]">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="mb-3 flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 className="m-0 text-xs font-black uppercase tracking-[0.14em] text-slate-600">Daftar Murid</h3>
+                    <span className="text-xs font-black text-slate-400">Klik untuk detail</span>
+                  </div>
+                  <div className="grid gap-2">
+                    {resultModal.students.map((student) => {
+                      const active = String(student.murid_id) === String(selectedStudent?.murid_id);
+                      return (
+                        <button key={student.murid_id} type="button" onClick={() => setSelectedResultStudent(String(student.murid_id))} className={`rounded-2xl border p-3 text-left transition ${active ? "border-sky-200 bg-sky-50 ring-2 ring-sky-100" : "border-slate-200 bg-white hover:border-sky-200"}`}>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="m-0 truncate text-sm font-black text-slate-900">{student.nama_murid || student.username}</p>
+                              <p className="m-0 mt-0.5 text-xs font-bold text-slate-500">Benar {student.correct} · Salah {student.wrong}</p>
+                            </div>
+                            <span className={`rounded-full px-3 py-1 text-xs font-black ${student.score >= 70 ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>{student.score}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm">
+                  {selectedStudent ? (
+                    <>
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div>
+                          <h3 className="m-0 text-lg font-black text-slate-950">{selectedStudent.nama_murid || selectedStudent.username}</h3>
+                          <p className="m-0 text-xs font-bold text-slate-500">Nilai {selectedStudent.score} · Terjawab {selectedStudent.answered}/{resultModal.total}</p>
+                        </div>
+                        <button type="button" onClick={() => resetStudentResult(selectedStudent)} className="rounded-full border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-black text-amber-700 hover:bg-amber-100">Reset Pengerjaan</button>
+                      </div>
+                      <div className="grid gap-2">
+                        {selectedStudent.answers.map((answer, idx) => (
+                          <div key={`${selectedStudent.murid_id}-${answer.quiz_id}`} className={`rounded-xl px-3 py-2 text-xs ${answer.is_correct ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>
+                            <p className="m-0 font-black">{idx + 1}. {answer.soal}</p>
+                            <p className="m-0 mt-1 font-bold">Jawaban murid: {answer.jawaban_user || "-"} · Kunci: {answer.jawaban_benar || "-"} · Nilai: {answer.nilai}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -435,47 +521,6 @@ export function QuizHomeTable({
               <button type="submit" className="btn-primary px-5 py-2.5 text-sm">Simpan Perubahan</button>
             </div>
           </form>
-        </div>
-      )}
-      {resultModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm">
-          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-2xl">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
-              <div>
-                <p className="m-0 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600">Hasil Pengerjaan</p>
-                <h3 className="m-0 mt-1 text-xl font-black text-slate-950">{resultModal.title}</h3>
-                <p className="m-0 mt-1 text-xs font-bold text-slate-500">{resultModal.total} soal · {resultModal.students.length} murid sudah mengerjakan</p>
-              </div>
-              <button type="button" onClick={() => setResultModal(null)} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-500 hover:bg-slate-50">Tutup</button>
-            </div>
-            {resultModal.loading ? (
-              <p className="rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-500">Memuat hasil...</p>
-            ) : resultModal.students.length === 0 ? (
-              <p className="rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-500">Belum ada murid yang mengerjakan quiz ini.</p>
-            ) : (
-              <div className="grid gap-3">
-                {resultModal.students.map((student) => (
-                  <div key={student.murid_id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <h4 className="m-0 text-base font-black text-slate-950">{student.nama_murid || student.username}</h4>
-                        <p className="m-0 text-xs font-bold text-slate-500">Nilai {student.score} · Benar {student.correct} · Salah {student.wrong} · Terjawab {student.answered}/{resultModal.total}</p>
-                      </div>
-                      <button type="button" onClick={() => resetStudentResult(student)} className="rounded-full border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-black text-amber-700 hover:bg-amber-100">Reset Pengerjaan</button>
-                    </div>
-                    <div className="grid gap-2">
-                      {student.answers.map((answer, idx) => (
-                        <div key={`${student.murid_id}-${answer.quiz_id}`} className={`rounded-xl px-3 py-2 text-xs ${answer.is_correct ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>
-                          <p className="m-0 font-black">{idx + 1}. {answer.soal}</p>
-                          <p className="m-0 mt-1 font-bold">Jawaban murid: {answer.jawaban_user || "-"} · Kunci: {answer.jawaban_benar || "-"} · Nilai: {answer.nilai}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       )}
       <AppDialog
