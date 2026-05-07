@@ -383,12 +383,14 @@ function QuizForm({
   csrfToken,
   isNew,
   onSaved,
+  onCancel,
 }: {
   quiz?: Quiz;
   subject: string;
   csrfToken: string;
   isNew: boolean;
   onSaved: () => void;
+  onCancel: () => void;
 }) {
   const [soal, setSoal]         = useState(quiz?.soal ?? "");
   const [tipe, setTipe]         = useState(quiz?.tipe ?? "pilihan_ganda");
@@ -519,10 +521,15 @@ function QuizForm({
         </div>
       )}
 
-      <button type="submit" disabled={loading}
-        className="btn-primary w-full py-3.5 text-sm mt-2">
-        {loading ? "Menyimpan..." : isNew ? "Simpan Soal" : "Perbarui Soal"}
-      </button>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button type="button" onClick={onCancel} className="rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-black text-slate-600 transition hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700">
+          Batal
+        </button>
+        <button type="submit" disabled={loading}
+          className="btn-primary w-full py-3.5 text-sm">
+          {loading ? "Menyimpan..." : isNew ? "Simpan Soal" : "Perbarui Soal"}
+        </button>
+      </div>
     </form>
   );
 }
@@ -543,6 +550,7 @@ export function QuizEditor({
 }) {
   const quizzes = allItems.filter(q => q.pelajaran === subject);
   const [activeId, setActiveId] = useState<number | string | "new">(() => quizzes[0]?.id ?? "new");
+  const [formOpen, setFormOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Quiz | null>(null);
 
   const { type, cleanTitle } = parseSubject(subject);
@@ -552,14 +560,20 @@ export function QuizEditor({
   const resolvedActiveId = activeId !== "new" && activeQuiz ? activeId : "new";
   const isNew = resolvedActiveId === "new";
 
+  function openForm(id: number | string | "new") {
+    setActiveId(id);
+    setFormOpen(true);
+  }
+
   async function refreshAfterSave() {
     const latest = await onRefresh();
     if (isNew) {
       const added = latest.find(q => q.pelajaran === subject);
       setActiveId(added?.id ?? "new");
-      return;
+    } else {
+      setActiveId(activeQuiz?.id ?? activeId);
     }
-    setActiveId(activeQuiz?.id ?? activeId);
+    setFormOpen(false);
   }
 
   async function handleDelete(quiz: Quiz) {
@@ -597,9 +611,7 @@ export function QuizEditor({
         </div>
       </div>
 
-      {/* Split body */}
-      <div className="grid flex-1 grid-cols-1 items-start gap-5 py-5 pb-8 lg:grid-cols-[minmax(0,1fr)_minmax(380px,0.82fr)]">
-        {/* Kiri: Daftar Soal */}
+      <div className="py-5 pb-8">
         <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/85 p-5 shadow-sm shadow-slate-900/5 backdrop-blur">
           <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
             <h4 className="m-0 text-xs font-black uppercase tracking-[0.14em] text-slate-600">Daftar Soal</h4>
@@ -608,7 +620,7 @@ export function QuizEditor({
 
           {quizzes.length === 0 && (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-5 py-8 text-center">
-              <p className="m-0 text-sm font-bold text-slate-500">Belum ada soal. Tambah dari form di kanan.</p>
+              <p className="m-0 text-sm font-bold text-slate-500">Belum ada soal. Tambahkan soal lewat tombol di bawah.</p>
             </div>
           )}
 
@@ -618,12 +630,12 @@ export function QuizEditor({
               return (
                 <div key={quiz.id}
                   className={`cursor-pointer rounded-2xl border p-4 transition-all ${active ? 'border-sky-200 bg-sky-50/80 shadow-sm ring-2 ring-sky-100' : 'border-slate-200/80 bg-white hover:border-sky-200 hover:shadow-sm'}`}
-                  onClick={() => setActiveId(quiz.id)}>
+                  onClick={() => openForm(quiz.id)}>
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <span className={`text-[11px] font-black uppercase tracking-wider ${active ? 'text-sky-700' : 'text-slate-400'}`}>Soal {i + 1} · 10 poin</span>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button type="button"
-                        onClick={e => { e.stopPropagation(); setActiveId(quiz.id); document.getElementById("quiz-question-form")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+                        onClick={e => { e.stopPropagation(); openForm(quiz.id); }}
                         className={`cursor-pointer rounded-full border px-2.5 py-1 text-[10px] font-black transition-colors ${active ? 'border-sky-200 bg-white text-sky-700' : 'border-sky-100 bg-sky-50 text-sky-600 hover:bg-sky-100'}`}>
                         Edit
                       </button>
@@ -652,24 +664,27 @@ export function QuizEditor({
           </div>
 
           {/* Tombol tambah soal baru */}
-          <button type="button" onClick={() => setActiveId("new")}
-            className={`mt-4 w-full rounded-2xl border border-dashed p-3 text-sm font-black transition-all ${isNew ? 'border-sky-300 bg-sky-50 text-sky-700 ring-2 ring-sky-100' : 'border-slate-300 bg-white/60 text-slate-600 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700'}`}>
+          <button type="button" onClick={() => openForm("new")}
+            className="mt-4 w-full rounded-2xl border border-dashed border-slate-300 bg-white/60 p-3 text-sm font-black text-slate-600 transition-all hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700">
             + Tambah Soal Baru
           </button>
         </div>
-
-        {/* Kanan: Form */}
-        <div id="quiz-question-form" className="scroll-mt-5 rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-6 shadow-xl shadow-slate-900/5 backdrop-blur lg:sticky lg:top-4">
-          <QuizForm
-            key={String(resolvedActiveId)}
-            quiz={activeQuiz}
-            subject={subject}
-            csrfToken={csrfToken}
-            isNew={isNew}
-            onSaved={refreshAfterSave}
-          />
-        </div>
       </div>
+      {formOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={isNew ? "Tambah soal baru" : "Edit soal"}>
+          <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-950/25 sm:p-6">
+            <QuizForm
+              key={String(resolvedActiveId)}
+              quiz={activeQuiz}
+              subject={subject}
+              csrfToken={csrfToken}
+              isNew={isNew}
+              onSaved={refreshAfterSave}
+              onCancel={() => setFormOpen(false)}
+            />
+          </div>
+        </div>
+      )}
       <AppDialog
         open={Boolean(deleteTarget)}
         title="Hapus soal?"
