@@ -21,6 +21,7 @@ $opsiC     = trim($_POST['opsi_c'] ?? '');
 $opsiD     = trim($_POST['opsi_d'] ?? '');
 $jawaban   = strtoupper(trim($_POST['jawaban_benar'] ?? ''));
 $tingkat   = trim($_POST['tingkat'] ?? 'SD');
+$poin      = isset($_POST['poin']) ? max(1, (int) $_POST['poin']) : 10;
 
 if (mb_strlen($pelajaran) > 255) {
     $pelajaran = mb_substr($pelajaran, 0, 255);
@@ -49,10 +50,14 @@ try {
     if (!in_array('tingkat', $cols)) {
         $pdo->exec("ALTER TABLE quiz ADD COLUMN tingkat VARCHAR(80) DEFAULT 'Umum'");
     }
+    if (!in_array('poin', $cols, true)) {
+        $pdo->exec("ALTER TABLE quiz ADD COLUMN poin INT NOT NULL DEFAULT 10");
+    }
+    $pdo->exec("UPDATE quiz SET poin = 10 WHERE poin IS NULL OR poin < 1");
 } catch (Exception $e) {}
 
-$pdo->prepare('INSERT INTO quiz (pelajaran, soal, tipe, opsi_a, opsi_b, opsi_c, opsi_d, jawaban_benar, tingkat) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-    ->execute([$pelajaran, $soal, $tipe, $opsiA, $opsiB, $opsiC, $opsiD, $jawaban, $tingkat]);
+$pdo->prepare('INSERT INTO quiz (pelajaran, soal, tipe, opsi_a, opsi_b, opsi_c, opsi_d, jawaban_benar, tingkat, poin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    ->execute([$pelajaran, $soal, $tipe, $opsiA, $opsiB, $opsiC, $opsiD, $jawaban, $tingkat, $poin]);
 
 echo json_encode(['success' => true, 'message' => 'Quiz berhasil ditambahkan']);
 ?>

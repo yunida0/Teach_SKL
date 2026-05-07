@@ -133,6 +133,7 @@ export type Quiz = {
   opsi_d?: string;
   jawaban_benar?: string;
   tingkat?: string;
+  poin?: number | string;
   sudah_dikerjakan?: number | string;
   nilai?: number | string;
 };

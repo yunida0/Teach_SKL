@@ -29,6 +29,11 @@ type QuizResultStudent = {
   answers: Array<{ quiz_id: number | string; soal?: string; jawaban_user?: string; jawaban_benar?: string; nilai: number; is_correct: boolean }>;
 };
 
+function questionPoint(quiz?: Quiz) {
+  const value = Number(quiz?.poin ?? 10);
+  return Number.isFinite(value) && value > 0 ? value : 10;
+}
+
 const defaultMeta: Omit<QuizMeta, "cleanTitle"> = {
   type: "quiz",
   duration: 0,
@@ -582,7 +587,7 @@ function QuizForm({
   const [soal, setSoal]         = useState(quiz?.soal ?? "");
   const [tipe, setTipe]         = useState(quiz?.tipe ?? "pilihan_ganda");
   const [tingkat, setTingkat]   = useState(quiz?.tingkat && ["TK", "SD", "SMP"].includes(quiz.tingkat) ? quiz.tingkat : "SD");
-  const [poin, setPoin]         = useState("10");
+  const [poin, setPoin]         = useState(String(questionPoint(quiz)));
   const [opsiA, setOpsiA]       = useState(quiz?.opsi_a ?? "");
   const [opsiB, setOpsiB]       = useState(quiz?.opsi_b ?? "");
   const [opsiC, setOpsiC]       = useState(quiz?.opsi_c ?? "");
@@ -609,6 +614,7 @@ function QuizForm({
     fd.set("opsi_d", tipe === "pilihan_ganda" ? opsiD : "");
     fd.set("jawaban_benar", jawaban);
     fd.set("tingkat", tingkat);
+    fd.set("poin", String(Math.max(1, parseInt(poin, 10) || 10)));
     if (!isNew) fd.set("id", String(quiz!.id));
     const url = isNew ? `${PHP_BASE}/backend/actions/tambah-quiz` : `${PHP_BASE}/backend/actions/update-quiz`;
     try {
@@ -632,7 +638,7 @@ function QuizForm({
             {isNew ? "Tambah Soal Baru" : "Edit Soal"}
           </h3>
         </div>
-        <span className="rounded-full bg-slate-50 px-3 py-1 text-[11px] font-black text-slate-500 ring-1 ring-slate-100">10 poin</span>
+        <span className="rounded-full bg-slate-50 px-3 py-1 text-[11px] font-black text-slate-500 ring-1 ring-slate-100">{Math.max(1, parseInt(poin, 10) || 10)} poin</span>
       </div>
 
       <div>
@@ -819,7 +825,7 @@ export function QuizEditor({
                   className={`cursor-pointer rounded-2xl border p-4 transition-all ${active ? 'border-sky-200 bg-sky-50/80 shadow-sm ring-2 ring-sky-100' : 'border-slate-200/80 bg-white hover:border-sky-200 hover:shadow-sm'}`}
                   onClick={() => openForm(quiz.id)}>
                   <div className="mb-2 flex items-center justify-between gap-3">
-                    <span className={`text-[11px] font-black uppercase tracking-wider ${active ? 'text-sky-700' : 'text-slate-400'}`}>Soal {i + 1} · 10 poin</span>
+                    <span className={`text-[11px] font-black uppercase tracking-wider ${active ? 'text-sky-700' : 'text-slate-400'}`}>Soal {i + 1} · {questionPoint(quiz)} poin</span>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button type="button"
                         onClick={e => { e.stopPropagation(); openForm(quiz.id); }}

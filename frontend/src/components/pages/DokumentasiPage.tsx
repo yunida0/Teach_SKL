@@ -43,99 +43,6 @@ function driveThumb(id: string, size = 1200) {
   return `https://drive.google.com/thumbnail?id=${id}&sz=w${size}`;
 }
 
-function GuestDocumentationCanvas({ photos }: { photos: DrivePhoto[] }) {
-  const drivePhotos = photos.length > 0 ? photos : defaultDrivePhotos;
-  const [activePhoto, setActivePhoto] = useState<DrivePhoto | null>(null);
-  const heroPhoto = drivePhotos[4] ?? drivePhotos[0];
-  const restPhotos = drivePhotos.filter((photo) => photo.id !== heroPhoto.id);
-
-  return (
-    <>
-      <section className="relative overflow-hidden rounded-[2rem] border border-sky-100 bg-[#f8fbf7] p-4 shadow-sm md:p-6 xl:p-8">
-        <div className="pointer-events-none absolute -left-16 top-10 h-56 w-56 rounded-full bg-emerald-200/40 blur-3xl" />
-        <div className="pointer-events-none absolute -right-20 top-0 h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-1/3 h-48 w-48 rounded-full bg-amber-100 blur-3xl" />
-
-        <div className="relative grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
-          <div className="grid content-between gap-5 rounded-[1.7rem] border border-white/70 bg-white/75 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur md:p-7">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-700">Dokumentasi Kegiatan</p>
-              <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-slate-950 md:text-5xl">
-                Cerita kecil dari ruang belajar Kolong Langit.
-              </h2>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl bg-emerald-50 p-4">
-                <p className="text-2xl font-black text-emerald-800">{drivePhotos.length}</p>
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Foto</p>
-              </div>
-              <div className="rounded-2xl bg-sky-50 p-4">
-                <p className="text-2xl font-black text-sky-800">2026</p>
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-sky-600">Arsip</p>
-              </div>
-              <div className="rounded-2xl bg-amber-50 p-4">
-                <p className="text-2xl font-black text-amber-800">SKL</p>
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-600">Galeri</p>
-              </div>
-            </div>
-          </div>
-
-          <button
-            className="group relative min-h-[24rem] overflow-hidden rounded-[1.9rem] border border-white bg-slate-900 text-left shadow-[0_28px_90px_rgba(15,23,42,0.18)]"
-            onClick={() => setActivePhoto(heroPhoto)}
-            type="button"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img alt={heroPhoto.title} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" src={driveThumb(heroPhoto.id, 1400)} />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
-            <div className="absolute bottom-0 left-0 right-0 p-5 text-white md:p-7">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-sky-100">Sorotan</p>
-              <h3 className="mt-2 text-3xl font-black">{heroPhoto.title}</h3>
-              <p className="mt-2 text-sm font-bold text-white/80">Klik untuk membuka foto di canvas.</p>
-            </div>
-          </button>
-        </div>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {restPhotos.map((photo, index) => (
-          <button
-            className={`group relative overflow-hidden rounded-[1.6rem] border border-white bg-white text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${index % 7 === 0 ? "sm:row-span-2" : ""}`}
-            key={photo.id}
-            onClick={() => setActivePhoto(photo)}
-            type="button"
-          >
-            <div className={`${index % 7 === 0 ? "h-[28rem]" : "h-64"} overflow-hidden bg-slate-100`}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img alt={photo.title} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" loading="lazy" src={driveThumb(photo.id)} />
-            </div>
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-4 pt-14 text-white opacity-95">
-              <p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-sky-100">Foto {String(index + 1).padStart(2, "0")}</p>
-              <h3 className="mt-1 text-lg font-black">{photo.title}</h3>
-            </div>
-          </button>
-        ))}
-      </section>
-
-      {activePhoto && (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/80 p-4 backdrop-blur-md" onClick={() => setActivePhoto(null)} role="presentation">
-          <div className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] bg-white p-2 shadow-2xl" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={activePhoto.title}>
-            <button
-              className="absolute right-4 top-4 z-10 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-slate-900 shadow-sm transition hover:bg-white"
-              onClick={() => setActivePhoto(null)}
-              type="button"
-            >
-              Tutup
-            </button>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img alt={activePhoto.title} className="max-h-[82vh] w-full rounded-[1.6rem] object-contain bg-slate-100" src={driveThumb(activePhoto.id, 1800)} />
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
 function EmbedDocumentationManager({ csrfToken, photos, onSaved }: { csrfToken: string; photos: DrivePhoto[]; onSaved: (photos: DrivePhoto[]) => void }) {
   const [rows, setRows] = useState<DrivePhoto[]>(photos.length ? photos : defaultDrivePhotos);
   const [msg, setMsg] = useState("");
@@ -162,9 +69,9 @@ function EmbedDocumentationManager({ csrfToken, photos, onSaved }: { csrfToken: 
   return (
     <div className="glass-card grid gap-3 rounded-[1.5rem] p-4 md:rounded-[2rem] md:p-6">
       <div className="border-b border-sky-100 pb-3">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Embed Google Drive</p>
-        <h2 className="title-font text-2xl font-black text-slate-950">Kelola Galeri Publik</h2>
-        <p className="mt-1 text-sm font-bold text-slate-500">Galeri ini tampil untuk tamu dan murid.</p>
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Google Drive</p>
+        <h2 className="title-font text-2xl font-black text-slate-950">Tambah Foto Dokumentasi</h2>
+        <p className="mt-1 text-sm font-bold text-slate-500">Foto dari Google Drive akan tampil di canvas dokumentasi yang sama.</p>
       </div>
       <div className="grid max-h-[28rem] gap-2 overflow-y-auto pr-1">
         {rows.map((row, index) => (
@@ -176,70 +83,40 @@ function EmbedDocumentationManager({ csrfToken, photos, onSaved }: { csrfToken: 
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        <button className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-black text-slate-600" onClick={() => setRows((prev) => [...prev, { id: "", title: "Dokumentasi Baru" }])} type="button">+ Tambah Foto Embed</button>
-        <button className="btn-primary px-4 py-2 text-xs" onClick={save} type="button">Simpan Galeri Embed</button>
+        <button className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-black text-slate-600" onClick={() => setRows((prev) => [...prev, { id: "", title: "Dokumentasi Baru" }])} type="button">+ Tambah Foto</button>
+        <button className="btn-primary px-4 py-2 text-xs" onClick={save} type="button">Simpan Galeri</button>
       </div>
       {msg && <p className={`text-sm font-black ${msg.includes("berhasil") ? "text-emerald-700" : "text-rose-600"}`}>{msg}</p>}
     </div>
   );
 }
 
-function ManualDocumentationCanvas({ items, isManager, onDelete }: { items: DokumentasiItem[]; isManager: boolean; onDelete: (item: DokumentasiItem) => void }) {
-  const [activeItem, setActiveItem] = useState<DokumentasiItem | null>(null);
-  const hero = items[0];
-  const rest = hero ? items.filter((item) => item.id !== hero.id) : items;
+type UnifiedDocItem =
+  | { source: "embed"; id: string; title: string; mediaUrl: string; type: "foto"; year?: string }
+  | { source: "manual"; id: string | number; title: string; mediaUrl: string; type: string; year?: string; raw: DokumentasiItem };
 
-  function media(item: DokumentasiItem, className: string) {
-    const src = `${PHP_BASE}/${item.file_path}`;
-    if (item.tipe === "video") return <video className={className} controls={false} muted src={src} />;
+function UnifiedDocumentationCanvas({ embedPhotos, manualItems, isManager, onDeleteManual, onEditManual }: { embedPhotos: DrivePhoto[]; manualItems: DokumentasiItem[]; isManager: boolean; onDeleteManual: (item: DokumentasiItem) => void; onEditManual: (item: DokumentasiItem) => void }) {
+  const docs: UnifiedDocItem[] = [
+    ...(embedPhotos.length ? embedPhotos : defaultDrivePhotos).map((photo) => ({ source: "embed" as const, id: photo.id, title: photo.title, mediaUrl: driveThumb(photo.id), type: "foto" as const, year: "Dokumentasi" })),
+    ...manualItems.map((item) => ({ source: "manual" as const, id: item.id, title: item.judul ?? "Dokumentasi", mediaUrl: `${PHP_BASE}/${item.file_path}`, type: item.tipe ?? "foto", year: String(item.tahun ?? "-"), raw: item })),
+  ];
+  const [active, setActive] = useState<UnifiedDocItem | null>(null);
+  const hero = docs[0];
+  const rest = hero ? docs.filter((item) => item !== hero) : docs;
+
+  function media(item: UnifiedDocItem, className: string, controls = false) {
+    if (item.type === "video") return <video className={className} controls={controls} muted={!controls} src={item.mediaUrl} />;
     // eslint-disable-next-line @next/next/no-img-element
-    return <img alt={item.judul ?? "Dokumentasi"} className={className} src={src} />;
+    return <img alt={item.title} className={className} src={item.source === "embed" ? driveThumb(item.id as string, controls ? 1800 : 1200) : item.mediaUrl} />;
   }
 
-  if (items.length === 0) return <EmptyState text="Belum ada dokumentasi upload manual." />;
+  if (docs.length === 0) return <EmptyState text="Belum ada dokumentasi." />;
 
   return (
     <>
-      {hero && (
-        <section className="relative overflow-hidden rounded-[2rem] border border-sky-100 bg-[#f8fbf7] p-4 shadow-sm md:p-6 xl:p-8">
-          <div className="relative grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
-            <div className="grid content-between gap-5 rounded-[1.7rem] border border-white/70 bg-white/75 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur md:p-7">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-sky-700">Galeri Upload Manual</p>
-                <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-slate-950 md:text-5xl">Dokumentasi dari file website.</h2>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl bg-emerald-50 p-4"><p className="text-2xl font-black text-emerald-800">{items.length}</p><p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Item</p></div>
-                <div className="rounded-2xl bg-sky-50 p-4"><p className="text-2xl font-black text-sky-800">{hero.tahun ?? "-"}</p><p className="text-xs font-black uppercase tracking-[0.14em] text-sky-600">Sorotan</p></div>
-                <div className="rounded-2xl bg-amber-50 p-4"><p className="text-2xl font-black text-amber-800">SKL</p><p className="text-xs font-black uppercase tracking-[0.14em] text-amber-600">Upload</p></div>
-              </div>
-            </div>
-            <button className="group relative min-h-[24rem] overflow-hidden rounded-[1.9rem] border border-white bg-slate-900 text-left shadow-[0_28px_90px_rgba(15,23,42,0.18)]" onClick={() => setActiveItem(hero)} type="button">
-              {media(hero, "absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105")}
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-5 text-white md:p-7"><p className="text-xs font-black uppercase tracking-[0.2em] text-sky-100">Sorotan</p><h3 className="mt-2 text-3xl font-black">{hero.judul}</h3></div>
-              {isManager && <button className="absolute right-4 top-4 z-10 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white" onClick={(e) => { e.stopPropagation(); onDelete(hero); }} type="button">Hapus</button>}
-            </button>
-          </div>
-        </section>
-      )}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        {rest.map((item, index) => (
-          <button className={`group relative overflow-hidden rounded-[1.6rem] border border-white bg-white text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${index % 7 === 0 ? "sm:row-span-2" : ""}`} key={item.id} onClick={() => setActiveItem(item)} type="button">
-            <div className={`${index % 7 === 0 ? "h-[28rem]" : "h-64"} overflow-hidden bg-slate-100`}>{media(item, "h-full w-full object-cover transition duration-700 group-hover:scale-105")}</div>
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-4 pt-14 text-white opacity-95"><p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-sky-100">{item.tipe} · {item.tahun}</p><h3 className="mt-1 text-lg font-black">{item.judul}</h3></div>
-            {isManager && <span className="absolute right-3 top-3 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white shadow-sm" onClick={(e) => { e.stopPropagation(); onDelete(item); }}>Hapus</span>}
-          </button>
-        ))}
-      </section>
-      {activeItem && (
-        <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/80 p-4 backdrop-blur-md" onClick={() => setActiveItem(null)} role="presentation">
-          <div className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] bg-white p-2 shadow-2xl" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={activeItem.judul ?? "Dokumentasi"}>
-            <button className="absolute right-4 top-4 z-10 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-slate-900 shadow-sm" onClick={() => setActiveItem(null)} type="button">Tutup</button>
-            {activeItem.tipe === "video" ? <video className="max-h-[82vh] w-full rounded-[1.6rem] bg-slate-100" controls src={`${PHP_BASE}/${activeItem.file_path}`} /> : media(activeItem, "max-h-[82vh] w-full rounded-[1.6rem] bg-slate-100 object-contain")}
-          </div>
-        </div>
-      )}
+      {hero && <section className="relative overflow-hidden rounded-[2rem] border border-sky-100 bg-[#f8fbf7] p-4 shadow-sm md:p-6 xl:p-8"><div className="relative grid gap-6 xl:grid-cols-[1.12fr_0.88fr]"><div className="grid content-between gap-5 rounded-[1.7rem] border border-white/70 bg-white/75 p-5 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur md:p-7"><div><p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-700">Dokumentasi Kegiatan</p><h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight text-slate-950 md:text-5xl">Cerita kecil dari ruang belajar Kolong Langit.</h2></div><div className="grid gap-3 sm:grid-cols-3"><div className="rounded-2xl bg-emerald-50 p-4"><p className="text-2xl font-black text-emerald-800">{docs.length}</p><p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-600">Dokumentasi</p></div><div className="rounded-2xl bg-sky-50 p-4"><p className="text-2xl font-black text-sky-800">Foto</p><p className="text-xs font-black uppercase tracking-[0.14em] text-sky-600">& Video</p></div><div className="rounded-2xl bg-amber-50 p-4"><p className="text-2xl font-black text-amber-800">SKL</p><p className="text-xs font-black uppercase tracking-[0.14em] text-amber-600">Galeri</p></div></div></div><button className="group relative min-h-[24rem] overflow-hidden rounded-[1.9rem] border border-white bg-slate-900 text-left shadow-[0_28px_90px_rgba(15,23,42,0.18)]" onClick={() => setActive(hero)} type="button">{media(hero, "absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105")}<div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" /><div className="absolute bottom-0 left-0 right-0 p-5 text-white md:p-7"><p className="text-xs font-black uppercase tracking-[0.2em] text-sky-100">Sorotan Dokumentasi</p><h3 className="mt-2 text-3xl font-black">{hero.title}</h3></div>{isManager && hero.source === "manual" && <div className="absolute right-4 top-4 z-10 flex gap-2"><button className="rounded-xl bg-white px-3 py-1.5 text-xs font-black text-slate-900" onClick={(e) => { e.stopPropagation(); onEditManual(hero.raw); }} type="button">Edit</button><button className="rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white" onClick={(e) => { e.stopPropagation(); onDeleteManual(hero.raw); }} type="button">Hapus</button></div>}</button></div></section>}
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">{rest.map((item, index) => (<button className={`group relative overflow-hidden rounded-[1.6rem] border border-white bg-white text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${index % 7 === 0 ? "sm:row-span-2" : ""}`} key={`${item.source}-${item.id}`} onClick={() => setActive(item)} type="button"><div className={`${index % 7 === 0 ? "h-[28rem]" : "h-64"} overflow-hidden bg-slate-100`}>{media(item, "h-full w-full object-cover transition duration-700 group-hover:scale-105")}</div><div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 to-transparent p-4 pt-14 text-white opacity-95"><p className="text-[0.68rem] font-black uppercase tracking-[0.18em] text-sky-100">Dokumentasi {String(index + 2).padStart(2, "0")}</p><h3 className="mt-1 text-lg font-black">{item.title}</h3></div>{isManager && item.source === "manual" && <div className="absolute right-3 top-3 flex gap-2"><span className="rounded-xl bg-white px-3 py-1.5 text-xs font-black text-slate-900 shadow-sm" onClick={(e) => { e.stopPropagation(); onEditManual(item.raw); }}>Edit</span><span className="rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white shadow-sm" onClick={(e) => { e.stopPropagation(); onDeleteManual(item.raw); }}>Hapus</span></div>}</button>))}</section>
+      {active && <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/80 p-4 backdrop-blur-md" onClick={() => setActive(null)} role="presentation"><div className="relative w-full max-w-6xl overflow-hidden rounded-[2rem] bg-white p-2 shadow-2xl" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={active.title}><button className="absolute right-4 top-4 z-10 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-slate-900 shadow-sm" onClick={() => setActive(null)} type="button">Tutup</button>{media(active, "max-h-[82vh] w-full rounded-[1.6rem] bg-slate-100 object-contain", true)}</div></div>}
     </>
   );
 }
@@ -285,8 +162,8 @@ function UploadDokumentasiForm({ csrfToken, onUploaded }: { csrfToken: string; o
     <form className="rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm md:rounded-[2rem] md:p-6" onSubmit={submit}>
       <div className="mb-4 rounded-2xl bg-sky-50 p-4">
         <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Dokumentasi Internal</p>
-        <h2 className="title-font text-2xl font-black text-slate-950">Upload Foto / Video Manual</h2>
-        <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">Gunakan ini untuk file yang diunggah langsung ke website. Untuk galeri publik dari Google Drive, kelola di panel embed di atas.</p>
+        <h2 className="title-font text-2xl font-black text-slate-950">Tambah Foto / Video</h2>
+        <p className="mt-1 text-sm font-bold leading-relaxed text-slate-500">File yang ditambahkan dari perangkat akan langsung masuk ke canvas dokumentasi yang sama.</p>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
         <label className="grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-500">Judul<input className="field normal-case tracking-normal" maxLength={200} name="judul" placeholder="Contoh: Kegiatan Literasi" required /></label>
@@ -316,6 +193,7 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
   const [deleting, setDeleting]         = useState(false);
   const [embedPhotos, setEmbedPhotos]   = useState<DrivePhoto[]>([]);
   const [managerSection, setManagerSection] = useState<"embed" | "manual">("embed");
+  const [editManual, setEditManual] = useState<DokumentasiItem | null>(null);
 
   function load() {
     readJson<DokumentasiItem[]>(`${PHP_BASE}/backend/data/dokumentasi`).then(setItems).catch(() => setItems([]));
@@ -328,7 +206,7 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
   const isManager = category === "pengajar" || category === "admin";
 
   if (category === "tamu" || category === "murid") {
-    return <GuestDocumentationCanvas photos={embedPhotos} />;
+    return <UnifiedDocumentationCanvas embedPhotos={embedPhotos} manualItems={items} isManager={false} onDeleteManual={() => undefined} onEditManual={() => undefined} />;
   }
 
   async function handleDelete() {
@@ -347,56 +225,30 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
     }
   }
 
+  async function handleEditManual(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!editManual) return;
+    const fd = new FormData(e.currentTarget);
+    fd.set("csrf_token", csrfToken);
+    fd.set("id", String(editManual.id));
+    const res = await fetch(`${PHP_BASE}/backend/actions/update-dokumentasi`, { method: "POST", body: fd, credentials: "include" });
+    const json = await res.json().catch(() => ({ success: false }));
+    if (json.success) { setEditManual(null); load(); }
+  }
+
   return (
     <>
       <section className="grid items-start gap-6">
         {isManager && (
           <div className="grid gap-3 rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm sm:grid-cols-2">
-            <button className={`rounded-2xl px-4 py-4 text-left text-sm font-black transition ${managerSection === "embed" ? "bg-sky-900 text-white" : "bg-sky-50 text-sky-800"}`} onClick={() => setManagerSection("embed")} type="button">Kelola Embed Google Drive<span className="mt-1 block text-xs font-bold opacity-80">Galeri publik untuk tamu & murid</span></button>
-            <button className={`rounded-2xl px-4 py-4 text-left text-sm font-black transition ${managerSection === "manual" ? "bg-sky-900 text-white" : "bg-sky-50 text-sky-800"}`} onClick={() => setManagerSection("manual")} type="button">Upload Manual<span className="mt-1 block text-xs font-bold opacity-80">File foto/video langsung ke website</span></button>
+            <button className={`rounded-2xl px-4 py-4 text-left text-sm font-black transition ${managerSection === "embed" ? "bg-sky-900 text-white" : "bg-sky-50 text-sky-800"}`} onClick={() => setManagerSection("embed")} type="button">Tambah dari Google Drive<span className="mt-1 block text-xs font-bold opacity-80">Masuk ke canvas dokumentasi yang sama</span></button>
+            <button className={`rounded-2xl px-4 py-4 text-left text-sm font-black transition ${managerSection === "manual" ? "bg-sky-900 text-white" : "bg-sky-50 text-sky-800"}`} onClick={() => setManagerSection("manual")} type="button">Tambah dari Perangkat<span className="mt-1 block text-xs font-bold opacity-80">Masuk ke canvas dokumentasi yang sama</span></button>
           </div>
         )}
         {isManager && managerSection === "embed" && <EmbedDocumentationManager key={embedPhotos.map((photo) => photo.id).join("|")} csrfToken={csrfToken} photos={embedPhotos} onSaved={setEmbedPhotos} />}
-        {isManager && managerSection === "embed" && <GuestDocumentationCanvas photos={embedPhotos} />}
         {isManager && managerSection === "manual" && <UploadDokumentasiForm csrfToken={csrfToken} onUploaded={load} />}
-        {isManager && managerSection === "manual" && <ManualDocumentationCanvas items={items} isManager={isManager} onDelete={setDeleteTarget} />}
+        {isManager && <UnifiedDocumentationCanvas embedPhotos={embedPhotos} manualItems={items} isManager={isManager} onDeleteManual={setDeleteTarget} onEditManual={setEditManual} />}
 
-        {!isManager && <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="title-font text-xl font-black text-slate-800">
-              {isManager ? "Galeri Upload Manual" : "Dokumentasi"}
-            </h2>
-            <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700">{items.length} item</span>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) => (
-              <article className="group relative glass-card overflow-hidden rounded-[1.5rem]" key={item.id}>
-                {item.tipe === "video" ? (
-                  <video className="h-52 w-full bg-slate-100 object-cover" controls src={`${PHP_BASE}/${item.file_path}`} />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img alt={item.judul ?? "Dokumentasi"} className="h-52 w-full bg-slate-100 object-cover" src={`${PHP_BASE}/${item.file_path}`} />
-                )}
-                <div className="p-5">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">{item.tipe ?? "media"} &bull; {item.tahun ?? "-"}</p>
-                  <h3 className="mt-2 text-xl font-black text-slate-950">{item.judul ?? "Dokumentasi"}</h3>
-                </div>
-                {isManager && (
-                  <button
-                    className="absolute right-3 top-3 rounded-xl bg-rose-600 px-3 py-1.5 text-xs font-black text-white shadow-sm transition hover:bg-rose-700 sm:opacity-0 sm:group-hover:opacity-100"
-                    onClick={() => setDeleteTarget(item)}
-                    type="button"
-                  >
-                    Hapus
-                  </button>
-                )}
-              </article>
-            ))}
-          </div>
-
-          {items.length === 0 && <EmptyState text="Belum ada dokumentasi." />}
-        </div>}
       </section>
 
       <AppDialog
@@ -409,6 +261,16 @@ export function DokumentasiPage({ category, csrfToken }: { category: Category; c
         title="Hapus dokumentasi?"
         tone="danger"
       />
+      {editManual && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/45 p-4 backdrop-blur-sm">
+          <form className="w-full max-w-md rounded-[1.5rem] bg-white p-5 shadow-2xl" onSubmit={handleEditManual}>
+            <h3 className="text-xl font-black text-slate-950">Edit Dokumentasi</h3>
+            <label className="mt-4 grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-500">Judul<input className="field normal-case tracking-normal" defaultValue={editManual.judul} name="judul" required /></label>
+            <label className="mt-3 grid gap-1.5 text-xs font-black uppercase tracking-wide text-slate-500">Tahun<input className="field normal-case tracking-normal" defaultValue={editManual.tahun} name="tahun" required type="number" /></label>
+            <div className="mt-5 flex justify-end gap-2"><button className="rounded-xl bg-slate-100 px-4 py-2 text-sm font-black text-slate-600" onClick={() => setEditManual(null)} type="button">Batal</button><button className="btn-primary px-4 py-2 text-sm" type="submit">Simpan</button></div>
+          </form>
+        </div>
+      )}
     </>
   );
 }

@@ -22,6 +22,7 @@ $opsiC     = trim($_POST['opsi_c'] ?? '');
 $opsiD     = trim($_POST['opsi_d'] ?? '');
 $jawaban   = strtoupper(trim($_POST['jawaban_benar'] ?? ''));
 $tingkat   = trim($_POST['tingkat'] ?? 'SD');
+$poin      = isset($_POST['poin']) ? max(1, (int) $_POST['poin']) : 10;
 
 if (!in_array($tingkat, ['TK', 'SD', 'SMP'], true)) {
     $tingkat = 'SD';
@@ -59,12 +60,16 @@ try {
     if (!in_array('tingkat', $cols, true)) {
         $pdo->exec("ALTER TABLE quiz ADD COLUMN tingkat VARCHAR(80) DEFAULT 'SD'");
     }
+    if (!in_array('poin', $cols, true)) {
+        $pdo->exec("ALTER TABLE quiz ADD COLUMN poin INT NOT NULL DEFAULT 10");
+    }
+    $pdo->exec("UPDATE quiz SET poin = 10 WHERE poin IS NULL OR poin < 1");
 } catch (Throwable $e) {
     log_error('Quiz tingkat column check failed', ['error' => $e->getMessage()]);
 }
 
-$stmt = $pdo->prepare('UPDATE quiz SET pelajaran = ?, soal = ?, tipe = ?, opsi_a = ?, opsi_b = ?, opsi_c = ?, opsi_d = ?, jawaban_benar = ?, tingkat = ? WHERE id = ?');
-$stmt->execute([$pelajaran, $soal, $tipe, $opsiA, $opsiB, $opsiC, $opsiD, $jawaban, $tingkat, $id]);
+$stmt = $pdo->prepare('UPDATE quiz SET pelajaran = ?, soal = ?, tipe = ?, opsi_a = ?, opsi_b = ?, opsi_c = ?, opsi_d = ?, jawaban_benar = ?, tingkat = ?, poin = ? WHERE id = ?');
+$stmt->execute([$pelajaran, $soal, $tipe, $opsiA, $opsiB, $opsiC, $opsiD, $jawaban, $tingkat, $poin, $id]);
 
 if ($stmt->rowCount() < 1) {
     $check = $pdo->prepare('SELECT id FROM quiz WHERE id = ? LIMIT 1');

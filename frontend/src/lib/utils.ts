@@ -5,7 +5,7 @@ export const subjects = ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "M
 export const subjectsByLevel: Record<string, string[]> = {
   TK: ["Literasi Awal", "Numerasi Awal", "Motorik", "Seni & Kreativitas", "Budi Pekerti"],
   SD: ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "PKWU"],
-  SMP: ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "IPS", "PKWU", "Seni Budaya", "PJOK"],
+  SMP: ["Bahasa Indonesia", "Bahasa Inggris", "Bahasa Jawa", "Matematika", "IPA", "IPS", "PKWU", "Seni Budaya"],
 };
 
 export const pageLabels: Record<PageKey, string> = {
