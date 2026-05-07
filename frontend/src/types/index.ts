@@ -132,6 +132,7 @@ export type Quiz = {
   opsi_c?: string;
   opsi_d?: string;
   jawaban_benar?: string;
+  tingkat?: string;
   sudah_dikerjakan?: number | string;
   nilai?: number | string;
 };

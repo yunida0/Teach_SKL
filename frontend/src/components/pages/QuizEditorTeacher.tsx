@@ -392,7 +392,7 @@ function QuizForm({
 }) {
   const [soal, setSoal]         = useState(quiz?.soal ?? "");
   const [tipe, setTipe]         = useState(quiz?.tipe ?? "pilihan_ganda");
-  const [tingkat, setTingkat]   = useState("SD");
+  const [tingkat, setTingkat]   = useState(quiz?.tingkat && ["TK", "SD", "SMP"].includes(quiz.tingkat) ? quiz.tingkat : "SD");
   const [poin, setPoin]         = useState("10");
   const [opsiA, setOpsiA]       = useState(quiz?.opsi_a ?? "");
   const [opsiB, setOpsiB]       = useState(quiz?.opsi_b ?? "");
@@ -421,7 +421,7 @@ function QuizForm({
     fd.set("jawaban_benar", jawaban);
     fd.set("tingkat", tingkat);
     if (!isNew) fd.set("id", String(quiz!.id));
-    const url = isNew ? `${PHP_BASE}/backend/actions/tambah_quiz.php` : `${PHP_BASE}/backend/actions/update_quiz.php`;
+    const url = isNew ? `${PHP_BASE}/backend/actions/tambah-quiz` : `${PHP_BASE}/backend/actions/update-quiz`;
     try {
       const res = await fetch(url, { method: "POST", body: fd, credentials: "include" });
       const json = await res.json();
@@ -623,7 +623,7 @@ export function QuizEditor({
                     <span className={`text-[11px] font-black uppercase tracking-wider ${active ? 'text-sky-700' : 'text-slate-400'}`}>Soal {i + 1} · 10 poin</span>
                     <div className="flex shrink-0 items-center gap-1.5">
                       <button type="button"
-                        onClick={e => { e.stopPropagation(); setActiveId(quiz.id); }}
+                        onClick={e => { e.stopPropagation(); setActiveId(quiz.id); document.getElementById("quiz-question-form")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
                         className={`cursor-pointer rounded-full border px-2.5 py-1 text-[10px] font-black transition-colors ${active ? 'border-sky-200 bg-white text-sky-700' : 'border-sky-100 bg-sky-50 text-sky-600 hover:bg-sky-100'}`}>
                         Edit
                       </button>
@@ -659,7 +659,7 @@ export function QuizEditor({
         </div>
 
         {/* Kanan: Form */}
-        <div className="rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-6 shadow-xl shadow-slate-900/5 backdrop-blur lg:sticky lg:top-4">
+        <div id="quiz-question-form" className="scroll-mt-5 rounded-[1.5rem] border border-slate-200/80 bg-white/90 p-6 shadow-xl shadow-slate-900/5 backdrop-blur lg:sticky lg:top-4">
           <QuizForm
             key={String(resolvedActiveId)}
             quiz={activeQuiz}
