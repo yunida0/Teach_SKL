@@ -170,8 +170,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
   // ── 1. Subject grid ───────────────────────────────────────────────────────
   if (!selectedSubject) {
     const totalQuiz = subjectGroups.length;
-    const totalQuestions = items.length;
-    const finishedQuestions = items.filter((q) => String(q.sudah_dikerjakan ?? 0) === "1").length;
+    const finishedQuizGroups = subjectGroups.filter(([, quizzes]) => quizzes.length > 0 && quizzes.every((q) => String(q.sudah_dikerjakan ?? 0) === "1")).length;
     const examCount = subjectGroups.filter(([subject]) => parseSubject(subject).type === "ujian").length;
     return (
       <section className="grid gap-5">
@@ -183,8 +182,8 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
           </div>
           <div className="rounded-2xl border border-emerald-100 bg-white/85 p-4 shadow-sm">
             <p className="m-0 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Progress</p>
-            <p className="m-0 mt-1 text-2xl font-black text-emerald-700">{finishedQuestions}/{totalQuestions}</p>
-            <p className="m-0 text-xs font-bold text-slate-500">soal selesai</p>
+            <p className="m-0 mt-1 text-2xl font-black text-emerald-700">{finishedQuizGroups}/{totalQuiz}</p>
+            <p className="m-0 text-xs font-bold text-slate-500">quiz / mapel selesai</p>
           </div>
           <div className="rounded-2xl border border-rose-100 bg-white/85 p-4 shadow-sm">
             <p className="m-0 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Ujian</p>
