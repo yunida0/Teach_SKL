@@ -22,6 +22,8 @@ export function AbsensiPengajarPage({ csrfToken }: { csrfToken: string }) {
   const [records, setRecords] = useState<AbsensiPengajarRecord[]>([]);
   const [msg, setMsg]         = useState("");
   const [loading, setLoading] = useState(false);
+  const [status, setStatus]   = useState("hadir");
+  const [locStatus, setLocStatus] = useState<"idle" | "loading" | "ok" | "denied">("idle");
   const today                 = new Date().toISOString().slice(0, 10);
 
   function load() {
@@ -34,13 +36,38 @@ export function AbsensiPengajarPage({ csrfToken }: { csrfToken: string }) {
 
   const todayRecord = records.find((r) => r.tanggal === today);
 
+  function getLocation() {
+    return new Promise<{ lat: number; lng: number }>((resolve, reject) => {
+      if (!navigator.geolocation) { reject(new Error("Geolocation tidak tersedia")); return; }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        reject,
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+      );
+    });
+  }
+
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setMsg("");
+    setLocStatus("idle");
     try {
       const data = new FormData(e.currentTarget);
       data.set("csrf_token", csrfToken);
+      if (status === "hadir") {
+        setLocStatus("loading");
+        try {
+          const loc = await getLocation();
+          data.set("lat", String(loc.lat));
+          data.set("lng", String(loc.lng));
+          setLocStatus("ok");
+        } catch {
+          setLocStatus("denied");
+          setMsg("Izinkan akses lokasi untuk absen hadir. Pastikan GPS aktif.");
+          return;
+        }
+      }
       const res = await fetch(`${PHP_BASE}/backend/actions/tambah-absensi-pengajar`, {
         method: "POST",
         body: data,
@@ -71,11 +98,17 @@ export function AbsensiPengajarPage({ csrfToken }: { csrfToken: string }) {
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
           {(["hadir", "izin", "sakit", "alpha"] as const).map((st) => (
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 px-4 py-3 font-black transition has-[:checked]:border-sky-600 has-[:checked]:bg-sky-50 has-[:checked]:text-sky-800 sm:justify-start sm:px-5" key={st}>
-              <input className="accent-sky-600" name="status" required type="radio" value={st} />
+              <input checked={status === st} className="accent-sky-600" name="status" onChange={() => setStatus(st)} required type="radio" value={st} />
               <span className="capitalize">{st}</span>
             </label>
           ))}
         </div>
+        <p className="rounded-2xl bg-sky-50 px-4 py-3 text-sm font-bold text-slate-600">
+          Untuk status <strong>Hadir</strong>, lokasi GPS akan direkam sebagai bukti kehadiran tanpa validasi jarak sekolah.
+          {locStatus === "loading" && <span className="ml-2 animate-pulse">Mengambil lokasi...</span>}
+          {locStatus === "ok" && <span className="ml-2 text-emerald-700">Lokasi berhasil direkam.</span>}
+          {locStatus === "denied" && <span className="ml-2 text-rose-600">Akses lokasi ditolak. Aktifkan GPS dan izinkan akses.</span>}
+        </p>
 
         <input className="field" maxLength={200} name="keterangan" placeholder="Keterangan (opsional)" type="text" />
 
