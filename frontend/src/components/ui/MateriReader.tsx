@@ -18,12 +18,12 @@ function getExt(filePath: string) {
 }
 
 type PdfState =
-  | { status: "loading"; pages: string[]; message: string }
+  | { status: "loading"; pages: string[]; message: string; progress: number }
   | { status: "ready"; pages: string[] }
   | { status: "error"; message: string };
 
 export function PdfCanvasReader({ title, url }: { title: string; url: string }) {
-  const [pdf, setPdf] = useState<PdfState>({ status: "loading", pages: [], message: "Menyiapkan reader PDF..." });
+  const [pdf, setPdf] = useState<PdfState>({ status: "loading", pages: [], message: "Menyiapkan reader PDF...", progress: 5 });
 
   useEffect(() => {
     let cancelled = false;
@@ -32,14 +32,40 @@ export function PdfCanvasReader({ title, url }: { title: string; url: string }) 
       try {
         const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
         pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/legacy/build/pdf.worker.min.mjs`;
+        if (!cancelled) setPdf({ status: "loading", pages: [], message: "Mengunduh file PDF...", progress: 10 });
         const response = await fetch(url, { credentials: "include" });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.arrayBuffer();
+        const totalBytes = Number(response.headers.get("content-length") ?? 0);
+        let data: ArrayBuffer;
+        if (response.body) {
+          const reader = response.body.getReader();
+          const chunks: Uint8Array[] = [];
+          let received = 0;
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            if (value) {
+              chunks.push(value);
+              received += value.length;
+              if (!cancelled && totalBytes > 0) {
+                setPdf({ status: "loading", pages: [], message: `Mengunduh PDF ${Math.round((received / totalBytes) * 100)}%...`, progress: Math.min(35, 10 + Math.round((received / totalBytes) * 25)) });
+              }
+            }
+          }
+          const buffer = new Uint8Array(received);
+          let offset = 0;
+          chunks.forEach((chunk) => { buffer.set(chunk, offset); offset += chunk.length; });
+          data = buffer.buffer;
+        } else {
+          data = await response.arrayBuffer();
+        }
+        if (!cancelled) setPdf({ status: "loading", pages: [], message: "Membaca struktur PDF...", progress: 40 });
         const documentProxy = await pdfjs.getDocument({ data }).promise;
         const renderedPages: string[] = [];
         for (let pageNumber = 1; pageNumber <= documentProxy.numPages; pageNumber += 1) {
           if (cancelled) return;
-          if (!cancelled) setPdf({ status: "loading", pages: renderedPages, message: `Memuat halaman ${pageNumber}/${documentProxy.numPages}...` });
+          const renderProgress = 40 + Math.round(((pageNumber - 1) / documentProxy.numPages) * 55);
+          if (!cancelled) setPdf({ status: "loading", pages: renderedPages, message: `Merender halaman ${pageNumber}/${documentProxy.numPages}...`, progress: renderProgress });
           const page = await documentProxy.getPage(pageNumber);
           const baseViewport = page.getViewport({ scale: 1 });
           const width = Math.min(980, Math.max(320, window.innerWidth - 32));
@@ -52,7 +78,7 @@ export function PdfCanvasReader({ title, url }: { title: string; url: string }) 
           canvas.height = Math.ceil(viewport.height);
           await page.render({ canvas, canvasContext: context, viewport }).promise;
           renderedPages.push(canvas.toDataURL("image/jpeg", 0.9));
-          if (!cancelled) setPdf({ status: "loading", pages: [...renderedPages], message: `Memuat halaman ${pageNumber}/${documentProxy.numPages}...` });
+          if (!cancelled) setPdf({ status: "loading", pages: [...renderedPages], message: `Halaman ${pageNumber}/${documentProxy.numPages} siap...`, progress: 40 + Math.round((pageNumber / documentProxy.numPages) * 55) });
         }
         if (!cancelled) setPdf({ status: "ready", pages: renderedPages });
       } catch (error) {
@@ -67,13 +93,13 @@ export function PdfCanvasReader({ title, url }: { title: string; url: string }) 
   if (pdf.status === "loading") {
     return (
       <div className="max-h-[calc(100svh-8rem)] overflow-y-auto overscroll-contain bg-slate-100 p-3 [-webkit-overflow-scrolling:touch] sm:p-5">
-        {pdf.pages.length === 0 ? <div className="grid min-h-[70svh] place-items-center p-6 text-center font-black text-slate-400">{pdf.message}</div> : null}
+        {pdf.pages.length === 0 ? <div className="grid min-h-[70svh] place-items-center p-6 text-center"><div className="w-full max-w-xs"><p className="font-black text-slate-500">{pdf.message}</p><div className="mt-4 h-3 overflow-hidden rounded-full bg-white shadow-inner"><div className="h-full rounded-full bg-sky-600 transition-all" style={{ width: `${pdf.progress}%` }} /></div><p className="mt-2 text-xs font-black text-slate-400">{pdf.progress}%</p></div></div> : null}
         <div className="mx-auto grid max-w-5xl gap-4">
           {pdf.pages.map((src, index) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img key={src} alt={`${title} halaman ${index + 1}`} className="mx-auto h-auto w-full rounded-xl bg-white shadow-sm" src={src} />
           ))}
-          {pdf.pages.length > 0 && <p className="rounded-2xl bg-white px-4 py-3 text-center text-sm font-black text-slate-500 shadow-sm">{pdf.message}</p>}
+          {pdf.pages.length > 0 && <div className="rounded-2xl bg-white px-4 py-3 text-center text-sm font-black text-slate-500 shadow-sm"><p>{pdf.message}</p><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-sky-600 transition-all" style={{ width: `${pdf.progress}%` }} /></div></div>}
         </div>
       </div>
     );
