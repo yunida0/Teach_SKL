@@ -68,16 +68,20 @@ export function PdfCanvasReader({ title, url }: { title: string; url: string }) 
           if (!cancelled) setPdf({ status: "loading", pages: renderedPages, message: `Merender halaman ${pageNumber}/${documentProxy.numPages}...`, progress: renderProgress });
           const page = await documentProxy.getPage(pageNumber);
           const baseViewport = page.getViewport({ scale: 1 });
-          const width = Math.min(980, Math.max(320, window.innerWidth - 32));
+          const width = Math.min(1200, Math.max(720, window.innerWidth - 32));
           const scale = width / baseViewport.width;
           const viewport = page.getViewport({ scale });
+          const outputScale = Math.min(2.5, Math.max(1.5, window.devicePixelRatio || 1));
           const canvas = document.createElement("canvas");
           const context = canvas.getContext("2d");
           if (!context) throw new Error("Canvas tidak didukung browser ini.");
-          canvas.width = Math.ceil(viewport.width);
-          canvas.height = Math.ceil(viewport.height);
+          canvas.width = Math.ceil(viewport.width * outputScale);
+          canvas.height = Math.ceil(viewport.height * outputScale);
+          canvas.style.width = `${Math.ceil(viewport.width)}px`;
+          canvas.style.height = `${Math.ceil(viewport.height)}px`;
+          context.setTransform(outputScale, 0, 0, outputScale, 0, 0);
           await page.render({ canvas, canvasContext: context, viewport }).promise;
-          renderedPages.push(canvas.toDataURL("image/jpeg", 0.9));
+          renderedPages.push(canvas.toDataURL("image/png"));
           if (!cancelled) setPdf({ status: "loading", pages: [...renderedPages], message: `Halaman ${pageNumber}/${documentProxy.numPages} siap...`, progress: 40 + Math.round((pageNumber / documentProxy.numPages) * 55) });
         }
         if (!cancelled) setPdf({ status: "ready", pages: renderedPages });
