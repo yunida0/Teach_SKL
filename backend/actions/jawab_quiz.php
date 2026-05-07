@@ -16,6 +16,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 csrf_verify();
 
+try {
+    $cols = $pdo->query('SHOW COLUMNS FROM nilai_quiz')->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('jawaban_user', $cols, true)) {
+        $pdo->exec("ALTER TABLE nilai_quiz ADD COLUMN jawaban_user VARCHAR(10) DEFAULT NULL");
+    }
+} catch (Throwable $e) {
+    log_error('Nilai quiz answer column check failed', ['error' => $e->getMessage()]);
+}
+
 $murid_id     = (int) $_SESSION['user']['id'];
 $quiz_id      = isset($_POST['quiz_id']) ? (int) $_POST['quiz_id'] : 0;
 $jawaban_user = strtoupper(trim($_POST['jawaban'] ?? ''));
@@ -54,8 +63,8 @@ if ($existing) {
 $is_benar = ($jawaban_user === $quiz['jawaban_benar']);
 $nilai    = $is_benar ? 100 : 0;
 
-$pdo->prepare('INSERT INTO nilai_quiz (murid_id, quiz_id, nilai) VALUES (?, ?, ?)')
-    ->execute([$murid_id, $quiz_id, $nilai]);
+$pdo->prepare('INSERT INTO nilai_quiz (murid_id, quiz_id, nilai, jawaban_user) VALUES (?, ?, ?, ?)')
+    ->execute([$murid_id, $quiz_id, $nilai, $jawaban_user]);
 
 echo json_encode([
     'success'  => true,

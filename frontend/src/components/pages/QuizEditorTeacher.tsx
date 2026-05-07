@@ -17,6 +17,17 @@ type QuizMeta = {
   cleanTitle: string;
 };
 
+type QuizResultStudent = {
+  murid_id: number | string;
+  nama_murid?: string;
+  username?: string;
+  answered: number;
+  correct: number;
+  wrong: number;
+  score: number;
+  answers: Array<{ quiz_id: number | string; soal?: string; jawaban_user?: string; jawaban_benar?: string; nilai: number; is_correct: boolean }>;
+};
+
 const defaultMeta: Omit<QuizMeta, "cleanTitle"> = {
   type: "quiz",
   duration: 0,
@@ -109,6 +120,7 @@ export function QuizHomeTable({
   const [newTingkat, setNewTingkat] = useState("SD");
   const [notice, setNotice] = useState<{ title: string; description: string } | null>(null);
   const [deleteSubject, setDeleteSubject] = useState<{ subject: string; title: string } | null>(null);
+  const [resultModal, setResultModal] = useState<{ subject: string; title: string; total: number; students: QuizResultStudent[]; loading: boolean } | null>(null);
 
   const subjectStats = allItems.reduce<Record<string, { count: number; choices: number; trueFalse: number }>>((acc, q) => {
     if (!q.pelajaran) return acc;
@@ -188,6 +200,39 @@ export function QuizHomeTable({
     }
   }
 
+  async function openResults(subject: string, title: string) {
+    setResultModal({ subject, title, total: 0, students: [], loading: true });
+    try {
+      const qs = new URLSearchParams({ pelajaran: subject });
+      const data = await fetch(`${PHP_BASE}/backend/data/quiz-results?${qs.toString()}`, { credentials: "include" }).then(r => r.json());
+      if (data.success) {
+        setResultModal({ subject, title, total: Number(data.total_questions ?? 0), students: data.students ?? [], loading: false });
+      } else {
+        setResultModal(null);
+        setNotice({ title: "Gagal memuat hasil", description: data.error || "Data pengerjaan belum bisa dimuat." });
+      }
+    } catch {
+      setResultModal(null);
+      setNotice({ title: "Server tidak terhubung", description: "Gagal menghubungi server. Coba lagi beberapa saat." });
+    }
+  }
+
+  async function resetStudentResult(student: QuizResultStudent) {
+    if (!resultModal) return;
+    const fd = new FormData();
+    fd.set("csrf_token", csrfToken);
+    fd.set("pelajaran", resultModal.subject);
+    fd.set("murid_id", String(student.murid_id));
+    try {
+      const res = await fetch(`${PHP_BASE}/backend/actions/reset-quiz-result`, { method: "POST", body: fd, credentials: "include" });
+      const json = await res.json();
+      if (json.success) await openResults(resultModal.subject, resultModal.title);
+      else setNotice({ title: "Reset gagal", description: json.error || "Pengerjaan murid belum bisa direset." });
+    } catch {
+      setNotice({ title: "Server tidak terhubung", description: "Gagal menghubungi server. Coba lagi beberapa saat." });
+    }
+  }
+
   return (
     <div className="pb-8">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4">
@@ -250,6 +295,10 @@ export function QuizHomeTable({
                   <button onClick={() => setDeleteSubject({ subject, title: cleanTitle })} type="button"
                     className="grid h-10 w-10 place-items-center rounded-full border border-rose-100 bg-rose-50 text-rose-600 transition-colors hover:border-rose-200 hover:bg-rose-100" title="Hapus Quiz">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
+                  </button>
+                  <button onClick={() => openResults(subject, cleanTitle)} type="button"
+                    className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-xs font-black text-emerald-700 transition-colors hover:border-emerald-200 hover:bg-emerald-100" title="Lihat Hasil">
+                    Hasil
                   </button>
                   <button onClick={() => onOpen(subject)} type="button"
                     className="btn-primary px-4 py-2.5 text-xs inline-flex items-center gap-2" title="Kelola Soal">
@@ -386,6 +435,47 @@ export function QuizHomeTable({
               <button type="submit" className="btn-primary px-5 py-2.5 text-sm">Simpan Perubahan</button>
             </div>
           </form>
+        </div>
+      )}
+      {resultModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm">
+          <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <p className="m-0 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-600">Hasil Pengerjaan</p>
+                <h3 className="m-0 mt-1 text-xl font-black text-slate-950">{resultModal.title}</h3>
+                <p className="m-0 mt-1 text-xs font-bold text-slate-500">{resultModal.total} soal · {resultModal.students.length} murid sudah mengerjakan</p>
+              </div>
+              <button type="button" onClick={() => setResultModal(null)} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-500 hover:bg-slate-50">Tutup</button>
+            </div>
+            {resultModal.loading ? (
+              <p className="rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-500">Memuat hasil...</p>
+            ) : resultModal.students.length === 0 ? (
+              <p className="rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-500">Belum ada murid yang mengerjakan quiz ini.</p>
+            ) : (
+              <div className="grid gap-3">
+                {resultModal.students.map((student) => (
+                  <div key={student.murid_id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h4 className="m-0 text-base font-black text-slate-950">{student.nama_murid || student.username}</h4>
+                        <p className="m-0 text-xs font-bold text-slate-500">Nilai {student.score} · Benar {student.correct} · Salah {student.wrong} · Terjawab {student.answered}/{resultModal.total}</p>
+                      </div>
+                      <button type="button" onClick={() => resetStudentResult(student)} className="rounded-full border border-amber-100 bg-amber-50 px-3 py-2 text-xs font-black text-amber-700 hover:bg-amber-100">Reset Pengerjaan</button>
+                    </div>
+                    <div className="grid gap-2">
+                      {student.answers.map((answer, idx) => (
+                        <div key={`${student.murid_id}-${answer.quiz_id}`} className={`rounded-xl px-3 py-2 text-xs ${answer.is_correct ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>
+                          <p className="m-0 font-black">{idx + 1}. {answer.soal}</p>
+                          <p className="m-0 mt-1 font-bold">Jawaban murid: {answer.jawaban_user || "-"} · Kunci: {answer.jawaban_benar || "-"} · Nilai: {answer.nilai}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
       <AppDialog
