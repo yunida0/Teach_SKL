@@ -35,6 +35,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
   const [showReview, setShowReview]           = useState(false);
   const [warningModal, setWarningModal]       = useState<WarningModal>(null);
   const [savedEvaluation, setSavedEvaluation] = useState<SavedEvaluation>(null);
+  const [numberModalOpen, setNumberModalOpen] = useState(false);
 
   const parsed = selectedSubject ? parseSubject(selectedSubject) : null;
   const isUjian = parsed?.type === "ujian";
@@ -575,6 +576,12 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
       </div>
 
       <div className={`grid items-start gap-4 ${navigationMode ? "lg:grid-cols-[minmax(0,1fr)_18rem]" : ""}`}>
+      {navigationMode && (
+        <div className="grid grid-cols-2 gap-2 lg:hidden">
+          <button className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-black text-sky-700" onClick={() => setNumberModalOpen(true)} type="button">No Soal</button>
+          <button className="btn-primary px-4 py-3 text-sm disabled:opacity-40" disabled={submitting} onClick={submitAll} type="button">{submitting ? "Mengirim..." : "Submit Semua"}</button>
+        </div>
+      )}
       {/* Question card */}
       <article className="rounded-[2rem] border border-sky-100 bg-white p-5 shadow-[0_20px_60px_rgba(16,42,67,0.10)] md:p-7">
         <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">{cleanTitle} · Soal {currentIndex + 1}</p>
@@ -643,7 +650,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
         </div>
       </article>
       {navigationMode && (
-        <aside className="order-first rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm lg:order-none lg:sticky lg:top-4">
+        <aside className="hidden rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm lg:sticky lg:top-4 lg:block">
           <p className="text-xs font-black uppercase tracking-wide text-sky-700">Pilih nomor soal</p>
           <p className="mt-1 text-xs font-bold text-slate-500">Hijau berarti sudah terisi. Klik nomor untuk pindah soal.</p>
           <div className="mt-4 grid grid-cols-5 gap-2 lg:grid-cols-4">
@@ -666,6 +673,37 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
           </div>
           <button className="btn-primary mt-4 w-full px-4 py-3 text-sm disabled:opacity-40" disabled={submitting} onClick={submitAll} type="button">{submitting ? "Mengirim..." : "Submit Semua"}</button>
         </aside>
+      )}
+      {navigationMode && numberModalOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm lg:hidden" onClick={() => setNumberModalOpen(false)} role="presentation">
+          <div className="w-full max-w-sm rounded-[1.5rem] bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Pilih nomor soal">
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wide text-sky-700">Pilih nomor soal</p>
+                <p className="mt-1 text-xs font-bold text-slate-500">Pilih nomor untuk kembali atau ubah jawaban.</p>
+              </div>
+              <button className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600" onClick={() => setNumberModalOpen(false)} type="button">Tutup</button>
+            </div>
+            <div className="grid grid-cols-5 gap-2">
+              {playable.map((quiz, index) => {
+                const key = String(quiz.id);
+                const active = index === currentIndex;
+                const filled = Boolean(draftAnswers[key]);
+                return (
+                  <button
+                    className={`rounded-xl px-3 py-2 text-sm font-black transition ${active ? "bg-sky-900 text-white shadow-sm" : filled ? "bg-emerald-100 text-emerald-800" : "bg-slate-50 text-slate-500"}`}
+                    disabled={submitting}
+                    key={key}
+                    onClick={() => { setCurrentIndex(index); setNumberModalOpen(false); }}
+                    type="button"
+                  >
+                    {index + 1}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       )}
       </div>
     </section>
