@@ -91,6 +91,8 @@ $routes = [
     'get_ulasan' => 'data/get_ulasan.php',
     'data/site-settings' => 'data/get_site_settings.php',
     'get_site_settings' => 'data/get_site_settings.php',
+    'data/donasi-monitor' => 'data/get_donasi_monitor.php',
+    'get_donasi_monitor' => 'data/get_donasi_monitor.php',
 
     // Actions
     'actions/input-raport' => 'actions/input_nilai_raport.php',
@@ -136,6 +138,8 @@ $routes = [
     'update_ebook' => 'actions/update_ebook.php',
     'actions/update-dokumentasi' => 'actions/update_dokumentasi.php',
     'update_dokumentasi' => 'actions/update_dokumentasi.php',
+    'actions/update-donasi-status' => 'actions/update_donasi_status.php',
+    'update_donasi_status' => 'actions/update_donasi_status.php',
     'actions/ganti-password' => 'actions/ganti_password.php',
     'ganti_password' => 'actions/ganti_password.php',
     'actions/upload-logo' => 'actions/upload_logo.php',

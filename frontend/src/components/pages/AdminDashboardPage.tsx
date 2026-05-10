@@ -12,6 +12,7 @@ import { CustomSelect } from "@/components/ui/CustomSelect";
 
 type MsgState = { type: "ok" | "err"; text: string } | null;
 type CreateUserResponse = { success: boolean; error?: string; user?: AdminUser };
+type DonationMonitorItem = { id: number | string; user_id?: number | string; username?: string; nama?: string; nominal?: number | string; catatan?: string; file_path?: string; status?: string; created_at?: string };
 
 export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, user }: { activeSection: AdminSection; csrfToken: string; onSectionChange: (section: AdminSection) => void; user: User }) {
   /* ── core data ───────────────────────────────────────────────── */
@@ -22,6 +23,7 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
   const [content, setContent] = useState<AdminContent | null>(null);
   const [absensi, setAbsensi] = useState<AdminAbsensi | null>(null);
   const [laporan, setLaporan] = useState<AdminLaporan | null>(null);
+  const [donations, setDonations] = useState<DonationMonitorItem[]>([]);
 
   const loadedRef = useRef(new Set<string>());
 
@@ -53,6 +55,7 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
     readJson<AdminUser[]>(`${PHP_BASE}/backend/data/admin-users?ts=${stamp}`).then(setUsers).catch(() => setUsers([]));
     readJson<TeacherToken[]>(`${PHP_BASE}/backend/data/admin-tokens?ts=${stamp}`).then(setTokens).catch(() => setTokens([]));
     readJson<AdminActivity[]>(`${PHP_BASE}/backend/data/admin-activity?ts=${stamp}`).then(setActivity).catch(() => setActivity([]));
+    readJson<{ success?: boolean; items?: DonationMonitorItem[] }>(`${PHP_BASE}/backend/data/donasi-monitor?ts=${stamp}`).then((res) => setDonations(res.items ?? [])).catch(() => setDonations([]));
   }
 
   useEffect(() => { refreshAdminData(); }, []);
@@ -197,6 +200,19 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
     } catch { setContentMsg({ type: "err", text: "Tidak dapat menghubungi server" }); }
   }
 
+  async function updateDonationStatus(id: number | string, status: string) {
+    const data = new FormData();
+    data.set("csrf_token", csrfToken);
+    data.set("id", String(id));
+    data.set("status", status);
+    try {
+      const res = await readJson<{ success?: boolean; error?: string }>(`${PHP_BASE}/backend/actions/update-donasi-status`, { method: "POST", body: data });
+      if (res.success) {
+        setDonations((prev) => prev.map((item) => String(item.id) === String(id) ? { ...item, status } : item));
+      }
+    } catch {}
+  }
+
   function exportUsersCsv() {
     const rows = [
       ["id", "nama", "username", "kategori", "created_at"],
@@ -256,6 +272,7 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
             <StatCard label="Token Aktif" value={activeTokens}    tone="bg-indigo-500" />
           </div>
           <LogoSettingsPanel csrfToken={csrfToken} />
+          <DonationAdminPanel donations={donations} onStatus={updateDonationStatus} />
           <div className="grid gap-6 xl:grid-cols-[1fr_0.7fr]">
             <ActivityPanel activity={activity.slice(0, 6)} />
             <Panel title="Quick Actions" caption="Pintasan ke operasi admin yang sering digunakan.">
@@ -326,6 +343,52 @@ function CreateUserPanel({ createRole, creatingUser, message, onRoleChange, onSu
         </button>
       </form>
       {message && <Message state={message} />}
+    </Panel>
+  );
+}
+
+function donationStatusClass(status?: string) {
+  if (status === "diterima") return "bg-emerald-100 text-emerald-800";
+  if (status === "ditolak") return "bg-rose-100 text-rose-800";
+  return "bg-amber-100 text-amber-800";
+}
+
+function rupiah(value?: number | string) {
+  return `Rp ${new Intl.NumberFormat("id-ID").format(Number(value ?? 0))}`;
+}
+
+function DonationAdminPanel({ donations, onStatus }: { donations: DonationMonitorItem[]; onStatus: (id: number | string, status: string) => void }) {
+  const total = donations.reduce((sum, item) => sum + (Number(item.nominal ?? 0) || 0), 0);
+  const accepted = donations.filter((item) => item.status === "diterima").reduce((sum, item) => sum + (Number(item.nominal ?? 0) || 0), 0);
+  return (
+    <Panel title="Monitoring Donasi" caption="Pantau bukti transfer dari akun tamu dan ubah status verifikasi.">
+      <div className="mb-4 grid gap-3 md:grid-cols-3">
+        <div className="rounded-2xl bg-sky-50 p-4"><p className="text-2xl font-black text-sky-800">{donations.length}</p><p className="text-xs font-black uppercase tracking-wide text-sky-500">Bukti Masuk</p></div>
+        <div className="rounded-2xl bg-emerald-50 p-4"><p className="text-2xl font-black text-emerald-800">{rupiah(accepted)}</p><p className="text-xs font-black uppercase tracking-wide text-emerald-500">Diterima</p></div>
+        <div className="rounded-2xl bg-amber-50 p-4"><p className="text-2xl font-black text-amber-800">{rupiah(total)}</p><p className="text-xs font-black uppercase tracking-wide text-amber-500">Total Bukti</p></div>
+      </div>
+      <div className="grid max-h-[34rem] gap-3 overflow-y-auto pr-1">
+        {donations.map((item) => (
+          <article className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm" key={item.id}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h3 className="font-black text-slate-950">{item.nama ?? "Donatur"}</h3>
+                <p className="text-sm font-bold text-slate-500">{rupiah(item.nominal)} · {item.created_at ?? "-"}</p>
+                <p className="text-xs font-bold text-slate-400">Akun: {item.username ?? item.user_id ?? "-"}</p>
+                {item.catatan && <p className="mt-2 rounded-xl bg-slate-50 p-3 text-sm font-bold text-slate-500">{item.catatan}</p>}
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs font-black uppercase ${donationStatusClass(item.status)}`}>{item.status ?? "menunggu"}</span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {item.file_path && <a className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-600" href={`${PHP_BASE}/${item.file_path}`} rel="noreferrer" target="_blank">Lihat Bukti</a>}
+              {(["menunggu", "diterima", "ditolak"] as const).map((status) => (
+                <button className={`rounded-xl px-3 py-2 text-xs font-black transition ${item.status === status ? "bg-sky-900 text-white" : "bg-sky-50 text-sky-700 hover:bg-sky-100"}`} key={status} onClick={() => onStatus(item.id, status)} type="button">{status}</button>
+              ))}
+            </div>
+          </article>
+        ))}
+        {donations.length === 0 && <p className="rounded-2xl bg-slate-50 p-6 text-center text-sm font-bold text-slate-400">Belum ada bukti donasi.</p>}
+      </div>
     </Panel>
   );
 }
