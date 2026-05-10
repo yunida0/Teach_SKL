@@ -30,6 +30,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
   const [submitting, setSubmitting]           = useState(false);
   const [results, setResults]                 = useState<Record<string, QuizResult>>({});
   const [savedAnswers, setSavedAnswers]       = useState<Record<string, string>>({});
+  const [draftAnswers, setDraftAnswers]       = useState<Record<string, string>>({});
   const [finished, setFinished]               = useState(false);
   const [showReview, setShowReview]           = useState(false);
   const [warningModal, setWarningModal]       = useState<WarningModal>(null);
@@ -44,6 +45,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
   const kkm = parsed?.kkm ?? 75;
   const shuffle = parsed?.shuffle ?? false;
   const showResult = parsed?.showResult ?? true;
+  const navigationMode = parsed?.navigation ?? false;
   const deadlineDate = deadline ? new Date(deadline) : null;
   const [now, setNow] = useState(() => Date.now());
   const deadlinePassed = Boolean(deadlineDate && !Number.isNaN(deadlineDate.getTime()) && now > deadlineDate.getTime());
@@ -122,6 +124,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
     setSelected("");
     setResults({});
     setSavedAnswers({});
+    setDraftAnswers({});
     setFinished(false);
     setShowReview(false);
     setWarningModal(null);
@@ -140,9 +143,11 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
   );
   const reviewQuizzes = playable.length > 0 ? playable : activeQuizzes;
   const current   = playable[currentIndex];
+  const currentKey = String(current?.id ?? "");
+  const currentSelected = navigationMode ? (draftAnswers[currentKey] ?? "") : selected;
   const correct   = Object.values(results).filter((r) => r.benar).length;
-  const answered  = Boolean(results[String(current?.id)]);
-  const ansResult = results[String(current?.id)];
+  const answered  = navigationMode ? Boolean(draftAnswers[currentKey]) : Boolean(results[currentKey]);
+  const ansResult = results[currentKey];
 
   useEffect(() => {
     if (!selectedSubject || playable.length > 0 || finished) return;
@@ -289,6 +294,32 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
     );
   }
 
+  async function submitAll() {
+    if (submitting || playable.length === 0) return;
+    setSubmitting(true);
+    try {
+      const nextResults: Record<string, QuizResult> = {};
+      const nextAnswers: Record<string, string> = {};
+      for (const quiz of playable) {
+        const key = String(quiz.id);
+        const answer = draftAnswers[key] || "_";
+        const fd = new FormData();
+        fd.set("csrf_token", csrfToken);
+        fd.set("quiz_id", key);
+        fd.set("jawaban", answer);
+        const res = await fetch(`${PHP_BASE}/backend/actions/jawab_quiz.php`, { method: "POST", body: fd, credentials: "include" });
+        const json = await res.json().catch(() => ({}));
+        nextResults[key] = { quizId: quiz.id, benar: Boolean(json.benar) };
+        nextAnswers[key] = answer;
+      }
+      setResults(nextResults);
+      setSavedAnswers(nextAnswers);
+      setFinished(true);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   // ── 3. Pre-quiz briefing ──────────────────────────────────────────────────
   if (!sessionStarted) {
     return (
@@ -337,8 +368,8 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
           <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm font-bold text-slate-500">
             <p className="mb-2 font-black text-slate-700">Cara bermain</p>
             <ul className="grid gap-1">
-              <li>• Pilih satu jawaban per soal lalu tekan Konfirmasi.</li>
-              <li>• Soal dikerjakan satu per satu.</li>
+              {navigationMode ? <li>• Kamu boleh pindah soal, mengganti jawaban, lalu submit semua di akhir.</li> : <li>• Pilih satu jawaban per soal lalu tekan Konfirmasi.</li>}
+              <li>• {navigationMode ? "Benar/salah baru dinilai setelah Submit Semua." : "Soal dikerjakan satu per satu."}</li>
               {isUjian ? <li>• Anda tidak dapat membatalkan/mengulang ujian.</li> : <li>• {showResult ? "Lihat review dan skor setelah selesai." : "Hasil disembunyikan oleh pengajar."}</li>}
             </ul>
           </div>
@@ -533,9 +564,9 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
 
         <div className="mt-6 grid gap-2.5">
           {opts.filter(([, txt]) => txt).map(([lbl, txt]) => {
-            const isSel     = selected === lbl;
-            const isCorrect = answered && ansResult?.benar  && lbl === selected;
-            const isWrong   = answered && !ansResult?.benar && lbl === selected;
+            const isSel     = currentSelected === lbl;
+            const isCorrect = !navigationMode && answered && ansResult?.benar  && lbl === currentSelected;
+            const isWrong   = !navigationMode && answered && !ansResult?.benar && lbl === currentSelected;
             return (
               <button
                 className={`flex w-full items-center gap-4 rounded-2xl border-2 p-4 text-left transition ${
@@ -543,10 +574,10 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
                   : isWrong ? "border-rose-400 bg-rose-50"
                   : isSel   ? "border-sky-700 bg-sky-50"
                             : "border-slate-200 bg-white hover:border-sky-300 hover:bg-sky-50/40"
-                } ${answered ? "cursor-default" : "cursor-pointer active:scale-[0.99]"}`}
-                disabled={answered || submitting}
+                } ${!navigationMode && answered ? "cursor-default" : "cursor-pointer active:scale-[0.99]"}`}
+                disabled={(!navigationMode && answered) || submitting}
                 key={lbl}
-                onClick={() => setSelected(lbl)}
+                onClick={() => navigationMode ? setDraftAnswers((prev) => ({ ...prev, [currentKey]: lbl })) : setSelected(lbl)}
                 type="button"
               >
                 <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-black transition ${
@@ -570,14 +601,20 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
           })}
         </div>
 
-        {answered && (
+        {!navigationMode && answered && (
           <div className={`mt-4 rounded-2xl px-4 py-3 text-sm font-black ${ansResult?.benar ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>
             {ansResult?.benar ? "✓ Jawaban kamu benar!" : "✗ Jawaban kurang tepat."}
           </div>
         )}
 
         <div className="mt-5">
-          {!answered ? (
+          {navigationMode ? (
+            <div className="grid gap-2 sm:grid-cols-3">
+              <button className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600 disabled:opacity-40" disabled={currentIndex === 0 || submitting} onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))} type="button">← Sebelumnya</button>
+              <button className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-black text-sky-700 disabled:opacity-40" disabled={currentIndex + 1 >= playable.length || submitting} onClick={() => setCurrentIndex((i) => Math.min(playable.length - 1, i + 1))} type="button">Berikutnya →</button>
+              <button className="btn-primary px-4 py-3 text-sm disabled:opacity-40" disabled={submitting} onClick={submitAll} type="button">{submitting ? "Mengirim..." : "Submit Semua"}</button>
+            </div>
+          ) : !answered ? (
             <button
               className="btn-primary w-full py-3.5 text-sm disabled:opacity-40"
               disabled={!selected || submitting}

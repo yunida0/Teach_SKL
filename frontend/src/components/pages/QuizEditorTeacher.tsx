@@ -15,6 +15,7 @@ type QuizMeta = {
   kkm: number;
   shuffle: boolean;
   showResult: boolean;
+  navigation: boolean;
   cleanTitle: string;
 };
 
@@ -42,6 +43,7 @@ const defaultMeta: Omit<QuizMeta, "cleanTitle"> = {
   kkm: 75,
   shuffle: false,
   showResult: true,
+  navigation: false,
 };
 
 const MAX_SUBJECT_LENGTH = 255;
@@ -62,6 +64,7 @@ export function parseSubject(raw: string): QuizMeta {
       kkm: Math.min(100, Math.max(0, Number(params.get("kkm") ?? 75) || 75)),
       shuffle: params.get("shuffle") === "1",
       showResult: params.get("result") !== "0",
+      navigation: params.get("nav") === "1",
       cleanTitle: advanced[3],
     };
   }
@@ -92,6 +95,7 @@ export function formatSubject(meta: Omit<QuizMeta, "cleanTitle">, title: string)
     `kkm=${kkm}`,
     `shuffle=${meta.shuffle ? "1" : "0"}`,
     `result=${meta.showResult ? "1" : "0"}`,
+    `nav=${meta.navigation ? "1" : "0"}`,
   ].filter(Boolean).join("|");
   const prefix = `[${meta.type.toUpperCase()}|${params}] `;
   const titleLimit = Math.max(1, MAX_SUBJECT_LENGTH - prefix.length);
@@ -129,6 +133,7 @@ export function QuizHomeTable({
   const [newKkm, setNewKkm] = useState(75);
   const [newShuffle, setNewShuffle] = useState(false);
   const [newShowResult, setNewShowResult] = useState(true);
+  const [newNavigation, setNewNavigation] = useState(false);
   const [newTingkat, setNewTingkat] = useState("SD");
   const [notice, setNotice] = useState<{ title: string; description: string } | null>(null);
   const [deleteSubject, setDeleteSubject] = useState<{ subject: string; title: string } | null>(null);
@@ -149,7 +154,7 @@ export function QuizHomeTable({
   function handleCreate(e: FormEvent) {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    const fullTitle = formatSubject({ type: newType, duration: newDuration, deadline: newDeadline, attempts: effectiveNewAttempts, kkm: newKkm, shuffle: newShuffle, showResult: newShowResult }, newTitle);
+    const fullTitle = formatSubject({ type: newType, duration: newDuration, deadline: newDeadline, attempts: effectiveNewAttempts, kkm: newKkm, shuffle: newShuffle, showResult: newShowResult, navigation: newNavigation }, newTitle);
     onOpen(fullTitle);
     setShowModal(false);
     setNewTitle("");
@@ -160,6 +165,7 @@ export function QuizHomeTable({
     setNewKkm(75);
     setNewShuffle(false);
     setNewShowResult(true);
+    setNewNavigation(false);
     setNewTingkat("SD");
   }
 
@@ -353,7 +359,7 @@ export function QuizHomeTable({
         <div className="grid gap-3">
           {uniqueSubjects.map((subject) => {
             const stats = subjectStats[subject];
-            const { type, duration, deadline, attempts, kkm, shuffle, showResult, cleanTitle } = parseSubject(subject);
+            const { type, duration, deadline, attempts, kkm, shuffle, showResult, navigation, cleanTitle } = parseSubject(subject);
             const isUjian = type === "ujian";
 
             return (
@@ -376,6 +382,7 @@ export function QuizHomeTable({
                           <span className="h-1 w-1 rounded-full bg-slate-300" />
                           <span>{stats.choices} PG · {stats.trueFalse} Benar/Salah</span>
                           {shuffle && <><span className="h-1 w-1 rounded-full bg-slate-300" /><span>Acak soal</span></>}
+                          {navigation && <><span className="h-1 w-1 rounded-full bg-slate-300" /><span>Navigasi soal</span></>}
                           {!showResult && <><span className="h-1 w-1 rounded-full bg-slate-300" /><span>Hasil disembunyikan</span></>}
                         </div>
                       </div>
@@ -387,7 +394,7 @@ export function QuizHomeTable({
                       <p className="m-0 text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Soal</p>
                     </div>
                     <div className="flex items-center gap-1.5">
-                  <button onClick={() => setEditModal({ oldSubject: subject, newTitle: cleanTitle, type, duration, deadline, attempts, kkm, shuffle, showResult })} type="button"
+                  <button onClick={() => setEditModal({ oldSubject: subject, newTitle: cleanTitle, type, duration, deadline, attempts, kkm, shuffle, showResult, navigation })} type="button"
                     className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-400 transition-colors hover:border-sky-200 hover:bg-sky-50 hover:text-sky-700" title="Edit Judul">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                   </button>
@@ -473,6 +480,10 @@ export function QuizHomeTable({
                 Tampilkan hasil ke murid
                 <span className="mt-1 block text-[11px] font-semibold">{newShowResult ? "Ya" : "Disembunyikan"}</span>
               </button>
+              <button type="button" onClick={() => setNewNavigation(v => !v)} className={`rounded-2xl border p-3 text-left text-xs font-black transition ${newNavigation ? "border-violet-300 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-500"}`}>
+                Bebaskan pindah soal
+                <span className="mt-1 block text-[11px] font-semibold">{newNavigation ? "Aktif, submit di akhir" : "Nonaktif"}</span>
+              </button>
             </div>
 
             <div className="flex justify-end gap-2">
@@ -534,6 +545,10 @@ export function QuizHomeTable({
               <button type="button" onClick={() => setEditModal({ ...editModal, showResult: !editModal.showResult })} className={`rounded-2xl border p-3 text-left text-xs font-black transition ${editModal.showResult ? "border-emerald-300 bg-emerald-50 text-emerald-700" : "border-slate-200 bg-white text-slate-500"}`}>
                 Tampilkan hasil ke murid
                 <span className="mt-1 block text-[11px] font-semibold">{editModal.showResult ? "Ya" : "Disembunyikan"}</span>
+              </button>
+              <button type="button" onClick={() => setEditModal({ ...editModal, navigation: !editModal.navigation })} className={`rounded-2xl border p-3 text-left text-xs font-black transition ${editModal.navigation ? "border-violet-300 bg-violet-50 text-violet-700" : "border-slate-200 bg-white text-slate-500"}`}>
+                Bebaskan pindah soal
+                <span className="mt-1 block text-[11px] font-semibold">{editModal.navigation ? "Aktif, submit di akhir" : "Nonaktif"}</span>
               </button>
             </div>
 
