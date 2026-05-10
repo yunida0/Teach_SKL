@@ -296,6 +296,16 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
 
   async function submitAll() {
     if (submitting || playable.length === 0) return;
+    const firstEmptyIndex = playable.findIndex((quiz) => !draftAnswers[String(quiz.id)]);
+    if (firstEmptyIndex >= 0) {
+      setCurrentIndex(firstEmptyIndex);
+      setWarningModal({
+        title: "Jawaban Belum Lengkap",
+        message: `Soal nomor ${firstEmptyIndex + 1} belum dijawab. Lengkapi semua soal dulu sebelum submit.`,
+        tone: "amber",
+      });
+      return;
+    }
     setSubmitting(true);
     try {
       const nextResults: Record<string, QuizResult> = {};
