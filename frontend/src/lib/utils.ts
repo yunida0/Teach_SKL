@@ -33,6 +33,7 @@ export const adminNav: Array<[AdminSection, string]> = [
   ["content", "Konten"],
   ["absensi", "Absensi"],
   ["laporan", "Laporan"],
+  ["donasi", "Donasi"],
   ["activity", "Aktivitas"],
 ];
 

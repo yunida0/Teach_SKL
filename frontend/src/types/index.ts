@@ -16,7 +16,7 @@ export type PageKey =
   | "donasi"
   | "adminpanel";
 
-export type AdminSection = "overview" | "create" | "tokens" | "users" | "content" | "absensi" | "laporan" | "activity";
+export type AdminSection = "overview" | "create" | "tokens" | "users" | "content" | "absensi" | "laporan" | "donasi" | "activity";
 
 export type TeacherToken = {
   id: number | string;

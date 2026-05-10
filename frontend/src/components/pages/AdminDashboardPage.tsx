@@ -73,6 +73,10 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
       loadedRef.current.add("laporan");
       readJson<AdminLaporan>(`${PHP_BASE}/backend/data/admin-laporan`).then(setLaporan).catch(() => setLaporan(null));
     }
+    if (activeSection === "donasi" && !loadedRef.current.has("donasi")) {
+      loadedRef.current.add("donasi");
+      readJson<{ success?: boolean; items?: DonationMonitorItem[] }>(`${PHP_BASE}/backend/data/donasi-monitor?ts=${Date.now()}`).then((res) => setDonations(res.items ?? [])).catch(() => setDonations([]));
+    }
   }, [activeSection]);
 
   /* ── derived ─────────────────────────────────────────────────── */
@@ -272,7 +276,6 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
             <StatCard label="Token Aktif" value={activeTokens}    tone="bg-indigo-500" />
           </div>
           <LogoSettingsPanel csrfToken={csrfToken} />
-          <DonationAdminPanel donations={donations} onStatus={updateDonationStatus} />
           <div className="grid gap-6 xl:grid-cols-[1fr_0.7fr]">
             <ActivityPanel activity={activity.slice(0, 6)} />
             <Panel title="Quick Actions" caption="Pintasan ke operasi admin yang sering digunakan.">
@@ -283,6 +286,7 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
                 <QuickAction title="Kelola konten"      text="Ebook, quiz, bank tugas, dokumentasi."        onClick={() => onSectionChange("content")} />
                 <QuickAction title="Rekap absensi"      text="Kehadiran murid dan pengajar."                onClick={() => onSectionChange("absensi")} />
                 <QuickAction title="Laporan &amp; nilai" text="Top scorer, raport, dan ulasan tamu."        onClick={() => onSectionChange("laporan")} />
+                <QuickAction title="Monitoring donasi"  text="Bukti transfer dan status verifikasi."        onClick={() => onSectionChange("donasi")} />
               </div>
             </Panel>
           </div>
@@ -295,6 +299,7 @@ export function AdminDashboardPage({ activeSection, csrfToken, onSectionChange, 
           {activeSection === "content"  && <ContentPanel content={content} message={contentMsg} onDelete={(tipe, id) => setDeleteContentTarget({ tipe, id })} />}
           {activeSection === "absensi"  && <AbsensiPanel data={absensi} />}
           {activeSection === "laporan"  && <LaporanPanel data={laporan} />}
+          {activeSection === "donasi"   && <DonationAdminPanel donations={donations} onStatus={updateDonationStatus} />}
           {activeSection === "activity" && <ActivityPanel activity={activity} full />}
       </div>
 
