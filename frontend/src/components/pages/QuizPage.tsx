@@ -609,10 +609,29 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
 
         <div className="mt-5">
           {navigationMode ? (
-            <div className="grid gap-2 sm:grid-cols-3">
-              <button className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-600 disabled:opacity-40" disabled={currentIndex === 0 || submitting} onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))} type="button">← Sebelumnya</button>
-              <button className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-black text-sky-700 disabled:opacity-40" disabled={currentIndex + 1 >= playable.length || submitting} onClick={() => setCurrentIndex((i) => Math.min(playable.length - 1, i + 1))} type="button">Berikutnya →</button>
-              <button className="btn-primary px-4 py-3 text-sm disabled:opacity-40" disabled={submitting} onClick={submitAll} type="button">{submitting ? "Mengirim..." : "Submit Semua"}</button>
+            <div className="grid gap-3">
+              <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-3">
+                <p className="mb-2 text-xs font-black uppercase tracking-wide text-sky-700">Pilih nomor soal</p>
+                <div className="grid grid-cols-5 gap-2 sm:grid-cols-8 md:grid-cols-10">
+                  {playable.map((quiz, index) => {
+                    const key = String(quiz.id);
+                    const active = index === currentIndex;
+                    const filled = Boolean(draftAnswers[key]);
+                    return (
+                      <button
+                        className={`rounded-xl px-3 py-2 text-sm font-black transition ${active ? "bg-sky-900 text-white shadow-sm" : filled ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" : "bg-white text-slate-500 hover:bg-sky-100 hover:text-sky-800"}`}
+                        disabled={submitting}
+                        key={key}
+                        onClick={() => setCurrentIndex(index)}
+                        type="button"
+                      >
+                        {index + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <button className="btn-primary w-full px-4 py-3 text-sm disabled:opacity-40" disabled={submitting} onClick={submitAll} type="button">{submitting ? "Mengirim..." : "Submit Semua"}</button>
             </div>
           ) : !answered ? (
             <button
