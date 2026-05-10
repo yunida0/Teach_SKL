@@ -91,6 +91,7 @@ export function EbookPage({
 }) {
   const [items, setItems] = useState<Ebook[]>([]);
   const [editing, setEditing] = useState<Ebook | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Ebook | null>(null);
   const [selected, setSelected] = useState<Ebook | null>(null);
   const [activeLevel, setActiveLevel] = useState<EbookLevel | null>(null);
@@ -158,6 +159,7 @@ export function EbookPage({
     form.reset();
     setMessage(payload.message ?? "Materi berhasil diupload.");
     window.setTimeout(() => setUploadProgress(0), 900);
+    setUploadOpen(false);
     load();
   }
 
@@ -236,35 +238,11 @@ export function EbookPage({
 
   return (
     <section className="grid gap-5">
-      {category !== "murid" && <button className="w-fit text-sm font-black text-sky-700 hover:underline" onClick={() => setActiveLevel(null)} type="button">← Semua tingkat</button>}
-      <div className={`grid items-start gap-6 ${isPengajar ? "xl:grid-cols-[0.8fr_1.2fr]" : ""}`}>
-      {isPengajar && (
-        <form className="glass-card grid gap-3 rounded-[1.5rem] p-4 md:rounded-[2rem] md:p-6" onSubmit={upload}>
-          <div>
-            <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-3xl">Upload Materi</h2>
-            <p className="mt-1 text-sm font-semibold text-slate-500">Isi detail materi sebelum upload file.</p>
-          </div>
-          <MapelInput name="pelajaran" subjects={currentSubjects} />
-          <input className="field" maxLength={200} name="judul_materi" placeholder="Judul materi" required />
-          <textarea className="field min-h-28 resize-y" maxLength={1200} name="deskripsi" placeholder="Deskripsi singkat materi, ringkasan isi, atau instruksi belajar" />
-          <textarea className="field min-h-24 resize-y" maxLength={800} name="tujuan_pembelajaran" placeholder="Tujuan pembelajaran, contoh: Setelah membaca, murid mampu memahami..." />
-          <div className="grid gap-3 sm:grid-cols-2">
-          <CustomSelect name="tingkat" defaultValue={currentLevel} options={levelPages.map(l => ({ value: l, label: l }))} placeholder="Tingkat" />
-            <input className="field" min="0" name="estimasi_menit" placeholder="Estimasi menit" type="number" />
-          </div>
-          <input className="field" maxLength={200} name="tags" placeholder="Tag: rangkuman, latihan, teori" />
-          <input className="field" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" name="file" required type="file" />
-          {uploadProgress > 0 && (
-            <div className="rounded-2xl bg-sky-50 p-3">
-              <div className="flex items-center justify-between text-xs font-black text-sky-700"><span>Upload materi</span><span>{uploadProgress}%</span></div>
-              <div className="mt-2 h-2 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-sky-500 transition-all" style={{ width: `${uploadProgress}%` }} /></div>
-            </div>
-          )}
-          <button className="btn-primary px-6 py-3" type="submit">
-            Upload Materi
-          </button>
-        </form>
-      )}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {category !== "murid" && <button className="w-fit text-sm font-black text-sky-700 hover:underline" onClick={() => setActiveLevel(null)} type="button">← Semua tingkat</button>}
+        {isPengajar && <button className="btn-primary px-4 py-2 text-sm" onClick={() => setUploadOpen(true)} type="button">+ Upload Materi</button>}
+      </div>
+      <div className="grid items-start gap-6">
       <div className={`grid content-start gap-4 sm:grid-cols-2 ${isPengajar ? "" : "lg:grid-cols-3"}`}>
         {visibleItems.map((item) => {
           const tags = parseTags(item.tags);
@@ -321,6 +299,39 @@ export function EbookPage({
         {visibleItems.length === 0 && <EmptyState text={`Belum ada e-book untuk ${currentLevel}.`} />}
       </div>
       </div>
+
+      {isPengajar && uploadOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Upload materi">
+          <form className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl sm:p-6" onSubmit={upload}>
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-slate-950 md:text-3xl">Upload Materi</h2>
+              <p className="mt-1 text-sm font-semibold text-slate-500">Isi detail materi sebelum upload file.</p>
+            </div>
+            <div className="mt-4 grid gap-3">
+              <MapelInput name="pelajaran" subjects={currentSubjects} />
+              <input className="field" maxLength={200} name="judul_materi" placeholder="Judul materi" required />
+              <textarea className="field min-h-28 resize-y" maxLength={1200} name="deskripsi" placeholder="Deskripsi singkat materi, ringkasan isi, atau instruksi belajar" />
+              <textarea className="field min-h-24 resize-y" maxLength={800} name="tujuan_pembelajaran" placeholder="Tujuan pembelajaran, contoh: Setelah membaca, murid mampu memahami..." />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <CustomSelect name="tingkat" defaultValue={currentLevel} options={levelPages.map(l => ({ value: l, label: l }))} placeholder="Tingkat" />
+                <input className="field" min="0" name="estimasi_menit" placeholder="Estimasi menit" type="number" />
+              </div>
+              <input className="field" maxLength={200} name="tags" placeholder="Tag: rangkuman, latihan, teori" />
+              <input className="field" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx" name="file" required type="file" />
+              {uploadProgress > 0 && (
+                <div className="rounded-2xl bg-sky-50 p-3">
+                  <div className="flex items-center justify-between text-xs font-black text-sky-700"><span>Upload materi</span><span>{uploadProgress}%</span></div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-sky-500 transition-all" style={{ width: `${uploadProgress}%` }} /></div>
+                </div>
+              )}
+              <div className="grid gap-2 sm:grid-cols-2">
+                <button className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-600" onClick={() => setUploadOpen(false)} type="button">Batal</button>
+                <button className="btn-primary px-6 py-3" type="submit">Upload Materi</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
 
       {editing && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4 backdrop-blur-sm">
