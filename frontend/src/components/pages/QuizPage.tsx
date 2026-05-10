@@ -576,12 +576,6 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
       </div>
 
       <div className={`grid items-start gap-4 ${navigationMode ? "lg:grid-cols-[minmax(0,1fr)_18rem]" : ""}`}>
-      {navigationMode && (
-        <div className="grid grid-cols-2 gap-2 lg:hidden">
-          <button className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-black text-sky-700" onClick={() => setNumberModalOpen(true)} type="button">No Soal</button>
-          <button className="btn-primary px-4 py-3 text-sm disabled:opacity-40" disabled={submitting} onClick={submitAll} type="button">{submitting ? "Mengirim..." : "Submit Semua"}</button>
-        </div>
-      )}
       {/* Question card */}
       <article className="rounded-[2rem] border border-sky-100 bg-white p-5 shadow-[0_20px_60px_rgba(16,42,67,0.10)] md:p-7">
         <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">{cleanTitle} · Soal {currentIndex + 1}</p>
@@ -649,6 +643,12 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
           ) : null}
         </div>
       </article>
+      {navigationMode && (
+        <div className="grid grid-cols-2 gap-2 lg:hidden">
+          <button className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm font-black text-sky-700" onClick={() => setNumberModalOpen(true)} type="button">No Soal</button>
+          <button className="btn-primary px-4 py-3 text-sm disabled:opacity-40" disabled={submitting} onClick={submitAll} type="button">{submitting ? "Mengirim..." : "Submit Semua"}</button>
+        </div>
+      )}
       {navigationMode && (
         <aside className="hidden rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm lg:sticky lg:top-4 lg:block">
           <p className="text-xs font-black uppercase tracking-wide text-sky-700">Pilih nomor soal</p>
