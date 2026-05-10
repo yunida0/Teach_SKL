@@ -513,6 +513,13 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
     ["A", current.opsi_a], ["B", current.opsi_b], ["C", current.opsi_c], ["D", current.opsi_d],
   ];
 
+  function chooseNavigableAnswer(label: string) {
+    setDraftAnswers((prev) => ({ ...prev, [currentKey]: label }));
+    if (currentIndex + 1 < playable.length) {
+      window.setTimeout(() => setCurrentIndex((index) => index === currentIndex ? index + 1 : index), 180);
+    }
+  }
+
   return (
     <section className={`mx-auto grid w-full gap-4 ${navigationMode ? "max-w-5xl" : "max-w-2xl"}`}>
       {warningModal && (
@@ -578,7 +585,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
                 } ${!navigationMode && answered ? "cursor-default" : "cursor-pointer active:scale-[0.99]"}`}
                 disabled={(!navigationMode && answered) || submitting}
                 key={lbl}
-                onClick={() => navigationMode ? setDraftAnswers((prev) => ({ ...prev, [currentKey]: lbl })) : setSelected(lbl)}
+                onClick={() => navigationMode ? chooseNavigableAnswer(lbl) : setSelected(lbl)}
                 type="button"
               >
                 <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-black transition ${
