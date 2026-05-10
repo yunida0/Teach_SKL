@@ -228,6 +228,7 @@ export function TugasPage({ category, csrfToken }: { category: Category; csrfTok
   const [deleteTarget, setDeleteTarget] = useState<Tugas | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Tugas | null>(null);
+  const [submissionTarget, setSubmissionTarget] = useState<Tugas | null>(null);
   const [deleting, setDeleting]   = useState(false);
 
   function load() {
@@ -278,6 +279,7 @@ export function TugasPage({ category, csrfToken }: { category: Category; csrfTok
               />
               {isPengajar && (
                 <div className="absolute right-3 top-3 flex gap-2 sm:opacity-0 sm:group-hover:opacity-100">
+                  <button className="rounded-xl bg-white px-3 py-1.5 text-xs font-black text-emerald-700 shadow-sm transition hover:bg-emerald-50" onClick={() => setSubmissionTarget(item)} type="button">Pengerjaan</button>
                   <button className="rounded-xl bg-white px-3 py-1.5 text-xs font-black text-sky-700 shadow-sm transition hover:bg-sky-50" onClick={() => { setEditTarget(item); setFormOpen(true); }} type="button">Edit</button>
                   <button className="rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-600 transition hover:bg-rose-100" onClick={() => setDeleteTarget(item)} type="button">Hapus</button>
                 </div>
@@ -288,30 +290,6 @@ export function TugasPage({ category, csrfToken }: { category: Category; csrfTok
           {items.length === 0 && <EmptyState text="Belum ada tugas." />}
         </div>
       </section>
-
-      {isPengajar && (
-        <section className="mt-6 grid gap-3 rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm md:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="title-font text-xl font-black text-slate-800">Pengumpulan Jawaban</h2>
-            <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700">{submissions.length} jawaban</span>
-          </div>
-          {submissions.map((item) => (
-            <article className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm" key={item.id}>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm font-black text-slate-900">{item.judul_tugas}</p>
-                  <p className="text-xs font-bold text-slate-500">{item.nama_murid} @{item.username} · {item.pelajaran} · {item.tanggal_upload ?? "-"}</p>
-                  {item.catatan && <p className="mt-2 text-sm font-semibold text-slate-600">{item.catatan}</p>}
-                  {item.nilai !== null && item.nilai !== undefined && <p className="mt-2 text-sm font-black text-emerald-700">Nilai: {item.nilai}</p>}
-                </div>
-                {item.file_path && <a className="rounded-xl bg-sky-50 px-3 py-2 text-xs font-black text-sky-700 hover:bg-sky-100" href={`${PHP_BASE}/${item.file_path}`} rel="noreferrer" target="_blank">Lihat Jawaban</a>}
-              </div>
-              <NilaiPengumpulanForm csrfToken={csrfToken} item={item} onSaved={load} />
-            </article>
-          ))}
-          {submissions.length === 0 && <EmptyState text="Belum ada pengumpulan jawaban." />}
-        </section>
-      )}
 
       {isMurid && submissions.length > 0 && (
         <section className="mt-6 grid gap-3 rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm md:p-6">
@@ -342,6 +320,37 @@ export function TugasPage({ category, csrfToken }: { category: Category; csrfTok
         <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={editTarget ? "Edit tugas" : "Tambah tugas"}>
           <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
             <TugasForm csrfToken={csrfToken} tugas={editTarget} onSaved={load} onCancel={() => { setFormOpen(false); setEditTarget(null); }} />
+          </div>
+        </div>
+      )}
+      {isPengajar && submissionTarget && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Pengumpulan jawaban">
+          <div className="max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-emerald-600">Pengerjaan Tugas</p>
+                <h2 className="title-font text-2xl font-black text-slate-950">{submissionTarget.judul_tugas ?? "Tugas"}</h2>
+                <p className="text-sm font-bold text-slate-500">{submissionTarget.pelajaran ?? "-"} · Deadline {submissionTarget.deadline ?? "-"}</p>
+              </div>
+              <button className="rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-600" onClick={() => setSubmissionTarget(null)} type="button">Tutup</button>
+            </div>
+            <div className="grid gap-3">
+              {submissions.filter((item) => String(item.tugas_id) === String(submissionTarget.id)).map((item) => (
+                <article className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm" key={item.id}>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-slate-900">{item.nama_murid} @{item.username}</p>
+                      <p className="text-xs font-bold text-slate-500">Dikumpulkan: {item.tanggal_upload ?? "-"}</p>
+                      {item.catatan && <p className="mt-2 text-sm font-semibold text-slate-600">{item.catatan}</p>}
+                      {item.nilai !== null && item.nilai !== undefined && <p className="mt-2 text-sm font-black text-emerald-700">Nilai: {item.nilai}</p>}
+                    </div>
+                    {item.file_path && <a className="rounded-xl bg-sky-50 px-3 py-2 text-xs font-black text-sky-700 hover:bg-sky-100" href={`${PHP_BASE}/${item.file_path}`} rel="noreferrer" target="_blank">Lihat Jawaban</a>}
+                  </div>
+                  <NilaiPengumpulanForm csrfToken={csrfToken} item={item} onSaved={load} />
+                </article>
+              ))}
+              {submissions.filter((item) => String(item.tugas_id) === String(submissionTarget.id)).length === 0 && <EmptyState text="Belum ada pengumpulan jawaban untuk tugas ini." />}
+            </div>
           </div>
         </div>
       )}
