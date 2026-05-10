@@ -626,7 +626,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
         </div>
       </article>
       {navigationMode && (
-        <aside className="rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm lg:sticky lg:top-4">
+        <aside className="order-first rounded-[1.5rem] border border-sky-100 bg-white p-4 shadow-sm lg:order-none lg:sticky lg:top-4">
           <p className="text-xs font-black uppercase tracking-wide text-sky-700">Pilih nomor soal</p>
           <p className="mt-1 text-xs font-bold text-slate-500">Hijau berarti sudah terisi. Klik nomor untuk pindah soal.</p>
           <div className="mt-4 grid grid-cols-5 gap-2 lg:grid-cols-4">
