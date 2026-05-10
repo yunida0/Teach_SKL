@@ -560,7 +560,7 @@ function StudentQuizSession({ csrfToken, items }: { csrfToken: string; items: Qu
       <div className={`grid items-start gap-4 ${navigationMode ? "lg:grid-cols-[minmax(0,1fr)_18rem]" : ""}`}>
       {/* Question card */}
       <article className="rounded-[2rem] border border-sky-100 bg-white p-5 shadow-[0_20px_60px_rgba(16,42,67,0.10)] md:p-7">
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">{selectedSubject} · Soal {currentIndex + 1}</p>
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">{cleanTitle} · Soal {currentIndex + 1}</p>
         <h3 className="title-font mt-3 text-xl font-black leading-snug text-slate-950 md:text-2xl">{current.soal}</h3>
 
         <div className="mt-6 grid gap-2.5">
