@@ -103,6 +103,7 @@ export type Tugas = {
   deskripsi?: string;
   deadline?: string;
   file_path?: string;
+  tingkat?: string;
 };
 
 export type PengumpulanTugas = {

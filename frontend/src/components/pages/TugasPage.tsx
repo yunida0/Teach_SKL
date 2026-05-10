@@ -46,12 +46,13 @@ function MapelInput({ name, defaultValue = "", subjectList }: { name: string; de
   );
 }
 
-function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: () => void }) {
+function TugasForm({ csrfToken, tugas, onSaved, onCancel }: { csrfToken: string; tugas?: Tugas | null; onSaved: () => void; onCancel: () => void }) {
   const [msg, setMsg]         = useState("");
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [tingkat, setTingkat] = useState("SD");
+  const [tingkat, setTingkat] = useState(tugas?.tingkat && ["TK", "SD", "SMP"].includes(tugas.tingkat) ? tugas.tingkat : "SD");
   const mapelList = subjectsByLevel[tingkat] ?? subjects;
+  const isEdit = Boolean(tugas);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -60,18 +61,20 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
     try {
       const data = new FormData(e.currentTarget);
       data.set("csrf_token", csrfToken);
+      if (tugas) data.set("id", String(tugas.id));
       setProgress(1);
       let json: { success?: boolean; error?: string } | null = null;
       try {
-        json = await uploadWithProgress(`${PHP_BASE}/backend/uploads/tugas`, data, setProgress);
+        json = await uploadWithProgress(`${PHP_BASE}/backend/${isEdit ? "actions/update-tugas" : "uploads/tugas"}`, data, setProgress);
       } catch (error) {
         json = error as { success?: boolean; error?: string };
       }
       if (json?.success) {
-        setMsg("Tugas berhasil ditambahkan.");
+        setMsg(isEdit ? "Tugas berhasil diperbarui." : "Tugas berhasil ditambahkan.");
         (e.target as HTMLFormElement).reset();
         window.setTimeout(() => setProgress(0), 900);
-        onAdded();
+        onSaved();
+        window.setTimeout(onCancel, 500);
       } else {
         setMsg(json?.error ?? "Gagal menyimpan tugas.");
         setProgress(0);
@@ -82,22 +85,23 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
   }
 
   return (
-    <form className="glass-card grid gap-3 rounded-[1.5rem] p-4 md:rounded-[2rem] md:p-6" onSubmit={submit}>
+    <form className="grid gap-3" onSubmit={submit}>
       <div className="border-b border-sky-100 pb-3">
         <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Form Tugas</p>
-        <h2 className="title-font text-2xl font-black text-slate-950">Tambah Tugas</h2>
+        <h2 className="title-font text-2xl font-black text-slate-950">{isEdit ? "Edit Tugas" : "Tambah Tugas"}</h2>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <CustomSelect name="tingkat" value={tingkat} onChange={setTingkat} options={["TK","SD","SMP"].map(t => ({ value: t, label: t }))} placeholder="Tingkat" />
-        <MapelInput name="pelajaran" key={tingkat} subjectList={mapelList} />
+        <MapelInput name="pelajaran" key={`${tingkat}-${tugas?.id ?? "new"}`} defaultValue={tugas?.pelajaran ?? ""} subjectList={mapelList} />
       </div>
-      <input className="field" maxLength={200} name="judul_tugas" placeholder="Judul tugas" required />
-      <textarea className="field min-h-[80px] resize-y" name="deskripsi" placeholder="Deskripsi tugas..." required />
+      <input className="field" defaultValue={tugas?.judul_tugas ?? ""} maxLength={200} name="judul_tugas" placeholder="Judul tugas" required />
+      <textarea className="field min-h-[80px] resize-y" defaultValue={tugas?.deskripsi ?? ""} name="deskripsi" placeholder="Deskripsi tugas..." required />
       <div>
         <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-400">Deadline</label>
-        <input className="field" name="deadline" required type="date" />
+        <input className="field" defaultValue={String(tugas?.deadline ?? "").slice(0, 10)} name="deadline" required type="date" />
       </div>
       <input accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.jpg,.png" className="field" name="file" type="file" />
+      {isEdit && <p className="text-xs font-bold text-slate-400">Kosongkan file jika tidak ingin mengganti lampiran tugas.</p>}
       {msg && (
         <p className={`text-sm font-black ${msg.includes("berhasil") ? "text-emerald-700" : "text-rose-600"}`}>{msg}</p>
       )}
@@ -107,9 +111,12 @@ function TambahTugasForm({ csrfToken, onAdded }: { csrfToken: string; onAdded: (
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-white"><div className="h-full rounded-full bg-sky-500 transition-all" style={{ width: `${progress}%` }} /></div>
         </div>
       )}
-      <button className="btn-primary px-6 py-3 disabled:opacity-50" disabled={loading} type="submit">
-        {loading ? "Menyimpan..." : "Simpan Tugas"}
-      </button>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <button className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-black text-slate-600" onClick={onCancel} type="button">Batal</button>
+        <button className="btn-primary px-6 py-3 disabled:opacity-50" disabled={loading} type="submit">
+          {loading ? "Menyimpan..." : isEdit ? "Perbarui Tugas" : "Simpan Tugas"}
+        </button>
+      </div>
     </form>
   );
 }
@@ -219,6 +226,8 @@ export function TugasPage({ category, csrfToken }: { category: Category; csrfTok
   const [items, setItems]         = useState<Tugas[]>([]);
   const [submissions, setSubmissions] = useState<PengumpulanTugas[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<Tugas | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<Tugas | null>(null);
   const [deleting, setDeleting]   = useState(false);
 
   function load() {
@@ -248,13 +257,15 @@ export function TugasPage({ category, csrfToken }: { category: Category; csrfTok
 
   return (
     <>
-      <section className={`grid items-start gap-6 ${isPengajar ? "xl:grid-cols-[0.9fr_1.1fr]" : ""}`}>
-        {isPengajar && <TambahTugasForm csrfToken={csrfToken} onAdded={load} />}
+      <section className="grid items-start gap-6">
         <div className="grid content-start gap-3">
           {isPengajar && (
             <div className="flex items-center justify-between">
               <h2 className="title-font text-xl font-black text-slate-800">Daftar Tugas</h2>
-              <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700">{items.length} tugas</span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-black text-sky-700">{items.length} tugas</span>
+                <button className="btn-primary px-4 py-2 text-xs" onClick={() => { setEditTarget(null); setFormOpen(true); }} type="button">+ Tambah Tugas</button>
+              </div>
             </div>
           )}
           {items.map((item) => (
@@ -266,13 +277,10 @@ export function TugasPage({ category, csrfToken }: { category: Category; csrfTok
                 title={item.judul_tugas ?? "Tanpa judul"}
               />
               {isPengajar && (
-                <button
-                  className="absolute right-3 top-3 rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-600 transition hover:bg-rose-100 sm:opacity-0 sm:group-hover:opacity-100"
-                  onClick={() => setDeleteTarget(item)}
-                  type="button"
-                >
-                  Hapus
-                </button>
+                <div className="absolute right-3 top-3 flex gap-2 sm:opacity-0 sm:group-hover:opacity-100">
+                  <button className="rounded-xl bg-white px-3 py-1.5 text-xs font-black text-sky-700 shadow-sm transition hover:bg-sky-50" onClick={() => { setEditTarget(item); setFormOpen(true); }} type="button">Edit</button>
+                  <button className="rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-600 transition hover:bg-rose-100" onClick={() => setDeleteTarget(item)} type="button">Hapus</button>
+                </div>
               )}
               {isMurid && <KumpulkanTugasForm csrfToken={csrfToken} tugas={item} onSubmitted={load} />}
             </div>
@@ -330,6 +338,13 @@ export function TugasPage({ category, csrfToken }: { category: Category; csrfTok
         title="Hapus tugas?"
         tone="danger"
       />
+      {isPengajar && formOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label={editTarget ? "Edit tugas" : "Tambah tugas"}>
+          <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-2xl sm:p-6">
+            <TugasForm csrfToken={csrfToken} tugas={editTarget} onSaved={load} onCancel={() => { setFormOpen(false); setEditTarget(null); }} />
+          </div>
+        </div>
+      )}
     </>
   );
 }
