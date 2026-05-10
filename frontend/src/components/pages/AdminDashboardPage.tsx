@@ -363,8 +363,11 @@ function rupiah(value?: number | string) {
 }
 
 function DonationAdminPanel({ donations, onStatus }: { donations: DonationMonitorItem[]; onStatus: (id: number | string, status: string) => void }) {
+  const [proof, setProof] = useState<DonationMonitorItem | null>(null);
   const total = donations.reduce((sum, item) => sum + (Number(item.nominal ?? 0) || 0), 0);
   const accepted = donations.filter((item) => item.status === "diterima").reduce((sum, item) => sum + (Number(item.nominal ?? 0) || 0), 0);
+  const proofUrl = proof?.file_path ? `${PHP_BASE}/${proof.file_path}` : "";
+  const proofIsPdf = proofUrl.toLowerCase().endsWith(".pdf");
   return (
     <Panel title="Monitoring Donasi" caption="Pantau bukti transfer dari akun tamu dan ubah status verifikasi.">
       <div className="mb-4 grid gap-3 md:grid-cols-3">
@@ -385,7 +388,7 @@ function DonationAdminPanel({ donations, onStatus }: { donations: DonationMonito
               <span className={`rounded-full px-3 py-1 text-xs font-black uppercase ${donationStatusClass(item.status)}`}>{item.status ?? "menunggu"}</span>
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
-              {item.file_path && <a className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-600" href={`${PHP_BASE}/${item.file_path}`} rel="noreferrer" target="_blank">Lihat Bukti</a>}
+              {item.file_path && <button className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-600" onClick={() => setProof(item)} type="button">Lihat Bukti</button>}
               {(["menunggu", "diterima", "ditolak"] as const).map((status) => (
                 <button className={`rounded-xl px-3 py-2 text-xs font-black transition ${item.status === status ? "bg-sky-900 text-white" : "bg-sky-50 text-sky-700 hover:bg-sky-100"}`} key={status} onClick={() => onStatus(item.id, status)} type="button">{status}</button>
               ))}
@@ -394,6 +397,24 @@ function DonationAdminPanel({ donations, onStatus }: { donations: DonationMonito
         ))}
         {donations.length === 0 && <p className="rounded-2xl bg-slate-50 p-6 text-center text-sm font-bold text-slate-400">Belum ada bukti donasi.</p>}
       </div>
+      {proof && (
+        <div className="fixed inset-0 z-[90] grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm" onClick={() => setProof(null)} role="presentation">
+          <div className="relative w-full max-w-5xl overflow-hidden rounded-[1.8rem] bg-white p-3 shadow-2xl" onClick={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-label="Bukti donasi">
+            <button className="absolute right-5 top-5 z-10 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-slate-900 shadow-sm" onClick={() => setProof(null)} type="button">Tutup</button>
+            <div className="mb-3 rounded-2xl bg-slate-50 p-4 pr-24">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Bukti Donasi</p>
+              <h3 className="text-xl font-black text-slate-950">{proof.nama ?? "Donatur"}</h3>
+              <p className="text-sm font-bold text-slate-500">{rupiah(proof.nominal)} · {proof.created_at ?? "-"}</p>
+            </div>
+            {proofIsPdf ? (
+              <iframe className="h-[74vh] w-full rounded-2xl border border-slate-100 bg-slate-100" src={proofUrl} title="Bukti donasi PDF" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt="Bukti donasi" className="max-h-[74vh] w-full rounded-2xl bg-slate-100 object-contain" src={proofUrl} />
+            )}
+          </div>
+        </div>
+      )}
     </Panel>
   );
 }
