@@ -319,13 +319,26 @@ function CreateUserPanel({ createRole, creatingUser, message, onRoleChange, onSu
   createRole: Category; creatingUser: boolean; message: MsgState;
   onRoleChange: (r: Category) => void; onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  function generatePassword() {
+    const value = `skl${Math.random().toString(36).slice(2, 8)}${Math.floor(100 + Math.random() * 900)}`;
+    setPassword(value);
+    setShowPassword(true);
+  }
   return (
     <Panel title="Buat Akun Baru" caption="Provisioning akun lengkap dengan detail sesuai role.">
       <form className="grid gap-4" onSubmit={onSubmit}>
         <div className="grid gap-3 md:grid-cols-2">
           <input className="field" name="nama"     placeholder="Nama lengkap" required />
           <input className="field" name="username" placeholder="Username"     required />
-          <input className="field" name="password" placeholder="Password awal" type="password" minLength={6} required />
+          <div className="grid gap-2">
+            <input className="field" name="password" onChange={(e) => setPassword(e.target.value)} placeholder="Password awal" type={showPassword ? "text" : "password"} minLength={6} required value={password} />
+            <div className="grid grid-cols-2 gap-2">
+              <button className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-600" onClick={() => setShowPassword((v) => !v)} type="button">{showPassword ? "Sembunyikan" : "Lihat Password"}</button>
+              <button className="rounded-xl bg-sky-50 px-3 py-2 text-xs font-black text-sky-700" onClick={generatePassword} type="button">Generate</button>
+            </div>
+          </div>
           <CustomSelect value={createRole} onChange={(v) => onRoleChange(v as Category)} options={[{value:"murid",label:"Murid"},{value:"pengajar",label:"Pengajar"},{value:"tamu",label:"Tamu"},{value:"admin",label:"Admin"}]} placeholder="Role" />
         </div>
         {createRole === "pengajar" && (
@@ -734,6 +747,13 @@ function EditUserModal({ onClose, onSubmit, user }: {
 function ResetPasswordModal({ onClose, onSubmit, user }: {
   onClose: () => void; onSubmit: (e: FormEvent<HTMLFormElement>) => void; user: AdminUser;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [password, setPassword] = useState("");
+  function generatePassword() {
+    const value = `skl${Math.random().toString(36).slice(2, 8)}${Math.floor(100 + Math.random() * 900)}`;
+    setPassword(value);
+    setShowPassword(true);
+  }
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4">
       <form className="w-full max-w-md rounded-[1.6rem] bg-white p-6 shadow-2xl" onSubmit={onSubmit}>
@@ -741,7 +761,11 @@ function ResetPasswordModal({ onClose, onSubmit, user }: {
           <div><h3 className="text-xl font-black text-slate-900">Reset Password</h3><p className="text-sm font-bold text-slate-400">@{user.username}</p></div>
           <button className="rounded-xl bg-slate-100 px-3 py-1.5 text-sm font-black hover:bg-slate-200" onClick={onClose} type="button">Tutup</button>
         </div>
-        <input className="field" name="password" placeholder="Password baru (min. 6 karakter)" type="password" minLength={6} required />
+        <input className="field" name="password" onChange={(e) => setPassword(e.target.value)} placeholder="Password baru (min. 6 karakter)" type={showPassword ? "text" : "password"} minLength={6} required value={password} />
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-black text-slate-600" onClick={() => setShowPassword((v) => !v)} type="button">{showPassword ? "Sembunyikan" : "Lihat Password"}</button>
+          <button className="rounded-xl bg-sky-50 px-3 py-2 text-xs font-black text-sky-700" onClick={generatePassword} type="button">Generate</button>
+        </div>
         <button className="btn-primary mt-5 rounded-2xl px-5 py-3" type="submit">Reset Password</button>
       </form>
     </div>
