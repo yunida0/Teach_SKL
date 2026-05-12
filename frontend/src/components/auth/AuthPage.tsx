@@ -9,6 +9,25 @@ import { CustomSelect } from "@/components/ui/CustomSelect";
 type AuthMode = "login" | "register";
 type SiteSettings = { logo_path: string | null; logo_size: number };
 
+const authGalleryPhotos = [
+  "1IxzvFpQFmOhzYVf0Q9UddRL7KchIuwk1",
+  "1Iy8XkGBi24kE6ZuXdhcd3Sp5YsQFfeil",
+  "1J1k_ouK7ghDqqWoRNo0gpSkp0LbO6ETU",
+  "1J7anQA7SQVCE7EgLRe7ZqWw2y1kVkwNk",
+  "1Hj3J-cdiZ2zoj1k1gVJcW6yXxbvlgvKS",
+  "1HvYgyxepb5AEhyPUoKXbZJF4lBpIKiJp",
+  "1I06Aq9Rr5zPf8N5mEIimcYrC83e-3wE9",
+  "1I7-qwy6Lgv6kSwocpcePP2o2ZSwmzzex",
+  "1I7lGwP3ZgNh28xK6o1L9Bd1mxX1JFc6h",
+  "1Iap26bmmClpeuHrKh2Vm4ufN78zJVi0X",
+  "1Idzi7xeGLyhqD3SKQ2vsf7ceWYseM7ZV",
+  "1IeMgYlybuIli9rY8Z0OLDKnbuCs0Rf7m",
+];
+
+function driveThumb(id: string) {
+  return `https://drive.google.com/thumbnail?id=${id}&sz=w900`;
+}
+
 export function AuthPage({
   csrfToken,
   setCsrfToken,
@@ -128,6 +147,13 @@ export function AuthPage({
 
   return (
     <main className="auth-page">
+      <div className="auth-photo-grid" aria-hidden="true">
+        {authGalleryPhotos.map((id, index) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" key={`${id}-${index}`} src={driveThumb(id)} />
+        ))}
+      </div>
+      <div className="auth-photo-shade" aria-hidden="true" />
       <section className="auth-shell" aria-labelledby="auth-title">
         <div className="auth-card">
           <div className="auth-card-brand">

@@ -120,14 +120,54 @@ button:disabled {
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  background: #f6fbfd;
+  position: relative;
+  overflow: hidden;
+  background: #071923;
   color: var(--auth-blue-deep);
   font-family: var(--font-jakarta), sans-serif;
+}
+
+.auth-photo-grid {
+  position: fixed;
+  inset: -5vh -5vw;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  grid-auto-rows: minmax(160px, 24vh);
+  gap: 0.7rem;
+  transform: rotate(-3deg) scale(1.08);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-photo-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 22px;
+  filter: saturate(0.95) contrast(1.04);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+}
+
+.auth-photo-grid img:nth-child(3n) { transform: translateY(18px); }
+.auth-photo-grid img:nth-child(4n) { transform: translateY(-16px); }
+.auth-photo-grid img:nth-child(5n) { grid-row: span 2; }
+
+.auth-photo-shade {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 52% 45%, rgba(10, 31, 42, 0.2), rgba(5, 16, 23, 0.86) 68%),
+    linear-gradient(115deg, rgba(3, 12, 18, 0.9), rgba(8, 31, 45, 0.66) 42%, rgba(2, 8, 12, 0.88));
+  backdrop-filter: blur(1px);
 }
 
 .auth-shell {
   width: min(100%, 460px);
   margin: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .auth-card-brand {
@@ -172,11 +212,12 @@ button:disabled {
 
 .auth-card {
   width: 100%;
-  border: 1px solid rgba(142, 207, 230, 0.48);
+  border: 1px solid rgba(255, 255, 255, 0.52);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.92);
   padding: clamp(1.25rem, 5vw, 1.8rem);
-  box-shadow: 0 18px 50px rgba(24, 68, 84, 0.1);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(18px);
 }
 
 
@@ -372,5 +413,17 @@ select.af-input {
   .auth-card {
     border-radius: 22px;
     padding: 1.1rem;
+  }
+
+  .auth-photo-grid {
+    inset: -4vh -18vw;
+    grid-template-columns: repeat(3, minmax(130px, 1fr));
+    grid-auto-rows: minmax(120px, 18vh);
+    gap: 0.5rem;
+    transform: rotate(-4deg) scale(1.12);
+  }
+
+  .auth-photo-grid img {
+    border-radius: 18px;
   }
 }
