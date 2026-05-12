@@ -416,34 +416,34 @@ select.af-input {
   }
 
   .auth-photo-grid {
-    inset: -1rem;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    grid-auto-rows: 82px;
-    gap: 0.42rem;
-    transform: rotate(-2deg) scale(1.04);
+    inset: -0.8rem;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-auto-rows: 54px;
+    gap: 0.32rem;
+    transform: rotate(-2deg) scale(1.03);
     opacity: 1;
   }
 
   .auth-photo-grid img {
-    border-radius: 18px;
+    border-radius: 14px;
     object-position: center center;
   }
 
   .auth-photo-grid img:nth-child(1) {
-    grid-column: span 4;
+    grid-column: span 5;
     grid-row: span 3;
   }
 
   .auth-photo-grid img:nth-child(2),
   .auth-photo-grid img:nth-child(9) {
-    grid-column: span 2;
+    grid-column: span 3;
     grid-row: span 2;
   }
 
   .auth-photo-grid img:nth-child(3),
   .auth-photo-grid img:nth-child(8),
   .auth-photo-grid img:nth-child(13) {
-    grid-column: span 3;
+    grid-column: span 4;
     grid-row: span 2;
   }
 
@@ -451,7 +451,7 @@ select.af-input {
   .auth-photo-grid img:nth-child(7),
   .auth-photo-grid img:nth-child(12),
   .auth-photo-grid img:nth-child(16) {
-    grid-column: span 2;
+    grid-column: span 3;
     grid-row: span 3;
   }
 
@@ -463,7 +463,7 @@ select.af-input {
   .auth-photo-grid img:nth-child(15),
   .auth-photo-grid img:nth-child(17),
   .auth-photo-grid img:nth-child(18) {
-    grid-column: span 3;
+    grid-column: span 4;
     grid-row: span 2;
   }
 

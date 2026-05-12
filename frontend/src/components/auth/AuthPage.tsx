@@ -10,25 +10,18 @@ type AuthMode = "login" | "register";
 type SiteSettings = { logo_path: string | null; logo_size: number };
 
 const authGalleryPhotos = [
-  "1OIxeDLxPxzDaS5ViLAAinXx9Ls52Uj4_",
-  "1hy9SMoNNB2_i0oRxfE881hhNWr9_GnsR",
-  "1m1ooJxwa5Xsfvfqy1muVL1zGHalI4JGt",
   "17KAmZuH1lpYzvkHLGN4M3RMC6WXbL_Ia",
   "1B0wpYCcf6iFT-W9yl4Yx4EafvIYLR-2x",
   "1Rl85UWjF4KugCK3HNbU63y_HCN1L-jWk",
-  "1RxPhMQnmUqVjmO3i5_v3aYSftdk02oDd",
-  "1xIbSJhlF_xVXNJoKMwkYtkzcWfMPcfFQ",
-  "1hlhgs9Fab0I1IwMGh4TZrE9zBxOZRBRu",
-  "1L0wjOQm5Ml-v0CTlkyTYX8Y47ntBmsSS",
-  "1TNznzy5yP1AsbYRb2MAjF664xwoaLehX",
   "13oYrZNiwkDIdYbt6jdDE1QqdQXfg3Va-",
   "1R9TNkrjd34HMhogvHVCzF_uGdSj83jRo",
   "11aD2rs9z5DmkLt6_I3o3Ms91c6Xn-J56",
   "1uZAYtQYhpLr0CEso72AEkZ5HDDRxqk4B",
-  "1HfSYmW82gSVSE6RKUM0KFbFySMpQAxH1",
   "11vPprOVFvGjk5wLY1cvTosUmADuC1rCn",
   "1ZG1sjHpvqyZwncJwgnwEGpicT00DHM5K",
 ];
+
+const authBackgroundPhotos = [...authGalleryPhotos, ...authGalleryPhotos];
 
 function driveThumb(id: string) {
   return `https://lh3.googleusercontent.com/d/${id}=w900`;
@@ -154,7 +147,7 @@ export function AuthPage({
   return (
     <main className="auth-page">
       <div className="auth-photo-grid" aria-hidden="true">
-        {authGalleryPhotos.map((id, index) => (
+        {authBackgroundPhotos.map((id, index) => (
           // eslint-disable-next-line @next/next/no-img-element
           <img alt="" key={`${id}-${index}`} src={driveThumb(id)} />
         ))}
