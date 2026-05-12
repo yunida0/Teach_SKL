@@ -11,17 +11,16 @@ type SiteSettings = { logo_path: string | null; logo_size: number };
 
 const authGalleryPhotos = [
   "17KAmZuH1lpYzvkHLGN4M3RMC6WXbL_Ia",
-  "1B0wpYCcf6iFT-W9yl4Yx4EafvIYLR-2x",
   "1Rl85UWjF4KugCK3HNbU63y_HCN1L-jWk",
-  "13oYrZNiwkDIdYbt6jdDE1QqdQXfg3Va-",
   "1R9TNkrjd34HMhogvHVCzF_uGdSj83jRo",
-  "11aD2rs9z5DmkLt6_I3o3Ms91c6Xn-J56",
-  "1uZAYtQYhpLr0CEso72AEkZ5HDDRxqk4B",
-  "11vPprOVFvGjk5wLY1cvTosUmADuC1rCn",
   "1ZG1sjHpvqyZwncJwgnwEGpicT00DHM5K",
+  "1itDfTeJ968rrtLIklBEo5O8-kVBiPRIp",
+  "1eFi63qP8jnwYCb-L5zWBj8OwmaPs-kOI",
+  "12sSabuhOzmV1b8JvcVa8VmoCImbUl9rY",
+  "1G2P-C0CGkTRU-ium6Pyi4cDm_urI0OEz",
 ];
 
-const authBackgroundPhotos = [...authGalleryPhotos, ...authGalleryPhotos];
+const authBackgroundPhotos = [...authGalleryPhotos, ...authGalleryPhotos, ...authGalleryPhotos];
 
 function driveThumb(id: string) {
   return `https://lh3.googleusercontent.com/d/${id}=w900`;
