@@ -428,11 +428,20 @@ select.af-input {
   .auth-photo-grid img {
     border-radius: 10px;
     object-position: center center;
-    transform: none;
-    grid-column: span 1;
-    grid-row: span 1;
   }
 
+  /* Override desktop nth-child rules yang masih aktif di mobile */
+  .auth-photo-grid img:nth-child(3n),
+  .auth-photo-grid img:nth-child(4n) {
+    transform: none;
+  }
+
+  .auth-photo-grid img:nth-child(5n) {
+    grid-row: span 1;
+    transform: none;
+  }
+
+  /* Setiap foto ke-1, 7, 13, 19 jadi tile besar 2×2 */
   .auth-photo-grid img:nth-child(6n + 1) {
     grid-column: span 2;
     grid-row: span 2;
