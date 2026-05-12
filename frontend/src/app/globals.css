@@ -416,14 +416,31 @@ select.af-input {
   }
 
   .auth-photo-grid {
-    inset: -4vh -18vw;
-    grid-template-columns: repeat(3, minmax(130px, 1fr));
-    grid-auto-rows: minmax(120px, 18vh);
-    gap: 0.5rem;
-    transform: rotate(-4deg) scale(1.12);
+    inset: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(170px, 24vh);
+    gap: 0.45rem;
+    transform: none;
+    opacity: 1;
   }
 
   .auth-photo-grid img {
-    border-radius: 18px;
+    border-radius: 16px;
+    object-position: center center;
+  }
+
+  .auth-photo-grid img:nth-child(3n),
+  .auth-photo-grid img:nth-child(4n) {
+    transform: none;
+  }
+
+  .auth-photo-grid img:nth-child(5n) {
+    grid-row: auto;
+  }
+
+  .auth-photo-shade {
+    background:
+      radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.38) 68%),
+      linear-gradient(115deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0.22) 42%, rgba(255, 255, 255, 0.46));
   }
 }
