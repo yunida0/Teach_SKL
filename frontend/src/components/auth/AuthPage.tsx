@@ -10,22 +10,22 @@ type AuthMode = "login" | "register";
 type SiteSettings = { logo_path: string | null; logo_size: number };
 
 const authGalleryPhotos = [
-  "1IxzvFpQFmOhzYVf0Q9UddRL7KchIuwk1",
-  "1Iy8XkGBi24kE6ZuXdhcd3Sp5YsQFfeil",
-  "1J1k_ouK7ghDqqWoRNo0gpSkp0LbO6ETU",
-  "1J7anQA7SQVCE7EgLRe7ZqWw2y1kVkwNk",
-  "1Hj3J-cdiZ2zoj1k1gVJcW6yXxbvlgvKS",
-  "1HvYgyxepb5AEhyPUoKXbZJF4lBpIKiJp",
-  "1I06Aq9Rr5zPf8N5mEIimcYrC83e-3wE9",
-  "1I7-qwy6Lgv6kSwocpcePP2o2ZSwmzzex",
-  "1I7lGwP3ZgNh28xK6o1L9Bd1mxX1JFc6h",
-  "1Iap26bmmClpeuHrKh2Vm4ufN78zJVi0X",
-  "1Idzi7xeGLyhqD3SKQ2vsf7ceWYseM7ZV",
-  "1IeMgYlybuIli9rY8Z0OLDKnbuCs0Rf7m",
+  "1OIxeDLxPxzDaS5ViLAAinXx9Ls52Uj4_",
+  "1hy9SMoNNB2_i0oRxfE881hhNWr9_GnsR",
+  "1m1ooJxwa5Xsfvfqy1muVL1zGHalI4JGt",
+  "17KAmZuH1lpYzvkHLGN4M3RMC6WXbL_Ia",
+  "1B0wpYCcf6iFT-W9yl4Yx4EafvIYLR-2x",
+  "1Rl85UWjF4KugCK3HNbU63y_HCN1L-jWk",
+  "1RxPhMQnmUqVjmO3i5_v3aYSftdk02oDd",
+  "1xIbSJhlF_xVXNJoKMwkYtkzcWfMPcfFQ",
+  "1hlhgs9Fab0I1IwMGh4TZrE9zBxOZRBRu",
+  "1L0wjOQm5Ml-v0CTlkyTYX8Y47ntBmsSS",
+  "1TNznzy5yP1AsbYRb2MAjF664xwoaLehX",
+  "13oYrZNiwkDIdYbt6jdDE1QqdQXfg3Va-",
 ];
 
 function driveThumb(id: string) {
-  return `https://drive.google.com/thumbnail?id=${id}&sz=w900`;
+  return `https://lh3.googleusercontent.com/d/${id}=w900`;
 }
 
 export function AuthPage({
