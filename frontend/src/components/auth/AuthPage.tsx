@@ -22,6 +22,12 @@ const authGalleryPhotos = [
   "1L0wjOQm5Ml-v0CTlkyTYX8Y47ntBmsSS",
   "1TNznzy5yP1AsbYRb2MAjF664xwoaLehX",
   "13oYrZNiwkDIdYbt6jdDE1QqdQXfg3Va-",
+  "1R9TNkrjd34HMhogvHVCzF_uGdSj83jRo",
+  "11aD2rs9z5DmkLt6_I3o3Ms91c6Xn-J56",
+  "1uZAYtQYhpLr0CEso72AEkZ5HDDRxqk4B",
+  "1HfSYmW82gSVSE6RKUM0KFbFySMpQAxH1",
+  "11vPprOVFvGjk5wLY1cvTosUmADuC1rCn",
+  "1ZG1sjHpvqyZwncJwgnwEGpicT00DHM5K",
 ];
 
 function driveThumb(id: string) {

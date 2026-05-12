@@ -416,26 +416,64 @@ select.af-input {
   }
 
   .auth-photo-grid {
-    inset: 0;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: minmax(170px, 24vh);
-    gap: 0.45rem;
-    transform: none;
+    inset: -1rem;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-auto-rows: 82px;
+    gap: 0.42rem;
+    transform: rotate(-2deg) scale(1.04);
     opacity: 1;
   }
 
   .auth-photo-grid img {
-    border-radius: 16px;
+    border-radius: 18px;
     object-position: center center;
+  }
+
+  .auth-photo-grid img:nth-child(1) {
+    grid-column: span 4;
+    grid-row: span 3;
+  }
+
+  .auth-photo-grid img:nth-child(2),
+  .auth-photo-grid img:nth-child(9) {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  .auth-photo-grid img:nth-child(3),
+  .auth-photo-grid img:nth-child(8),
+  .auth-photo-grid img:nth-child(13) {
+    grid-column: span 3;
+    grid-row: span 2;
+  }
+
+  .auth-photo-grid img:nth-child(4),
+  .auth-photo-grid img:nth-child(7),
+  .auth-photo-grid img:nth-child(12),
+  .auth-photo-grid img:nth-child(16) {
+    grid-column: span 2;
+    grid-row: span 3;
+  }
+
+  .auth-photo-grid img:nth-child(5),
+  .auth-photo-grid img:nth-child(6),
+  .auth-photo-grid img:nth-child(10),
+  .auth-photo-grid img:nth-child(11),
+  .auth-photo-grid img:nth-child(14),
+  .auth-photo-grid img:nth-child(15),
+  .auth-photo-grid img:nth-child(17),
+  .auth-photo-grid img:nth-child(18) {
+    grid-column: span 3;
+    grid-row: span 2;
   }
 
   .auth-photo-grid img:nth-child(3n),
   .auth-photo-grid img:nth-child(4n) {
-    transform: none;
+    transform: translateY(0);
   }
 
   .auth-photo-grid img:nth-child(5n) {
-    grid-row: auto;
+    transform: translateY(-0.4rem);
   }
 
   .auth-photo-shade {
