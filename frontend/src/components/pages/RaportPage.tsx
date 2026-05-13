@@ -9,6 +9,7 @@ import { subjects, subjectsByLevel } from "@/lib/utils";
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
 type Breakdown = { quiz: number; tugas: number; kehadiran: number; bonus: number; nilai_akhir: number };
+type RaportResponse = { success?: boolean; nilai_akhir?: number; breakdown?: Omit<Breakdown, "nilai_akhir">; error?: string };
 type RaportModalMode = "generate" | "edit";
 
 function scoreTone(score: number) {
@@ -103,6 +104,7 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastBreakdown, setLastBreakdown] = useState<Breakdown | null>(null);
+  const [generatedCount, setGeneratedCount] = useState(0);
   const thisYear = new Date().getFullYear();
   const isEdit = mode === "edit";
 
@@ -111,23 +113,36 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
     setLoading(true);
     setMsg("");
     setLastBreakdown(null);
+    setGeneratedCount(0);
     try {
-      const data = new FormData(e.currentTarget);
-      data.set("csrf_token", csrfToken);
-      if (isEdit) data.set("manual_mode", "1");
-      const res = await fetch(`${PHP_BASE}/backend/actions/input-raport`, {
-        method: "POST",
-        body: data,
-        credentials: "include",
-      });
-      const json = await res.json();
-      if (json.success) {
-        setMsg(`Raport tersimpan. Nilai akhir: ${json.nilai_akhir}`);
-        setLastBreakdown({ ...json.breakdown, nilai_akhir: json.nilai_akhir });
-        onSaved();
-      } else {
-        setMsg(json.error ?? "Gagal menyimpan.");
+      const baseData = new FormData(e.currentTarget);
+      const targetSubjects = isEdit ? [String(baseData.get("pelajaran") ?? defaultSubject)] : mapelOptions.map((opt) => opt.value);
+      let lastJson: RaportResponse | null = null;
+
+      for (const subject of targetSubjects) {
+        const data = new FormData();
+        baseData.forEach((value, key) => data.set(key, value));
+        data.set("csrf_token", csrfToken);
+        data.set("pelajaran", subject);
+        if (isEdit) data.set("manual_mode", "1");
+
+        const res = await fetch(`${PHP_BASE}/backend/actions/input-raport`, {
+          method: "POST",
+          body: data,
+          credentials: "include",
+        });
+        const json = await res.json() as RaportResponse;
+        if (!json.success) {
+          setMsg(json.error ?? `Gagal menyimpan ${subject}.`);
+          return;
+        }
+        lastJson = json;
       }
+
+      setMsg(isEdit ? `Raport tersimpan. Nilai akhir: ${lastJson?.nilai_akhir ?? 0}` : `${targetSubjects.length} mapel raport berhasil digenerate.`);
+      setGeneratedCount(targetSubjects.length);
+      if (lastJson?.breakdown) setLastBreakdown({ ...lastJson.breakdown, nilai_akhir: lastJson.nilai_akhir ?? 0 });
+      onSaved();
     } catch {
       setMsg("Gagal menghubungi server.");
     } finally {
@@ -155,7 +170,7 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
         <input name="murid_id" type="hidden" value={activeMuridId} />
 
         <div className="grid gap-3">
-          <div>
+          {isEdit ? <div>
             <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Mata Pelajaran</label>
             <CustomSelect
               name="pelajaran"
@@ -166,7 +181,13 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
               placeholder="Pilih mapel"
             />
             <p className="mt-1 text-xs font-semibold text-slate-400">Mapel otomatis mengikuti tingkat murid: TK, SD, atau SMP.</p>
-          </div>
+          </div> : <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-3">
+            <p className="text-xs font-black uppercase tracking-wide text-sky-700">Mapel yang akan digenerate</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {mapelOptions.map((opt) => <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-sky-800 shadow-sm" key={opt.value}>{opt.label}</span>)}
+            </div>
+            <p className="mt-2 text-xs font-semibold text-slate-500">Sekali klik akan membuat raport untuk semua mapel sesuai tingkat {murid?.tingkat ?? "murid"}.</p>
+          </div>}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -216,7 +237,7 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
 
           {lastBreakdown && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
-              <p className="mb-1 text-xs font-black text-emerald-700">Breakdown Tersimpan</p>
+              <p className="mb-1 text-xs font-black text-emerald-700">{generatedCount > 1 ? `${generatedCount} Mapel Tersimpan` : "Breakdown Tersimpan"}</p>
               <div className="grid grid-cols-4 gap-1 text-center text-xs">
                 <div><span className="font-black text-slate-700">{lastBreakdown.quiz}</span><br/><span className="text-slate-400">Quiz</span></div>
                 <div><span className="font-black text-slate-700">{lastBreakdown.tugas}</span><br/><span className="text-slate-400">Tugas</span></div>
@@ -227,10 +248,10 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
             </div>
           )}
 
-          {msg && !lastBreakdown && <p className={`text-sm font-black ${msg.includes("tersimpan") ? "text-emerald-700" : "text-rose-600"}`}>{msg}</p>}
+          {msg && (!lastBreakdown || generatedCount > 1) && <p className={`text-sm font-black ${msg.includes("tersimpan") || msg.includes("berhasil") ? "text-emerald-700" : "text-rose-600"}`}>{msg}</p>}
 
           <button className="btn-primary px-6 py-3 disabled:opacity-50" disabled={loading} type="submit">
-            {loading ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Generate & Simpan Raport"}
+            {loading ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Generate Semua Mapel"}
           </button>
         </div>
       </form>
