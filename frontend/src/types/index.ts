@@ -178,6 +178,10 @@ export type RaportItem = {
   bulan?: number | string;
   nilai_akhir?: number | string;
   nilai_quiz?: number | string;
+  nilai_tugas?: number | string;
+  nilai_kehadiran?: number | string;
+  bonus_poin?: number | string;
+  catatan?: string | null;
 };
 
 export type Ulasan = {
