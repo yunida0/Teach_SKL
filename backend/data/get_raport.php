@@ -20,6 +20,27 @@ try {
     if (!in_array('bonus_poin', $existingCols, true))      $toAdd[] = 'ADD COLUMN bonus_poin INT DEFAULT 0';
     if (!in_array('catatan', $existingCols, true))         $toAdd[] = 'ADD COLUMN catatan TEXT NULL';
     if ($toAdd) $pdo->exec('ALTER TABLE raport_bulanan ' . implode(', ', $toAdd));
+
+    $indexes = $pdo->query('SHOW INDEX FROM raport_bulanan')->fetchAll(PDO::FETCH_ASSOC);
+    $uniqueIndexes = [];
+    foreach ($indexes as $idx) {
+        if ((int) $idx['Non_unique'] === 0 && $idx['Key_name'] !== 'PRIMARY') {
+            $uniqueIndexes[$idx['Key_name']][(int) $idx['Seq_in_index']] = $idx['Column_name'];
+        }
+    }
+    $hasSubjectUnique = false;
+    foreach ($uniqueIndexes as $name => $colsBySeq) {
+        ksort($colsBySeq);
+        $cols = array_values($colsBySeq);
+        if ($cols === ['murid_id', 'tahun', 'bulan', 'pelajaran']) $hasSubjectUnique = true;
+        if ($cols === ['murid_id', 'tahun', 'bulan']) {
+            $safeName = str_replace('`', '', $name);
+            $pdo->exec("ALTER TABLE raport_bulanan DROP INDEX `$safeName`");
+        }
+    }
+    if (!$hasSubjectUnique) {
+        try { $pdo->exec('ALTER TABLE raport_bulanan ADD UNIQUE KEY uniq_raport_subject (murid_id, tahun, bulan, pelajaran)'); } catch (Throwable $e) {}
+    }
 } catch (Throwable $e) {}
 
 $user     = $_SESSION['user'];

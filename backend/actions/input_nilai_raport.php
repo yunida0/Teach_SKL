@@ -34,27 +34,42 @@ try {
     $uniqueIndexes = [];
     foreach ($indexes as $idx) {
         if ((int) $idx['Non_unique'] === 0 && $idx['Key_name'] !== 'PRIMARY') {
-            $uniqueIndexes[$idx['Key_name']][] = $idx['Column_name'];
+            $uniqueIndexes[$idx['Key_name']][(int) $idx['Seq_in_index']] = $idx['Column_name'];
         }
     }
-    foreach ($uniqueIndexes as $name => $cols) {
-        if ($cols === ['murid_id', 'tahun', 'bulan']) {
-            $pdo->exec('ALTER TABLE raport_bulanan DROP INDEX `' . str_replace('`', '', $name) . '`');
-        }
-    }
+
     $hasSubjectUnique = false;
-    $indexes = $pdo->query('SHOW INDEX FROM raport_bulanan')->fetchAll(PDO::FETCH_ASSOC);
-    $uniqueIndexes = [];
-    foreach ($indexes as $idx) {
-        if ((int) $idx['Non_unique'] === 0 && $idx['Key_name'] !== 'PRIMARY') {
-            $uniqueIndexes[$idx['Key_name']][] = $idx['Column_name'];
+    foreach ($uniqueIndexes as $name => $colsBySeq) {
+        ksort($colsBySeq);
+        $cols = array_values($colsBySeq);
+        if ($cols === ['murid_id', 'tahun', 'bulan', 'pelajaran']) {
+            $hasSubjectUnique = true;
+            continue;
+        }
+        if ($cols === ['murid_id', 'tahun', 'bulan']) {
+            $safeName = str_replace('`', '', $name);
+            $pdo->exec("ALTER TABLE raport_bulanan DROP INDEX `$safeName`");
         }
     }
-    foreach ($uniqueIndexes as $cols) {
-        if ($cols === ['murid_id', 'tahun', 'bulan', 'pelajaran']) $hasSubjectUnique = true;
-    }
+
     if (!$hasSubjectUnique) {
-        $pdo->exec('ALTER TABLE raport_bulanan ADD UNIQUE KEY uniq_raport_subject (murid_id, tahun, bulan, pelajaran)');
+        try {
+            $pdo->exec('ALTER TABLE raport_bulanan ADD UNIQUE KEY uniq_raport_subject (murid_id, tahun, bulan, pelajaran)');
+        } catch (Throwable $e) {
+            $indexes = $pdo->query('SHOW INDEX FROM raport_bulanan')->fetchAll(PDO::FETCH_ASSOC);
+            $hasSubjectUnique = false;
+            $uniqueIndexes = [];
+            foreach ($indexes as $idx) {
+                if ((int) $idx['Non_unique'] === 0 && $idx['Key_name'] !== 'PRIMARY') {
+                    $uniqueIndexes[$idx['Key_name']][(int) $idx['Seq_in_index']] = $idx['Column_name'];
+                }
+            }
+            foreach ($uniqueIndexes as $colsBySeq) {
+                ksort($colsBySeq);
+                if (array_values($colsBySeq) === ['murid_id', 'tahun', 'bulan', 'pelajaran']) $hasSubjectUnique = true;
+            }
+            if (!$hasSubjectUnique) throw $e;
+        }
     }
 } catch (Throwable $e) {}
 
