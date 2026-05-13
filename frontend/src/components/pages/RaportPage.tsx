@@ -392,7 +392,8 @@ function printRaportPdf(murid: MuridListItem, items: RaportItem[]) {
           <title>Raport ${htmlEscape(murid.nama ?? "Murid")}</title>
         <style>
           @page { size: A4; margin: 12mm; }
-          * { box-sizing: border-box; }
+          * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+          html { background: #ffffff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           body { font-family: Arial, sans-serif; color: #0f172a; margin: 0; background: #fff; }
           .sheet { border: 1px solid #dbeafe; border-radius: 18px; overflow: hidden; }
           .hero { background: linear-gradient(135deg, #075985, #0ea5e9); color: white; padding: 24px; position: relative; }
@@ -420,6 +421,16 @@ function printRaportPdf(murid: MuridListItem, items: RaportItem[]) {
           .note { max-width: 360px; color: #64748b; line-height: 1.55; }
           .sign { width: 210px; text-align: center; }
           .space { height: 64px; }
+          @media print {
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            body { background: #ffffff !important; }
+            .hero { background: linear-gradient(135deg, #075985, #0ea5e9) !important; color: #ffffff !important; }
+            .stat { background: #f8fafc !important; }
+            th { background: #e0f2fe !important; color: #0c4a6e !important; }
+            tbody tr:nth-child(even) { background: #f8fafc !important; }
+            .badge.ok { background: #dcfce7 !important; color: #166534 !important; }
+            .badge.warn { background: #fff7ed !important; color: #c2410c !important; }
+          }
         </style>
       </head>
       <body>
