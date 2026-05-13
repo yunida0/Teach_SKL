@@ -23,10 +23,15 @@ try {
 
     $indexes = $pdo->query('SHOW INDEX FROM raport_bulanan')->fetchAll(PDO::FETCH_ASSOC);
     $uniqueIndexes = [];
+    $hasMuridIndex = false;
     foreach ($indexes as $idx) {
+        if ($idx['Key_name'] === 'idx_raport_murid') $hasMuridIndex = true;
         if ((int) $idx['Non_unique'] === 0 && $idx['Key_name'] !== 'PRIMARY') {
             $uniqueIndexes[$idx['Key_name']][(int) $idx['Seq_in_index']] = $idx['Column_name'];
         }
+    }
+    if (!$hasMuridIndex) {
+        $pdo->exec('ALTER TABLE raport_bulanan ADD INDEX idx_raport_murid (murid_id)');
     }
     $hasSubjectUnique = false;
     foreach ($uniqueIndexes as $name => $colsBySeq) {
