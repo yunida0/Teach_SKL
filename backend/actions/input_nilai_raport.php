@@ -66,7 +66,12 @@ $bonus_poin = isset($_POST['bonus_poin']) ? (int) $_POST['bonus_poin'] : 0;
 $catatan    = trim($_POST['catatan'] ?? '');
 $manual_mode = isset($_POST['manual_mode']) && $_POST['manual_mode'] === '1';
 
-if ($murid_id <= 0 || $tahun < 2000 || $tahun > 2100 || $bulan < 1 || $bulan > 12 || $pelajaran === '') {
+$pelajaran = $pelajaran !== '' ? $pelajaran : trim($_POST['mapel'] ?? '');
+if ($pelajaran === '') {
+    $pelajaran = 'Umum';
+}
+
+if ($murid_id <= 0 || $tahun < 2000 || $tahun > 2100 || $bulan < 1 || $bulan > 12) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Data tidak valid']);
     exit;

@@ -254,7 +254,7 @@ function PageContent({
   if (activePage === "absensipengajar")
     return <AbsensiPengajarPage csrfToken={csrfToken} />;
   if (activePage === "raport")
-    return <RaportPage category={user.kategori} csrfToken={csrfToken} teacherSubject={detail?.bidang} />;
+    return <RaportPage category={user.kategori} csrfToken={csrfToken} />;
   if (activePage === "dokumentasi")
     return <DokumentasiPage category={user.kategori} csrfToken={csrfToken} />;
   if (activePage === "adminpanel")

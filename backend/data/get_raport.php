@@ -26,7 +26,7 @@ $user     = $_SESSION['user'];
 $kategori = $user['kategori'] ?? '';
 
 if ($kategori === 'pengajar') {
-    $stmt = $pdo->query('SELECT u.nama, rb.murid_id, rb.tahun, rb.bulan, COALESCE(rb.pelajaran, "Umum") AS pelajaran,
+    $sql = 'SELECT u.nama, rb.murid_id, rb.tahun, rb.bulan, COALESCE(rb.pelajaran, "Umum") AS pelajaran,
         rb.nilai_akhir, rb.nilai_quiz,
         COALESCE(rb.nilai_tugas, 0)     AS nilai_tugas,
         COALESCE(rb.nilai_kehadiran, 0) AS nilai_kehadiran,
@@ -34,7 +34,9 @@ if ($kategori === 'pengajar') {
         rb.catatan
         FROM raport_bulanan rb
         JOIN users u ON u.id = rb.murid_id
-        ORDER BY rb.tahun DESC, rb.bulan DESC, u.nama ASC');
+        ORDER BY rb.tahun DESC, rb.bulan DESC, u.nama ASC';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     exit;
 }

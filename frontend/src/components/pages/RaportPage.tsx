@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { Category, MuridListItem, RaportItem } from "@/types";
 import { PHP_BASE, readJson } from "@/lib/api";
 import { CustomSelect } from "@/components/ui/CustomSelect";
-import { subjects } from "@/lib/utils";
+import { subjects, subjectsByLevel } from "@/lib/utils";
 
 const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
 
@@ -27,8 +27,9 @@ function StatPill({ label, value, unit = "" }: { label: string; value: number | 
   );
 }
 
-function subjectOptions(teacherSubject?: string) {
-  const merged = [teacherSubject, ...subjects].filter(Boolean) as string[];
+function subjectOptions(level?: string, currentSubject?: string) {
+  const levelSubjects = level ? subjectsByLevel[level] : undefined;
+  const merged = [currentSubject, ...(levelSubjects?.length ? levelSubjects : subjects)].filter(Boolean) as string[];
   return Array.from(new Set(merged)).map((subject) => ({ value: subject, label: subject }));
 }
 
@@ -98,7 +99,7 @@ function RaportCard({ item, index, onEdit }: { item: RaportItem; index: number; 
   );
 }
 
-function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved, teacherSubject }: { csrfToken: string; mode: RaportModalMode; murid?: MuridListItem | null; item?: RaportItem | null; onClose: () => void; onSaved: () => void; teacherSubject?: string }) {
+function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfToken: string; mode: RaportModalMode; murid?: MuridListItem | null; item?: RaportItem | null; onClose: () => void; onSaved: () => void }) {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastBreakdown, setLastBreakdown] = useState<Breakdown | null>(null);
@@ -136,8 +137,8 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved, teacherSu
 
   const activeMuridId = String(item?.murid_id ?? murid?.id ?? "");
   const activeMuridName = item?.nama ?? murid?.nama ?? "Murid";
-  const mapelOptions = subjectOptions(teacherSubject);
-  const defaultSubject = item?.pelajaran ?? teacherSubject ?? mapelOptions[0]?.value ?? "Lainnya";
+  const mapelOptions = subjectOptions(murid?.tingkat, item?.pelajaran);
+  const defaultSubject = item?.pelajaran ?? mapelOptions[0]?.value ?? "Lainnya";
 
   return (
     <div className="fixed inset-0 z-[80] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
@@ -146,7 +147,7 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved, teacherSu
           <div>
             <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">{isEdit ? "Edit khusus murid" : "Auto dari Quiz + Tugas + Kehadiran"}</p>
             <h2 className="title-font text-2xl font-black text-slate-950 md:text-3xl">{isEdit ? "Edit Raport" : "Generate Raport"}</h2>
-            <p className="mt-1 text-sm font-bold text-slate-500">{activeMuridName}</p>
+            <p className="mt-1 text-sm font-bold text-slate-500">{activeMuridName} · {murid?.tingkat ?? "-"}</p>
           </div>
           <button className="rounded-full bg-slate-100 px-4 py-2 text-sm font-black text-slate-600" onClick={onClose} type="button">Tutup</button>
         </div>
@@ -164,7 +165,7 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved, teacherSu
               options={mapelOptions.some((opt) => opt.value === defaultSubject) ? mapelOptions : [{ value: defaultSubject, label: defaultSubject }, ...mapelOptions]}
               placeholder="Pilih mapel"
             />
-            <p className="mt-1 text-xs font-semibold text-slate-400">Nilai quiz dan tugas dihitung hanya dari mapel ini.</p>
+            <p className="mt-1 text-xs font-semibold text-slate-400">Mapel otomatis mengikuti tingkat murid: TK, SD, atau SMP.</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -255,20 +256,18 @@ function StudentRaportList({ items, murids, onGenerate, onOpenEdit }: { items: R
         const summary = countByStudent.get(String(murid.id));
         const latest = summary?.latest;
         return (
-          <article className="rounded-2xl border border-sky-100 bg-white p-4 shadow-sm" key={murid.id}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-900 text-sm font-black text-white">{index + 1}</span>
-                <div className="min-w-0">
-                  <h3 className="truncate text-lg font-black text-slate-950">{murid.nama ?? `Murid #${murid.id}`}</h3>
-                  <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{murid.tingkat ?? "-"} · {summary?.count ?? 0} raport mapel</p>
-                </div>
+          <article className="group relative rounded-2xl border border-sky-100 bg-white p-4 shadow-sm transition hover:border-sky-200 hover:shadow-md" key={murid.id}>
+            <div className="flex min-w-0 items-center gap-3 pr-0 sm:pr-52">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-900 text-sm font-black text-white">{index + 1}</span>
+              <div className="min-w-0">
+                <h3 className="truncate text-lg font-black text-slate-950">{murid.nama ?? `Murid #${murid.id}`}</h3>
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-slate-400">{murid.tingkat ?? "-"} · {summary?.count ?? 0} raport mapel</p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {latest && <span className={`rounded-xl border px-3 py-2 text-xs font-black ${scoreTone(Number(latest.nilai_akhir ?? 0))}`}>Terakhir: {Number(latest.nilai_akhir ?? 0)}</span>}
-                <button className="rounded-xl bg-sky-50 px-4 py-2 text-xs font-black text-sky-800" onClick={() => onGenerate(murid)} type="button">Generate</button>
-                <button className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-black text-white" onClick={() => onOpenEdit(murid)} type="button">Edit Nilai</button>
-              </div>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2 sm:absolute sm:right-3 sm:top-3 sm:mt-0 sm:opacity-0 sm:transition sm:group-hover:opacity-100">
+              {latest && <span className={`rounded-xl border bg-white px-3 py-1.5 text-xs font-black shadow-sm ${scoreTone(Number(latest.nilai_akhir ?? 0))}`}>Terakhir: {Number(latest.nilai_akhir ?? 0)}</span>}
+              <button className="rounded-xl bg-white px-3 py-1.5 text-xs font-black text-emerald-700 shadow-sm transition hover:bg-emerald-50" onClick={() => onGenerate(murid)} type="button">Generate</button>
+              <button className="rounded-xl bg-white px-3 py-1.5 text-xs font-black text-sky-700 shadow-sm transition hover:bg-sky-50" onClick={() => onOpenEdit(murid)} type="button">Edit</button>
             </div>
           </article>
         );
@@ -299,7 +298,7 @@ function StudentEditView({ murid, items, onBack, onEditRecord, onGenerate }: { m
   );
 }
 
-export function RaportPage({ category, csrfToken, teacherSubject }: { category: Category; csrfToken: string; teacherSubject?: string }) {
+export function RaportPage({ category, csrfToken }: { category: Category; csrfToken: string }) {
   const [items, setItems] = useState<RaportItem[]>([]);
   const [murids, setMurids] = useState<MuridListItem[]>([]);
   const [modal, setModal] = useState<null | { mode: RaportModalMode; murid?: MuridListItem; item?: RaportItem }>(null);
@@ -336,7 +335,7 @@ export function RaportPage({ category, csrfToken, teacherSubject }: { category: 
             <div className="rounded-[1.75rem] border border-sky-100 bg-white p-4 shadow-sm">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-600">Raport Murid</p>
               <h2 className="text-2xl font-black text-slate-900">Daftar Murid ({murids.length})</h2>
-              <p className="mt-1 text-sm font-bold text-slate-500">Yang tampil hanya nama murid. Generate raport lewat popup, edit nilai dan keterangan lewat halaman khusus murid.</p>
+              <p className="mt-1 text-sm font-bold text-slate-500">Mapel raport otomatis mengikuti tingkat murid: TK, SD, atau SMP.</p>
             </div>
             <StudentRaportList items={items} murids={murids} onGenerate={(murid) => setModal({ mode: "generate", murid })} onOpenEdit={setEditMurid} />
             {murids.length === 0 && <RaportEmptyState isPengajar />}
@@ -362,7 +361,6 @@ export function RaportPage({ category, csrfToken, teacherSubject }: { category: 
           murid={modal.murid}
           onClose={() => setModal(null)}
           onSaved={load}
-          teacherSubject={teacherSubject}
         />
       )}
     </section>
