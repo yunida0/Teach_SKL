@@ -119,12 +119,28 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
       const targetSubjects = isEdit ? [String(baseData.get("pelajaran") ?? defaultSubject)] : mapelOptions.map((opt) => opt.value);
       let lastJson: RaportResponse | null = null;
 
-      for (const subject of targetSubjects) {
+      for (const [index, subject] of targetSubjects.entries()) {
         const data = new FormData();
-        baseData.forEach((value, key) => data.set(key, value));
+        data.set("murid_id", String(baseData.get("murid_id") ?? ""));
+        data.set("tahun", String(baseData.get("tahun") ?? ""));
+        data.set("bulan", String(baseData.get("bulan") ?? ""));
         data.set("csrf_token", csrfToken);
         data.set("pelajaran", subject);
-        if (isEdit) data.set("manual_mode", "1");
+        data.set("manual_mode", "1");
+
+        if (isEdit) {
+          data.set("nilai_quiz", String(baseData.get("nilai_quiz") ?? 0));
+          data.set("nilai_tugas", String(baseData.get("nilai_tugas") ?? 0));
+          data.set("nilai_kehadiran", String(baseData.get("nilai_kehadiran") ?? 0));
+          data.set("bonus_poin", String(baseData.get("bonus_poin") ?? 0));
+          data.set("catatan", String(baseData.get("catatan") ?? ""));
+        } else {
+          data.set("nilai_quiz", String(baseData.get(`nilai_quiz_${index}`) ?? 0));
+          data.set("nilai_tugas", String(baseData.get(`nilai_tugas_${index}`) ?? 0));
+          data.set("nilai_kehadiran", String(baseData.get(`nilai_kehadiran_${index}`) ?? 0));
+          data.set("bonus_poin", String(baseData.get(`bonus_poin_${index}`) ?? 0));
+          data.set("catatan", String(baseData.get(`catatan_${index}`) ?? ""));
+        }
 
         const res = await fetch(`${PHP_BASE}/backend/actions/input-raport`, {
           method: "POST",
@@ -182,11 +198,8 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
             />
             <p className="mt-1 text-xs font-semibold text-slate-400">Mapel otomatis mengikuti tingkat murid: TK, SD, atau SMP.</p>
           </div> : <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-3">
-            <p className="text-xs font-black uppercase tracking-wide text-sky-700">Mapel yang akan digenerate</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {mapelOptions.map((opt) => <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-sky-800 shadow-sm" key={opt.value}>{opt.label}</span>)}
-            </div>
-            <p className="mt-2 text-xs font-semibold text-slate-500">Sekali klik akan membuat raport untuk semua mapel sesuai tingkat {murid?.tingkat ?? "murid"}.</p>
+            <p className="text-xs font-black uppercase tracking-wide text-sky-700">Input Nilai Semua Mapel</p>
+            <p className="mt-1 text-xs font-semibold text-slate-500">Isi nilai untuk semua mapel tingkat {murid?.tingkat ?? "murid"}. Sekali simpan akan membuat semua raport mapel.</p>
           </div>}
 
           <div className="grid grid-cols-2 gap-3">
@@ -206,7 +219,34 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
             </div>
           </div>
 
-          {!isEdit && <div className="rounded-xl bg-sky-50 px-3 py-2 text-xs font-semibold leading-relaxed text-sky-700">Nilai dihitung otomatis: Quiz 40% + Tugas 40% + Kehadiran 20%</div>}
+          {!isEdit && (
+            <div className="grid max-h-[38vh] gap-3 overflow-y-auto pr-1">
+              {mapelOptions.map((opt, index) => (
+                <div className="rounded-2xl border border-sky-100 bg-white p-3 shadow-sm" key={opt.value}>
+                  <p className="mb-3 text-sm font-black text-slate-950">{opt.label}</p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                    <div>
+                      <label className="mb-1 block text-[0.65rem] font-black uppercase tracking-wide text-slate-500">Quiz</label>
+                      <input className="field" defaultValue={0} max={100} min={0} name={`nilai_quiz_${index}`} required type="number" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[0.65rem] font-black uppercase tracking-wide text-slate-500">Tugas</label>
+                      <input className="field" defaultValue={0} max={100} min={0} name={`nilai_tugas_${index}`} required type="number" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[0.65rem] font-black uppercase tracking-wide text-slate-500">Hadir %</label>
+                      <input className="field" defaultValue={100} max={100} min={0} name={`nilai_kehadiran_${index}`} required type="number" />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[0.65rem] font-black uppercase tracking-wide text-slate-500">Bonus</label>
+                      <input className="field" defaultValue={0} max={30} min={-30} name={`bonus_poin_${index}`} type="number" />
+                    </div>
+                  </div>
+                  <textarea className="field mt-2 resize-none" name={`catatan_${index}`} placeholder={`Catatan ${opt.label} (opsional)`} rows={2} />
+                </div>
+              ))}
+            </div>
+          )}
 
           {isEdit && (
             <div className="grid gap-3 rounded-2xl border border-sky-100 bg-sky-50/70 p-3 sm:grid-cols-3">
@@ -225,15 +265,15 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
             </div>
           )}
 
-          <div>
+          {isEdit && <div>
             <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Bonus / Koreksi Poin <span className="font-semibold normal-case text-slate-400">(-30 s/d +30)</span></label>
             <input className="field" defaultValue={item?.bonus_poin ?? 0} max={30} min={-30} name="bonus_poin" type="number" />
-          </div>
+          </div>}
 
-          <div>
+          {isEdit && <div>
             <label className="mb-1 block text-xs font-black uppercase tracking-wide text-slate-500">Keterangan / Catatan Murid <span className="font-semibold normal-case text-slate-400">(opsional)</span></label>
             <textarea className="field resize-none" defaultValue={item?.catatan ?? ""} name="catatan" placeholder="Contoh: Rajin, perlu tingkatkan kehadiran..." rows={3} />
-          </div>
+          </div>}
 
           {lastBreakdown && (
             <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
