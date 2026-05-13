@@ -337,6 +337,76 @@ function StudentRaportList({ items, murids, onGenerate, onOpenEdit }: { items: R
   );
 }
 
+function htmlEscape(value: unknown) {
+  return String(value ?? "").replace(/[&<>"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[char] ?? char));
+}
+
+function printRaportPdf(murid: MuridListItem, items: RaportItem[]) {
+  const sorted = [...items].sort((a, b) => String(a.pelajaran ?? "").localeCompare(String(b.pelajaran ?? "")));
+  const rows = sorted.map((item, index) => {
+    const finalScore = Number(item.nilai_akhir ?? 0);
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${htmlEscape(item.pelajaran ?? "-")}</td>
+        <td>${htmlEscape(item.nilai_quiz ?? 0)}</td>
+        <td>${htmlEscape(item.nilai_tugas ?? 0)}</td>
+        <td>${htmlEscape(item.nilai_kehadiran ?? 0)}%</td>
+        <td>${htmlEscape(item.bonus_poin ?? 0)}</td>
+        <td><strong>${finalScore}</strong></td>
+        <td>${finalScore >= 70 ? "Tuntas" : "Perlu Dampingi"}</td>
+        <td>${htmlEscape(item.catatan ?? "")}</td>
+      </tr>`;
+  }).join("");
+  const latest = sorted[0];
+  const monthIndex = Number(latest?.bulan ?? new Date().getMonth() + 1) - 1;
+  const printWindow = window.open("", "_blank", "width=900,height=700");
+  if (!printWindow) return;
+  printWindow.document.write(`<!doctype html>
+    <html>
+      <head>
+          <title>Raport ${htmlEscape(murid.nama ?? "Murid")}</title>
+        <style>
+          @page { size: A4; margin: 14mm; }
+          * { box-sizing: border-box; }
+          body { font-family: Arial, sans-serif; color: #0f172a; margin: 0; }
+          .header { border-bottom: 3px solid #0f5f8f; padding-bottom: 14px; margin-bottom: 18px; }
+          .kicker { color: #0f5f8f; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+          h1 { margin: 4px 0 8px; font-size: 28px; }
+          .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; font-size: 13px; font-weight: 700; }
+          table { width: 100%; border-collapse: collapse; font-size: 11px; }
+          th { background: #e0f2fe; color: #0c4a6e; text-align: left; }
+          th, td { border: 1px solid #cbd5e1; padding: 7px; vertical-align: top; }
+          .footer { margin-top: 28px; display: flex; justify-content: flex-end; font-size: 12px; }
+          .sign { width: 210px; text-align: center; }
+          .space { height: 64px; }
+        </style>
+      </head>
+      <body>
+        <section class="header">
+          <div class="kicker">Teach SKL</div>
+          <h1>Raport Siswa</h1>
+          <div class="meta">
+            <div>Nama: ${htmlEscape(murid.nama ?? "-")}</div>
+            <div>Tingkat: ${htmlEscape(murid.tingkat ?? "-")}</div>
+            <div>Bulan: ${monthNames[monthIndex] ?? "-"}</div>
+            <div>Tahun: ${latest?.tahun ?? new Date().getFullYear()}</div>
+          </div>
+        </section>
+        <table>
+          <thead>
+            <tr><th>No</th><th>Mapel</th><th>Quiz</th><th>Tugas</th><th>Hadir</th><th>Bonus</th><th>Akhir</th><th>Status</th><th>Catatan</th></tr>
+          </thead>
+          <tbody>${rows || `<tr><td colspan="9">Belum ada data raport.</td></tr>`}</tbody>
+        </table>
+        <section class="footer"><div class="sign"><div>Pengajar</div><div class="space"></div><div>________________________</div></div></section>
+      </body>
+    </html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 250);
+}
+
 function StudentEditView({ murid, items, onBack, onEditRecord, onGenerate }: { murid: MuridListItem; items: RaportItem[]; onBack: () => void; onEditRecord: (item: RaportItem) => void; onGenerate: () => void }) {
   return (
     <div className="grid gap-4">
@@ -348,7 +418,10 @@ function StudentEditView({ murid, items, onBack, onEditRecord, onGenerate }: { m
             <h2 className="text-2xl font-black text-slate-900">{murid.nama ?? `Murid #${murid.id}`}</h2>
             <p className="text-sm font-bold text-slate-500">{murid.tingkat ?? "-"}</p>
           </div>
-          <button className="btn-primary px-5 py-2.5 text-sm" onClick={onGenerate} type="button">Generate Raport Baru</button>
+          <div className="flex flex-wrap gap-2">
+            <button className="rounded-full bg-white px-5 py-2.5 text-sm font-black text-sky-800 shadow-sm ring-1 ring-sky-100" onClick={() => printRaportPdf(murid, items)} type="button">Cetak PDF</button>
+            <button className="btn-primary px-5 py-2.5 text-sm" onClick={onGenerate} type="button">Generate Raport Baru</button>
+          </div>
         </div>
       </div>
       <div className="grid gap-2">
