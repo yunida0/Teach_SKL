@@ -105,6 +105,7 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
   const [loading, setLoading] = useState(false);
   const [lastBreakdown, setLastBreakdown] = useState<Breakdown | null>(null);
   const [generatedCount, setGeneratedCount] = useState(0);
+  const [useManualInput, setUseManualInput] = useState(false);
   const thisYear = new Date().getFullYear();
   const isEdit = mode === "edit";
 
@@ -126,7 +127,7 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
         data.set("bulan", String(baseData.get("bulan") ?? ""));
         data.set("csrf_token", csrfToken);
         data.set("pelajaran", subject);
-        data.set("manual_mode", "1");
+        if (isEdit || useManualInput) data.set("manual_mode", "1");
 
         if (isEdit) {
           data.set("nilai_quiz", String(baseData.get("nilai_quiz") ?? 0));
@@ -134,12 +135,15 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
           data.set("nilai_kehadiran", String(baseData.get("nilai_kehadiran") ?? 0));
           data.set("bonus_poin", String(baseData.get("bonus_poin") ?? 0));
           data.set("catatan", String(baseData.get("catatan") ?? ""));
-        } else {
+        } else if (useManualInput) {
           data.set("nilai_quiz", String(baseData.get(`nilai_quiz_${index}`) ?? 0));
           data.set("nilai_tugas", String(baseData.get(`nilai_tugas_${index}`) ?? 0));
           data.set("nilai_kehadiran", String(baseData.get(`nilai_kehadiran_${index}`) ?? 0));
           data.set("bonus_poin", String(baseData.get(`bonus_poin_${index}`) ?? 0));
           data.set("catatan", String(baseData.get(`catatan_${index}`) ?? ""));
+        } else {
+          data.set("bonus_poin", "0");
+          data.set("catatan", "");
         }
 
         const res = await fetch(`${PHP_BASE}/backend/actions/input-raport`, {
@@ -198,8 +202,15 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
             />
             <p className="mt-1 text-xs font-semibold text-slate-400">Mapel otomatis mengikuti tingkat murid: TK, SD, atau SMP.</p>
           </div> : <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-3">
-            <p className="text-xs font-black uppercase tracking-wide text-sky-700">Input Nilai Semua Mapel</p>
-            <p className="mt-1 text-xs font-semibold text-slate-500">Isi nilai untuk semua mapel tingkat {murid?.tingkat ?? "murid"}. Sekali simpan akan membuat semua raport mapel.</p>
+            <p className="text-xs font-black uppercase tracking-wide text-sky-700">Generate Semua Mapel</p>
+            <p className="mt-1 text-xs font-semibold text-slate-500">Default-nya otomatis ambil nilai dari quiz, tugas, dan absensi murid. Aktifkan input manual hanya kalau perlu koreksi langsung.</p>
+            <button
+              className={`mt-3 rounded-full px-4 py-2 text-xs font-black transition ${useManualInput ? "bg-sky-900 text-white" : "bg-white text-sky-800 shadow-sm"}`}
+              onClick={() => setUseManualInput((value) => !value)}
+              type="button"
+            >
+              {useManualInput ? "Mode Input Manual Aktif" : "Pakai Input Manual"}
+            </button>
           </div>}
 
           <div className="grid grid-cols-2 gap-3">
@@ -219,7 +230,7 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
             </div>
           </div>
 
-          {!isEdit && (
+          {!isEdit && useManualInput && (
             <div className="grid max-h-[38vh] gap-3 overflow-y-auto pr-1">
               {mapelOptions.map((opt, index) => (
                 <div className="rounded-2xl border border-sky-100 bg-white p-3 shadow-sm" key={opt.value}>
@@ -243,6 +254,17 @@ function RaportModal({ csrfToken, mode, murid, item, onClose, onSaved }: { csrfT
                     </div>
                   </div>
                   <textarea className="field mt-2 resize-none" name={`catatan_${index}`} placeholder={`Catatan ${opt.label} (opsional)`} rows={2} />
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!isEdit && !useManualInput && (
+            <div className="grid max-h-[30vh] gap-2 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-3">
+              {mapelOptions.map((opt) => (
+                <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2" key={opt.value}>
+                  <span className="text-sm font-black text-slate-800">{opt.label}</span>
+                  <span className="text-xs font-bold text-slate-400">auto</span>
                 </div>
               ))}
             </div>
@@ -343,18 +365,20 @@ function htmlEscape(value: unknown) {
 
 function printRaportPdf(murid: MuridListItem, items: RaportItem[]) {
   const sorted = [...items].sort((a, b) => String(a.pelajaran ?? "").localeCompare(String(b.pelajaran ?? "")));
+  const average = sorted.length ? Math.round(sorted.reduce((total, item) => total + Number(item.nilai_akhir ?? 0), 0) / sorted.length) : 0;
+  const completed = sorted.filter((item) => Number(item.nilai_akhir ?? 0) >= 70).length;
   const rows = sorted.map((item, index) => {
     const finalScore = Number(item.nilai_akhir ?? 0);
     return `
       <tr>
-        <td>${index + 1}</td>
-        <td>${htmlEscape(item.pelajaran ?? "-")}</td>
-        <td>${htmlEscape(item.nilai_quiz ?? 0)}</td>
-        <td>${htmlEscape(item.nilai_tugas ?? 0)}</td>
-        <td>${htmlEscape(item.nilai_kehadiran ?? 0)}%</td>
-        <td>${htmlEscape(item.bonus_poin ?? 0)}</td>
-        <td><strong>${finalScore}</strong></td>
-        <td>${finalScore >= 70 ? "Tuntas" : "Perlu Dampingi"}</td>
+        <td class="center">${index + 1}</td>
+        <td class="subject">${htmlEscape(item.pelajaran ?? "-")}</td>
+        <td class="center">${htmlEscape(item.nilai_quiz ?? 0)}</td>
+        <td class="center">${htmlEscape(item.nilai_tugas ?? 0)}</td>
+        <td class="center">${htmlEscape(item.nilai_kehadiran ?? 0)}%</td>
+        <td class="center">${htmlEscape(item.bonus_poin ?? 0)}</td>
+        <td class="score">${finalScore}</td>
+        <td><span class="badge ${finalScore >= 70 ? "ok" : "warn"}">${finalScore >= 70 ? "Tuntas" : "Perlu Dampingi"}</span></td>
         <td>${htmlEscape(item.catatan ?? "")}</td>
       </tr>`;
   }).join("");
@@ -367,39 +391,64 @@ function printRaportPdf(murid: MuridListItem, items: RaportItem[]) {
       <head>
           <title>Raport ${htmlEscape(murid.nama ?? "Murid")}</title>
         <style>
-          @page { size: A4; margin: 14mm; }
+          @page { size: A4; margin: 12mm; }
           * { box-sizing: border-box; }
-          body { font-family: Arial, sans-serif; color: #0f172a; margin: 0; }
-          .header { border-bottom: 3px solid #0f5f8f; padding-bottom: 14px; margin-bottom: 18px; }
-          .kicker { color: #0f5f8f; font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
-          h1 { margin: 4px 0 8px; font-size: 28px; }
+          body { font-family: Arial, sans-serif; color: #0f172a; margin: 0; background: #fff; }
+          .sheet { border: 1px solid #dbeafe; border-radius: 18px; overflow: hidden; }
+          .hero { background: linear-gradient(135deg, #075985, #0ea5e9); color: white; padding: 24px; position: relative; }
+          .hero:after { content: ""; position: absolute; width: 180px; height: 180px; border-radius: 999px; right: -60px; top: -80px; background: rgba(255,255,255,.16); }
+          .kicker { color: #bae6fd; font-size: 11px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+          h1 { margin: 5px 0 12px; font-size: 30px; letter-spacing: -.03em; }
           .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; font-size: 13px; font-weight: 700; }
-          table { width: 100%; border-collapse: collapse; font-size: 11px; }
-          th { background: #e0f2fe; color: #0c4a6e; text-align: left; }
-          th, td { border: 1px solid #cbd5e1; padding: 7px; vertical-align: top; }
-          .footer { margin-top: 28px; display: flex; justify-content: flex-end; font-size: 12px; }
+          .content { padding: 18px; }
+          .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+          .stat { border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; background: #f8fafc; }
+          .stat .label { color: #64748b; font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+          .stat .value { margin-top: 4px; font-size: 24px; font-weight: 900; color: #0f172a; }
+          table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 11px; overflow: hidden; border: 1px solid #cbd5e1; border-radius: 14px; }
+          th { background: #e0f2fe; color: #0c4a6e; text-align: left; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+          th, td { border-bottom: 1px solid #e2e8f0; padding: 8px; vertical-align: top; }
+          tr:last-child td { border-bottom: 0; }
+          tbody tr:nth-child(even) { background: #f8fafc; }
+          .center { text-align: center; }
+          .subject { font-weight: 800; color: #0f172a; }
+          .score { text-align: center; font-weight: 900; font-size: 14px; color: #075985; }
+          .badge { display: inline-block; border-radius: 999px; padding: 4px 8px; font-size: 10px; font-weight: 800; white-space: nowrap; }
+          .badge.ok { background: #dcfce7; color: #166534; }
+          .badge.warn { background: #fff7ed; color: #c2410c; }
+          .footer { margin-top: 28px; display: flex; justify-content: space-between; align-items: flex-end; font-size: 12px; }
+          .note { max-width: 360px; color: #64748b; line-height: 1.55; }
           .sign { width: 210px; text-align: center; }
           .space { height: 64px; }
         </style>
       </head>
       <body>
-        <section class="header">
-          <div class="kicker">Teach SKL</div>
-          <h1>Raport Siswa</h1>
-          <div class="meta">
-            <div>Nama: ${htmlEscape(murid.nama ?? "-")}</div>
-            <div>Tingkat: ${htmlEscape(murid.tingkat ?? "-")}</div>
-            <div>Bulan: ${monthNames[monthIndex] ?? "-"}</div>
-            <div>Tahun: ${latest?.tahun ?? new Date().getFullYear()}</div>
+        <main class="sheet">
+          <section class="hero">
+            <div class="kicker">Teach SKL · Laporan Akademik</div>
+            <h1>Raport Siswa</h1>
+            <div class="meta">
+              <div>Nama: ${htmlEscape(murid.nama ?? "-")}</div>
+              <div>Tingkat: ${htmlEscape(murid.tingkat ?? "-")}</div>
+              <div>Bulan: ${monthNames[monthIndex] ?? "-"}</div>
+              <div>Tahun: ${latest?.tahun ?? new Date().getFullYear()}</div>
+            </div>
+          </section>
+          <div class="content">
+            <section class="summary">
+              <div class="stat"><div class="label">Jumlah Mapel</div><div class="value">${sorted.length}</div></div>
+              <div class="stat"><div class="label">Rata-rata</div><div class="value">${average}</div></div>
+              <div class="stat"><div class="label">Tuntas</div><div class="value">${completed}</div></div>
+            </section>
+            <table>
+              <thead>
+                <tr><th>No</th><th>Mapel</th><th>Quiz</th><th>Tugas</th><th>Hadir</th><th>Bonus</th><th>Akhir</th><th>Status</th><th>Catatan</th></tr>
+              </thead>
+              <tbody>${rows || `<tr><td colspan="9">Belum ada data raport.</td></tr>`}</tbody>
+            </table>
+            <section class="footer"><div class="note">Dokumen ini dicetak dari sistem Teach SKL. Simpan sebagai PDF melalui dialog cetak browser.</div><div class="sign"><div>Pengajar</div><div class="space"></div><div>________________________</div></div></section>
           </div>
-        </section>
-        <table>
-          <thead>
-            <tr><th>No</th><th>Mapel</th><th>Quiz</th><th>Tugas</th><th>Hadir</th><th>Bonus</th><th>Akhir</th><th>Status</th><th>Catatan</th></tr>
-          </thead>
-          <tbody>${rows || `<tr><td colspan="9">Belum ada data raport.</td></tr>`}</tbody>
-        </table>
-        <section class="footer"><div class="sign"><div>Pengajar</div><div class="space"></div><div>________________________</div></div></section>
+        </main>
       </body>
     </html>`);
   printWindow.document.close();
