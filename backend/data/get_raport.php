@@ -14,6 +14,7 @@ try {
         'Field'
     );
     $toAdd = [];
+    if (!in_array('pelajaran', $existingCols, true))        $toAdd[] = "ADD COLUMN pelajaran VARCHAR(255) DEFAULT 'Umum' AFTER bulan";
     if (!in_array('nilai_tugas', $existingCols, true))     $toAdd[] = 'ADD COLUMN nilai_tugas INT DEFAULT 0';
     if (!in_array('nilai_kehadiran', $existingCols, true)) $toAdd[] = 'ADD COLUMN nilai_kehadiran INT DEFAULT 0';
     if (!in_array('bonus_poin', $existingCols, true))      $toAdd[] = 'ADD COLUMN bonus_poin INT DEFAULT 0';
@@ -25,7 +26,7 @@ $user     = $_SESSION['user'];
 $kategori = $user['kategori'] ?? '';
 
 if ($kategori === 'pengajar') {
-    $stmt = $pdo->query('SELECT u.nama, rb.murid_id, rb.tahun, rb.bulan,
+    $stmt = $pdo->query('SELECT u.nama, rb.murid_id, rb.tahun, rb.bulan, COALESCE(rb.pelajaran, "Umum") AS pelajaran,
         rb.nilai_akhir, rb.nilai_quiz,
         COALESCE(rb.nilai_tugas, 0)     AS nilai_tugas,
         COALESCE(rb.nilai_kehadiran, 0) AS nilai_kehadiran,
@@ -39,7 +40,7 @@ if ($kategori === 'pengajar') {
 }
 
 if ($kategori === 'murid') {
-    $stmt = $pdo->prepare('SELECT rb.murid_id, rb.tahun, rb.bulan,
+    $stmt = $pdo->prepare('SELECT rb.murid_id, rb.tahun, rb.bulan, COALESCE(rb.pelajaran, "Umum") AS pelajaran,
         rb.nilai_akhir, rb.nilai_quiz,
         COALESCE(rb.nilai_tugas, 0)     AS nilai_tugas,
         COALESCE(rb.nilai_kehadiran, 0) AS nilai_kehadiran,

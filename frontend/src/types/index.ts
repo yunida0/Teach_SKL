@@ -176,6 +176,7 @@ export type RaportItem = {
   murid_id?: number | string;
   tahun?: number | string;
   bulan?: number | string;
+  pelajaran?: string;
   nilai_akhir?: number | string;
   nilai_quiz?: number | string;
   nilai_tugas?: number | string;
